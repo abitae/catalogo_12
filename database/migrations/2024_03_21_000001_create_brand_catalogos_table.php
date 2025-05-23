@@ -8,16 +8,18 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::create('product_almacens', function (Blueprint $table) {
+        Schema::create('brand_catalogos', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique();
-            $table->string('unique_entry_code')->unique();
+            $table->string('name');
+            $table->string('logo')->nullable();
+            $table->string('archivo')->nullable();
+            $table->boolean('isActive')->default(true);
             $table->timestamps();
         });
     }
 
     public function down()
     {
-        Schema::dropIfExists('product_almacens');
+        Schema::dropIfExists('brand_catalogos');
     }
 };

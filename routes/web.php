@@ -17,6 +17,12 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('settings/profile', 'settings.profile')->name('settings.profile');
     Volt::route('settings/password', 'settings.password')->name('settings.password');
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
+
+    // Rutas del Catálogo
+    Route::get('catalogo/marcas', App\Livewire\Catalogo\BrandCatalogoTable::class)->name('catalogo.brands');
+    Route::get('catalogo/categorias', App\Livewire\Catalogo\CategoryCatalogoTable::class)->name('catalogo.categories');
+    Route::get('catalogo/lineas', App\Livewire\Catalogo\LineCatalogoTable::class)->name('catalogo.lines');
+    Route::get('catalogo/productos', App\Livewire\Catalogo\ProductoCatalogoTable::class)->name('catalogo.products');
 });
 
 require __DIR__.'/auth.php';

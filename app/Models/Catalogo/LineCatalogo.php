@@ -2,18 +2,17 @@
 
 namespace App\Models\Catalogo;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class LineCatalogo extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'code',
         'name',
         'logo',
         'fondo',
-        'firma_autorizacion',
-        'fondo_autorizacion',
-        'fondo_rotulo',
         'archivo',
         'isActive',
     ];

@@ -6,25 +6,21 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    public function up()
     {
-        Schema::create('brand_catalogos', function (Blueprint $table) {
+        Schema::create('category_catalogos', function (Blueprint $table) {
             $table->id();
-            $table->string('code')->unique();
             $table->string('name');
+            $table->string('logo')->nullable();
+            $table->string('fondo')->nullable();
+            $table->string('archivo')->nullable();
             $table->boolean('isActive')->default(true);
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('brand_catalogos');
+        Schema::dropIfExists('category_catalogos');
     }
 };

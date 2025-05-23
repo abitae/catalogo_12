@@ -2,10 +2,12 @@
 
 namespace App\Models\Catalogo;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class ProductoCatalogo extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'brand_id',
         'category_id',
@@ -15,17 +17,15 @@ class ProductoCatalogo extends Model
         'code_peru',
         'price_compra',
         'price_venta',
-        'porcentaje',
         'stock',
         'dias_entrega',
         'description',
-        'tipo',
-        'color',
         'garantia',
         'observaciones',
         'image',
         'archivo',
         'archivo2',
+        'caracteristicas',
         'isActive',
     ];
     public function category()
