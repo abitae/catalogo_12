@@ -1,5 +1,9 @@
 <?php
 
+use App\Livewire\Catalogo\BrandCatalogoIndex;
+use App\Livewire\Catalogo\CategoryCatalogoIndex;
+use App\Livewire\Catalogo\LineCatalogoIndex;
+use App\Livewire\Catalogo\ProductoCatalogoIndex;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
@@ -19,10 +23,10 @@ Route::middleware(['auth'])->group(function () {
     Volt::route('settings/appearance', 'settings.appearance')->name('settings.appearance');
 
     // Rutas del Catálogo
-    Route::get('catalogo/marcas', App\Livewire\Catalogo\BrandCatalogoTable::class)->name('catalogo.brands');
-    Route::get('catalogo/categorias', App\Livewire\Catalogo\CategoryCatalogoTable::class)->name('catalogo.categories');
-    Route::get('catalogo/lineas', App\Livewire\Catalogo\LineCatalogoTable::class)->name('catalogo.lines');
-    Route::get('catalogo/productos', App\Livewire\Catalogo\ProductoCatalogoTable::class)->name('catalogo.products');
+    Route::get('catalogo/marcas', BrandCatalogoIndex::class)->name('catalogo.brands');
+    Route::get('catalogo/categorias', CategoryCatalogoIndex::class)->name('catalogo.categories');
+    Route::get('catalogo/lineas', LineCatalogoIndex::class)->name('catalogo.lines');
+    Route::get('catalogo/productos', ProductoCatalogoIndex::class)->name('catalogo.products');
 });
 
 require __DIR__.'/auth.php';

@@ -26,7 +26,7 @@ return new class extends Migration
             $table->string('image')->nullable();
             $table->string('archivo')->nullable();
             $table->string('archivo2')->nullable();
-            $table->json('caracteristicas')->nullable();
+            $table->json('caracteristicas')->default('[]')->nullable();
             $table->boolean('isActive')->default(true);
             $table->timestamps();
         });
