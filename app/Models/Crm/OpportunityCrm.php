@@ -16,6 +16,7 @@ class OpportunityCrm extends Model
         'nombre',
         'estado',
         'tipo_negocio_id',
+        'marca_id',
         'lead_id',
         'valor',
         'etapa',
@@ -40,6 +41,11 @@ class OpportunityCrm extends Model
     public function tipoNegocio()
     {
         return $this->belongsTo(TipeNegocioCrm::class, 'tipo_negocio_id');
+    }
+
+    public function marca()
+    {
+        return $this->belongsTo(MarcaCrm::class, 'marca_id');
     }
 
     public function lead()

@@ -11,6 +11,13 @@ use App\Models\Almacen\ProductoAlmacen;
 use App\Models\Almacen\TransferenciaAlmacen;
 use App\Models\Almacen\MovimientoAlmacen;
 use App\Models\User;
+use App\Models\Crm\TipeNegocioCrm;
+use App\Models\Crm\MarcaCrm;
+use App\Models\Crm\LeadCrm;
+use App\Models\Crm\OpportunityCrm;
+use App\Models\Crm\DealCrm;
+use App\Models\Crm\ActivityCrm;
+use App\Models\Crm\ContactCrm;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -41,5 +48,14 @@ class DatabaseSeeder extends Seeder
         ProductoAlmacen::factory(200)->create();
         TransferenciaAlmacen::factory(100)->create();
         MovimientoAlmacen::factory(200)->create();
+
+        // Crear datos de prueba para el CRM
+        TipeNegocioCrm::factory(10)->create();
+        MarcaCrm::factory(10)->create();
+        LeadCrm::factory(100)->create();
+        OpportunityCrm::factory(100)->create();
+        DealCrm::factory(100)->create();
+        ActivityCrm::factory(200)->create();
+        ContactCrm::factory(100)->create();
     }
 }
