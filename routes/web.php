@@ -1,5 +1,9 @@
 <?php
 
+use App\Livewire\Almacen\MovimientoAlmacenIndex;
+use App\Livewire\Almacen\ProductoAlmacenIndex;
+use App\Livewire\Almacen\TransferenciaAlmacenIndex;
+use App\Livewire\Almacen\WarehouseAlmacenIndex;
 use App\Livewire\Catalogo\BrandCatalogoIndex;
 use App\Livewire\Catalogo\CategoryCatalogoIndex;
 use App\Livewire\Catalogo\LineCatalogoIndex;
@@ -27,6 +31,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('catalogo/categorias', CategoryCatalogoIndex::class)->name('catalogo.categories');
     Route::get('catalogo/lineas', LineCatalogoIndex::class)->name('catalogo.lines');
     Route::get('catalogo/productos', ProductoCatalogoIndex::class)->name('catalogo.products');
+
+    // Rutas del Almacén
+    Route::get('almacen/almacenes', WarehouseAlmacenIndex::class)->name('almacen.warehouses');
+    Route::get('almacen/productos', ProductoAlmacenIndex::class)->name('almacen.products');
+    Route::get('almacen/transferencias', TransferenciaAlmacenIndex::class)->name('almacen.transfers');
+    Route::get('almacen/movimientos', MovimientoAlmacenIndex::class)->name('almacen.movements');
 });
 
 require __DIR__.'/auth.php';

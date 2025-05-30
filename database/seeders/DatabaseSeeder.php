@@ -6,6 +6,10 @@ use App\Models\Catalogo\BrandCatalogo;
 use App\Models\Catalogo\CategoryCatalogo;
 use App\Models\Catalogo\LineCatalogo;
 use App\Models\Catalogo\ProductoCatalogo;
+use App\Models\Almacen\WarehouseAlmacen;
+use App\Models\Almacen\ProductoAlmacen;
+use App\Models\Almacen\TransferenciaAlmacen;
+use App\Models\Almacen\MovimientoAlmacen;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -27,11 +31,15 @@ class DatabaseSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
-    // Crear datos de prueba para el catálogo
-    BrandCatalogo::factory(20)->create();
-    CategoryCatalogo::factory(20)->create();
-    LineCatalogo::factory(20)->create();
-    ProductoCatalogo::factory(40)->create();
+        // Crear datos de prueba para el catálogo
+        BrandCatalogo::factory(20)->create();
+        CategoryCatalogo::factory(20)->create();
+        LineCatalogo::factory(20)->create();
+        ProductoCatalogo::factory(40)->create();
 
+        WarehouseAlmacen::factory(4)->create();
+        ProductoAlmacen::factory(200)->create();
+        TransferenciaAlmacen::factory(100)->create();
+        MovimientoAlmacen::factory(200)->create();
     }
 }

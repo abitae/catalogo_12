@@ -136,6 +136,9 @@
                             Stock</th>
                         <th
                             class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                            Doc</th>
+                        <th
+                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                             Precio</th>
 
                         <th
@@ -145,28 +148,21 @@
                 </thead>
                 <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
                     @foreach ($productos as $producto)
-                        <tr class="hover:bg-zinc-100 dark:hover:bg-zinc-600 transition-colors duration-200 ease-in-out">
+                        <tr wire:key="producto-{{ $producto->id }}" class="hover:bg-zinc-100 dark:hover:bg-zinc-600 transition-colors duration-200 ease-in-out">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-300">
                                 <div class="flex flex-col">
-                                    <span
-                                        class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $producto->isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $producto->isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                         {{ $producto->isActive ? 'Activo' : 'Inactivo' }}
                                     </span>
                                     <span>{{ $producto->code ?? '' }}</span>
                                     <span>{{ $producto->code_fabrica ?? '' }}</span>
                                     <span>{{ $producto->code_peru ?? '' }}</span>
-
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
                                 <img src="{{ $producto->image ? asset('storage/' . $producto->image) : 'https://placehold.co/600x400' }}"
-                                    alt="Imagen del producto" class="w-10 h-10 rounded-full">
-                                <flux:button wire:click="descargarArchivo({{ $producto->id }})" size="xs"
-                                    variant="ghost" icon="arrow-down-tray" title="Descargar archivo">
-                                </flux:button>
-                                <flux:button wire:click="descargarArchivo2({{ $producto->id }})" size="xs"
-                                    variant="ghost" icon="arrow-down-tray" title="Descargar archivo 2">
-                                </flux:button>
+                                    alt="Imagen del producto" class="w-20 h-20 rounded-full">
+                                
                             </td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">{{ $producto->description }}
                             </td>
@@ -175,6 +171,26 @@
                                 {{ $producto->category->name ?? 'N/A' }} /
                                 {{ $producto->line->name ?? 'N/A' }}</td>
                             <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-300">{{ $producto->stock }}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-300">
+                                @if($producto->archivo)
+                                    <a href="{{ asset('storage/' . $producto->archivo) }}" target="_blank" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                                        <flux:icon name="document" class="w-6 h-6" />
+                                    </a>
+                                @else
+                                    <div class="w-10 h-10 rounded bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
+                                        <flux:icon name="document" class="w-6 h-6 text-zinc-400" />
+                                    </div>
+                                @endif
+                                @if($producto->archivo2)
+                                    <a href="{{ asset('storage/' . $producto->archivo2) }}" target="_blank" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                                        <flux:icon name="document" class="w-6 h-6" />
+                                    </a>
+                                @else
+                                    <div class="w-10 h-10 rounded bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
+                                        <flux:icon name="document" class="w-6 h-6 text-zinc-400" />
+                                    </div>
+                                @endif
+                            </td>
                             <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-300">S/
                                 {{ number_format($producto->price_venta, 2) }}</td>
                             <td class="px-6 py-4 text-sm">

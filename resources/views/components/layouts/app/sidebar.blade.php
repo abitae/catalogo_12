@@ -12,12 +12,18 @@
             </a>
 
             <flux:navlist variant="outline">
-                <flux:navlist.group :heading="__('Platform')" class="grid">
-                    <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>{{ __('Dashboard') }}</flux:navlist.item>
-                    <flux:navlist.item icon="home" :href="route('catalogo.brands')" :current="request()->routeIs('catalogo.brands')" wire:navigate>{{ __('Marcas') }}</flux:navlist.item>
-                    <flux:navlist.item icon="home" :href="route('catalogo.categories')" :current="request()->routeIs('catalogo.categories')" wire:navigate>{{ __('Categorías') }}</flux:navlist.item>
-                    <flux:navlist.item icon="home" :href="route('catalogo.lines')" :current="request()->routeIs('catalogo.lines')" wire:navigate>{{ __('Líneas') }}</flux:navlist.item>
-                    <flux:navlist.item icon="home" :href="route('catalogo.products')" :current="request()->routeIs('catalogo.products')" wire:navigate>{{ __('Productos') }}</flux:navlist.item>
+                <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>{{ __('Dashboard') }}</flux:navlist.item>
+                <flux:navlist.group :expanded="false" expandable heading="Catalogo">
+                    <flux:navlist.item icon="cube" :href="route('catalogo.products')" :current="request()->routeIs('catalogo.products')" wire:navigate>{{ __('Productos') }}</flux:navlist.item>
+                    <flux:navlist.item icon="tag" :href="route('catalogo.brands')" :current="request()->routeIs('catalogo.brands')" wire:navigate>{{ __('Marcas') }}</flux:navlist.item>
+                    <flux:navlist.item icon="squares-2x2" :href="route('catalogo.categories')" :current="request()->routeIs('catalogo.categories')" wire:navigate>{{ __('Categorías') }}</flux:navlist.item>
+                    <flux:navlist.item icon="bars-3" :href="route('catalogo.lines')" :current="request()->routeIs('catalogo.lines')" wire:navigate>{{ __('Líneas') }}</flux:navlist.item>
+                </flux:navlist.group>
+                <flux:navlist.group :expanded="false" expandable heading="Almacén">
+                    <flux:navlist.item icon="folder-git-2" :href="route('almacen.warehouses')" :current="request()->routeIs('almacen.warehouses')" wire:navigate>{{ __('Almacenes') }}</flux:navlist.item>
+                    <flux:navlist.item icon="folder-git-2" :href="route('almacen.products')" :current="request()->routeIs('almacen.products')" wire:navigate>{{ __('Productos') }}</flux:navlist.item>
+                    <flux:navlist.item icon="folder-git-2" :href="route('almacen.transfers')" :current="request()->routeIs('almacen.transfers')" wire:navigate>{{ __('Transferencias') }}</flux:navlist.item>
+                    <flux:navlist.item icon="folder-git-2" :href="route('almacen.movements')" :current="request()->routeIs('almacen.movements')" wire:navigate>{{ __('Movimientos') }}</flux:navlist.item>
                 </flux:navlist.group>
             </flux:navlist>
 
