@@ -56,6 +56,18 @@
                     <option value="cancelada">Cancelada</option>
                 </flux:select>
             </div>
+            <!-- Registros por página -->
+            <div>
+                <flux:label>Registros por página</flux:label>
+                <flux:select wire:model.live="perPage" class="w-full">
+                    <option value="10">10</option>
+                    <option value="25">25</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                    <option value="500">500</option>
+                </flux:select>
+            </div>
             <!-- Fecha de inicio -->
             <div>
                 <flux:label>Fecha de inicio</flux:label>
@@ -105,10 +117,7 @@
                             </div>
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                            Almacén Origen
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                            Almacén Destino
+                            Origen/Destino
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                             Productos
@@ -117,38 +126,51 @@
                             Fecha
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                            Estado
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                             Acciones
                         </th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
-                    @foreach ($transferencias as $transferencia)
+                    @forelse ($transferencias as $transferencia)
                         <tr wire:key="transferencia-{{ $transferencia->id }}" class="hover:bg-zinc-100 dark:hover:bg-zinc-600 transition-colors duration-200 ease-in-out">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-300">
                                 {{ $transferencia->code }}
                             </td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
-                                {{ $transferencia->almacenOrigen->nombre }}
+                                {{ $transferencia->almacenOrigen->nombre }} <br> {{ $transferencia->almacenDestino->nombre }}
                             </td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
-                                {{ $transferencia->almacenDestino->nombre }}
-                            </td>
-                            <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
-                                <div class="space-y-1">
-                                    @foreach ($transferencia->productos as $producto)
-                                        <div>
-                                            {{ $producto['nombre'] }} ({{ $producto['cantidad'] }} {{ $producto['unidad_medida'] }})
+                                <div class="space-y-2">
+                                    @forelse ($transferencia->productos as $producto)
+                                        <div class="flex items-center justify-between p-2 bg-zinc-50 dark:bg-zinc-700 rounded-md border border-zinc-200 dark:border-zinc-600">
+                                            <div class="flex-1">
+                                                <div class="font-medium text-zinc-800 dark:text-zinc-200">
+                                                    {{ $producto['code'] }}
+                                                </div>
+                                                <div class="text-xs text-zinc-600 dark:text-zinc-400">
+                                                    {{ Str::limit($producto['nombre'], 20) }}
+                                                </div>
+                                            </div>
+                                            <div class="flex items-center space-x-2">
+                                                <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium rounded-full">
+                                                    {{ $producto['cantidad'] }}
+                                                </span>
+                                                <span class="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                                                    {{ $producto['unidad_medida'] }}
+                                                </span>
+                                            </div>
                                         </div>
-                                    @endforeach
+                                    @empty
+                                        <div class="text-center py-3 text-zinc-500 dark:text-zinc-400 italic">
+                                            <flux:icon name="package" class="w-4 h-4 mx-auto mb-1" />
+                                            No hay productos
+                                        </div>
+                                    @endforelse
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
-                                {{ $transferencia->fecha_transferencia }}
-                            </td>
-                            <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
+                                {{ $transferencia->fecha_transferencia->format('d/m/Y h:i A') }}
+                                <br>
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
                                     @if($transferencia->estado === 'completada') bg-green-100 text-green-800
                                     @elseif($transferencia->estado === 'cancelada') bg-red-100 text-red-800
@@ -156,6 +178,7 @@
                                     {{ ucfirst($transferencia->estado) }}
                                 </span>
                             </td>
+
                             <td class="px-6 py-4 text-sm">
                                 <div class="flex items-center gap-2">
                                     @if($transferencia->estado === 'pendiente')
@@ -175,7 +198,13 @@
                                 </div>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="6" class="px-6 py-4 text-center text-zinc-500">
+                                No hay transferencias disponibles
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
@@ -251,8 +280,8 @@
 
                     <!-- Formulario para agregar productos -->
                     <div class="mt-4 p-4 bg-zinc-50 dark:bg-zinc-700 rounded-lg">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="md:col-span-2">
                                 <flux:select
                                     label="Producto"
                                     wire:model.live="producto_seleccionado"
@@ -262,11 +291,15 @@
                                     <option value="">Seleccione un producto</option>
                                     @foreach ($productos_disponibles as $producto)
                                         <option value="{{ $producto->id }}">
-                                            {{ $producto->nombre }}
-                                            (Stock: {{ number_format($producto->stock_disponible ?? $producto->stock_actual, 2) }} {{ $producto->unidad_medida }})
-                                            @if($producto->necesitaReposicion())
-                                                <span class="text-red-500">(Stock Bajo)</span>
-                                            @endif
+                                            <div class="flex justify-between items-center">
+                                                <span>{{ $producto->code }} - {{ $producto->nombre }}</span>
+                                                <span class="text-sm text-zinc-500">
+                                                    Stock: {{ number_format($producto->stock_disponible ?? $producto->stock_actual, 2) }} {{ $producto->unidad_medida }}
+                                                    @if($producto->necesitaReposicion())
+                                                        <span class="text-red-500 ml-1">⚠️</span>
+                                                    @endif
+                                                </span>
+                                            </div>
                                         </option>
                                     @endforeach
                                 </flux:select>
@@ -277,20 +310,53 @@
                                     label="Cantidad"
                                     wire:model="cantidad_producto"
                                     min="1"
+                                    step="1"
+                                    placeholder="1"
                                     :disabled="!$producto_seleccionado || ($transferencia_id && $estado !== 'pendiente')"
                                     :error="$errors->first('cantidad_producto')"
                                 />
                             </div>
                             <div class="flex items-end">
                                 <flux:button
+                                    icon="plus"
                                     wire:click="agregarProducto"
                                     :disabled="!$producto_seleccionado || !$cantidad_producto || ($transferencia_id && $estado !== 'pendiente')"
-                                    class="w-full"
+                                    class="w-full h-10 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200"
+                                    title="Agregar producto a la transferencia"
                                 >
-                                    Agregar Producto
+
                                 </flux:button>
                             </div>
                         </div>
+
+                        <!-- Información del producto seleccionado -->
+                        @if($producto_seleccionado && $productos_disponibles && $productos_disponibles->count())
+                            @php
+                                $productoInfo = $productos_disponibles->first(function($p) use ($producto_seleccionado) {
+                                    return $p->id == $producto_seleccionado;
+                                });
+                            @endphp
+                            @if($productoInfo)
+                                <div class="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                                    <div class="flex items-center justify-between text-sm">
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-medium text-green-500 dark:text-green-300">{{ $productoInfo->nombre }}</span>
+                                            <span class="text-blue-600 dark:text-blue-400">({{ $productoInfo->code }})</span>
+                                        </div>
+                                        <div class="flex items-center gap-4">
+                                            <span class="text-blue-600 dark:text-blue-400">
+                                                Stock disponible: <strong>{{ number_format($productoInfo->stock_disponible ?? $productoInfo->stock_actual, 2) }} {{ $productoInfo->unidad_medida }}</strong>
+                                            </span>
+                                            @if($productoInfo->necesitaReposicion())
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                                                    Stock Bajo
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+                        @endif
                     </div>
 
                     <!-- Lista de productos seleccionados -->
@@ -312,13 +378,16 @@
                                 <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
                                     @forelse ($productos_seleccionados as $productoId)
                                         @php
-                                            $producto = $productos_disponibles->first(function($p) use ($productoId) {
-                                                return $p->id == $productoId;
-                                            });
+                                            $producto = null;
+                                            if ($productos_disponibles && $productos_disponibles->count()) {
+                                                $producto = $productos_disponibles->first(function($p) use ($productoId) {
+                                                    return $p->id == $productoId;
+                                                });
+                                            }
                                         @endphp
                                         @if($producto)
                                             <tr>
-                                                <td class="px-4 py-2 text-sm text-zinc-900 dark:text-zinc-300">{{ $producto->nombre }}</td>
+                                                <td class="px-4 py-2 text-sm text-zinc-900 dark:text-zinc-300">{{ $producto->code }} <br> {{ $producto->nombre }}</td>
                                                 <td class="px-4 py-2 text-sm text-zinc-900 dark:text-zinc-300">
                                                     <div class="flex items-center gap-2">
                                                         <flux:input

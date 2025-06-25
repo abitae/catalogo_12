@@ -162,7 +162,7 @@
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
                                 <img src="{{ $producto->image ? asset('storage/' . $producto->image) : 'https://placehold.co/600x400' }}"
                                     alt="Imagen del producto" class="w-20 h-20 rounded-full">
-                                
+
                             </td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">{{ $producto->description }}
                             </td>
@@ -176,19 +176,11 @@
                                     <a href="{{ asset('storage/' . $producto->archivo) }}" target="_blank" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
                                         <flux:icon name="document" class="w-6 h-6" />
                                     </a>
-                                @else
-                                    <div class="w-10 h-10 rounded bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
-                                        <flux:icon name="document" class="w-6 h-6 text-zinc-400" />
-                                    </div>
                                 @endif
                                 @if($producto->archivo2)
-                                    <a href="{{ asset('storage/' . $producto->archivo2) }}" target="_blank" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                                    <a href="{{ asset('storage/' . $producto->archivo2) }}" target="_blank" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300">
                                         <flux:icon name="document" class="w-6 h-6" />
                                     </a>
-                                @else
-                                    <div class="w-10 h-10 rounded bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
-                                        <flux:icon name="document" class="w-6 h-6 text-zinc-400" />
-                                    </div>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-300">S/

@@ -140,11 +140,42 @@ class ProductoCatalogoIndex extends Component
 
     public function nuevoProducto()
     {
+        $this->resetValidation();
+        $this->reset([
+            'producto_id',
+            'producto',
+            'tempImage',
+            'tempArchivo',
+            'tempArchivo2',
+            'imagePreview',
+            'archivoPreview',
+            'archivo2Preview',
+            'image',
+            'archivo',
+            'archivo2',
+            'caracteristicas',
+            'isActive',
+            'brand_id',
+            'category_id',
+            'line_id',
+            'code',
+            'code_fabrica',
+            'code_peru',
+            'price_compra',
+            'price_venta',
+            'stock',
+            'dias_entrega',
+            'description',
+            'garantia',
+            'observaciones',
+        ]);
+
         $this->modal_form_producto = true;
     }
 
     public function editarProducto($id)
     {
+        $this->resetValidation();
         $this->producto_id = $id;
         $this->producto = ProductoCatalogo::find($id);
         $this->brand_id = $this->producto->brand_id;
@@ -377,7 +408,25 @@ class ProductoCatalogoIndex extends Component
             'tempArchivo2',
             'imagePreview',
             'archivoPreview',
-            'archivo2Preview'
+            'archivo2Preview',
+            'image',
+            'archivo',
+            'archivo2',
+            'caracteristicas',
+            'isActive',
+            'brand_id',
+            'category_id',
+            'line_id',
+            'code',
+            'code_fabrica',
+            'code_peru',
+            'price_compra',
+            'price_venta',
+            'stock',
+            'dias_entrega',
+            'description',
+            'garantia',
+            'observaciones',
         ]);
         $this->resetValidation();
     }

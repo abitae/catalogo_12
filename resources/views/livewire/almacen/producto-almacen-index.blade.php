@@ -86,7 +86,7 @@
     </div>
 
     <!-- Tabla de Productos -->
-    <div class="bg-white dark:bg-zinc-800 rounded-lg overflow-hidden shadow-sm">
+    <div class="bg-white dark:bg-zinc-800 rounded-lg overflow-hidden shadow-sm mb-6">
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead class="bg-zinc-50 dark:bg-zinc-700">
@@ -101,10 +101,12 @@
                                 @endif
                             </div>
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                        <th
+                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                             Cód.Salida
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                        <th
+                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                             Imagen
                         </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-500 transition-colors"
@@ -117,41 +119,48 @@
                                 @endif
                             </div>
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                            Almacén / Categoría
+                        <th
+                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                            Almacén/Categoría
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                        <th
+                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                             Stock
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                            Precio
+                        <th
+                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                            Precio/Estado
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                            Estado
-                        </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+
+                        <th
+                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                             Acciones
                         </th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
                     @foreach ($productos as $producto)
-                        <tr wire:key="producto-{{ $producto->id }}" class="hover:bg-zinc-100 dark:hover:bg-zinc-600 transition-colors duration-200 ease-in-out">
+                        <tr wire:key="producto-{{ $producto->id }}"
+                            class="hover:bg-zinc-100 dark:hover:bg-zinc-600 transition-colors duration-200 ease-in-out">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-300">
                                 {{ $producto->code }}
                             </td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
-                                @foreach($producto->codes_exit as $code)
-                                    <span class="px-2 text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                @foreach ($producto->codes_exit as $code)
+                                    <span
+                                        class="px-2 text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
                                         {{ $code }}
                                     </span>
+                                    <br>
                                 @endforeach
                             </td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
-                                @if($producto->imagen)
-                                    <img src="{{ asset('storage/' . $producto->imagen) }}" alt="Imagen del producto" class="w-20 h-20 rounded-full">
+                                @if ($producto->imagen)
+                                    <img src="{{ asset('storage/' . $producto->imagen) }}" alt="Imagen del producto"
+                                        class="w-20 h-20 rounded-full">
                                 @else
-                                    <div class="w-20 h-20 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
+                                    <div
+                                        class="w-20 h-20 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
                                         <flux:icon name="photo" class="w-10 h-10 text-zinc-400" />
                                     </div>
                                 @endif
@@ -160,7 +169,7 @@
                                 {{ $producto->nombre }}
                             </td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
-                                {{ $producto->almacen->nombre ?? 'N/A' }} / {{ $producto->categoria }}
+                                {{ $producto->almacen->nombre ?? 'N/A' }} <br> {{ $producto->categoria }}
                             </td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
                                 <div class="flex flex-col">
@@ -169,13 +178,13 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
-                                S/ {{ number_format($producto->precio_unitario, 2) }}
-                            </td>
-                            <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $producto->estado ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                S/ {{ number_format($producto->precio_unitario, 2) }} <br>
+                                <span
+                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $producto->estado ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                                     {{ $producto->estado ? 'Activo' : 'Inactivo' }}
                                 </span>
                             </td>
+
                             <td class="px-6 py-4 text-sm">
                                 <div class="flex items-center gap-2">
                                     <flux:button wire:click="editarProducto({{ $producto->id }})" size="xs"
@@ -220,11 +229,16 @@
                     <flux:input label="Nombre" wire:model="nombre" placeholder="Ingrese el nombre" />
                     <flux:input label="Descripción" wire:model="descripcion" placeholder="Ingrese la descripción" />
                     <flux:input label="Categoría" wire:model="categoria" placeholder="Ingrese la categoría" />
-                    <flux:input label="Unidad de Medida" wire:model="unidad_medida" placeholder="Ingrese la unidad de medida" />
-                    <flux:input label="Stock Mínimo" type="number" wire:model="stock_minimo" placeholder="Ingrese el stock mínimo" />
-                    <flux:input label="Stock Actual" type="number" wire:model="stock_actual" placeholder="Ingrese el stock actual" />
-                    <flux:input label="Precio Unitario" type="number" step="0.01" wire:model="precio_unitario" placeholder="Ingrese el precio unitario" />
-                    <flux:input label="Código de Barras" wire:model="codigo_barras" placeholder="Ingrese el código de barras" />
+                    <flux:input label="Unidad de Medida" wire:model="unidad_medida"
+                        placeholder="Ingrese la unidad de medida" />
+                    <flux:input label="Stock Mínimo" type="number" wire:model="stock_minimo"
+                        placeholder="Ingrese el stock mínimo" />
+                    <flux:input label="Stock Actual" type="number" wire:model="stock_actual"
+                        placeholder="Ingrese el stock actual" />
+                    <flux:input label="Precio Unitario" type="number" step="0.01" wire:model="precio_unitario"
+                        placeholder="Ingrese el precio unitario" />
+                    <flux:input label="Código de Barras" wire:model="codigo_barras"
+                        placeholder="Ingrese el código de barras" />
                     <flux:input label="Marca" wire:model="marca" placeholder="Ingrese la marca" />
                     <flux:input label="Modelo" wire:model="modelo" placeholder="Ingrese el modelo" />
                 </div>
@@ -234,7 +248,8 @@
                     <flux:heading size="md">Códigos de Salida</flux:heading>
                     <div class="mt-4">
                         <div class="flex gap-2">
-                            <flux:input wire:model="nuevo_codigo_salida" placeholder="Ingrese nuevo código de salida" class="flex-1" />
+                            <flux:input wire:model="nuevo_codigo_salida" placeholder="Ingrese nuevo código de salida"
+                                class="flex-1" />
                             <flux:button wire:click="agregarCodigoSalida" variant="primary" icon="plus">
                                 Agregar
                             </flux:button>
@@ -246,27 +261,31 @@
                                 <table class="w-full">
                                     <thead class="bg-zinc-50 dark:bg-zinc-700">
                                         <tr>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                                            <th
+                                                class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                                                 Código de Salida
                                             </th>
-                                            <th class="px-6 py-3 text-right text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                                            <th
+                                                class="px-6 py-3 text-right text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                                                 Acciones
                                             </th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
-                                        @foreach($codes_exit as $code)
-                                        <tr>
-                                            <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
-                                                {{ $code }}
-                                            </td>
-                                            <td class="px-6 py-4 text-sm text-right">
-                                                <flux:button wire:click="eliminarCodigoSalida('{{ $code }}')" size="xs"
-                                                    variant="danger" icon="trash" title="Eliminar código"
-                                                    class="hover:bg-red-600 transition-colors">
-                                                </flux:button>
-                                            </td>
-                                        </tr>
+                                        @foreach ($codes_exit as $code)
+                                            <tr>
+                                                <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
+                                                    {{ $code }}
+                                                </td>
+                                                <td class="px-6 py-4 text-sm text-right">
+                                                    <flux:button
+                                                        wire:click="eliminarCodigoSalida('{{ $code }}')"
+                                                        size="xs" variant="danger" icon="trash"
+                                                        title="Eliminar código"
+                                                        class="hover:bg-red-600 transition-colors">
+                                                    </flux:button>
+                                                </td>
+                                            </tr>
                                         @endforeach
                                     </tbody>
                                 </table>
@@ -279,21 +298,27 @@
                     <label class="block text-sm font-medium text-gray-700">Imagen del Producto</label>
                     <div class="mt-1 flex items-center">
                         <div class="flex-1">
-                            <input type="file" wire:model.live="tempImage" class="hidden" id="image-upload" accept="image/*">
-                            <label for="image-upload" class="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                            <input type="file" wire:model.live="tempImage" class="hidden" id="image-upload"
+                                accept="image/*">
+                            <label for="image-upload"
+                                class="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
                                 Seleccionar Imagen
                             </label>
                         </div>
-                        @if($imagePreview)
+                        @if ($imagePreview)
                             <div class="ml-4 relative group">
-                                <img src="{{ $imagePreview }}" alt="Vista previa" class="h-20 w-20 object-cover rounded shadow-sm">
-                                <button type="button" wire:click="removeImage" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600">
+                                <img src="{{ $imagePreview }}" alt="Vista previa"
+                                    class="h-20 w-20 object-cover rounded shadow-sm">
+                                <button type="button" wire:click="removeImage"
+                                    class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600">
                                     <flux:icon name="x-mark" class="h-4 w-4" />
                                 </button>
                             </div>
                         @endif
                     </div>
-                    @error('tempImage') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    @error('tempImage')
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <div class="mt-4">
@@ -313,22 +338,23 @@
     </flux:modal>
 
     <!-- Modal Form Eliminar Producto -->
-    @if($producto_id)
-    <flux:modal wire:model="modal_form_eliminar_producto" class="w-2/3 max-w-2xl">
-        <div class="space-y-6">
-            <div>
-                <flux:heading size="lg">Eliminar Producto</flux:heading>
-                <flux:text class="mt-2">¿Está seguro de querer eliminar este producto?</flux:text>
+    @if ($producto_id)
+        <flux:modal wire:model="modal_form_eliminar_producto" class="w-2/3 max-w-2xl">
+            <div class="space-y-6">
+                <div>
+                    <flux:heading size="lg">Eliminar Producto</flux:heading>
+                    <flux:text class="mt-2">¿Está seguro de querer eliminar este producto?</flux:text>
+                </div>
+                <div class="flex justify-end mt-6">
+                    <flux:button type="button" wire:click="$set('modal_form_eliminar_producto', false)"
+                        class="mr-2">
+                        Cancelar
+                    </flux:button>
+                    <flux:button variant="danger" wire:click="confirmarEliminarProducto">
+                        Eliminar
+                    </flux:button>
+                </div>
             </div>
-            <div class="flex justify-end mt-6">
-                <flux:button type="button" wire:click="$set('modal_form_eliminar_producto', false)" class="mr-2">
-                    Cancelar
-                </flux:button>
-                <flux:button variant="danger" wire:click="confirmarEliminarProducto">
-                    Eliminar
-                </flux:button>
-            </div>
-        </div>
-    </flux:modal>
+        </flux:modal>
     @endif
 </div>

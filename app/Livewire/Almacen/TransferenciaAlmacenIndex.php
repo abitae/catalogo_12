@@ -58,7 +58,7 @@ class TransferenciaAlmacenIndex extends Component
     // Productos seleccionados
     public $productos_seleccionados = [];
     public $cantidades = [];
-    public $productos_disponibles = [];
+    public $productos_disponibles;
     public $producto_seleccionado = null;
     public $cantidad_producto = 1;
 
@@ -110,7 +110,11 @@ class TransferenciaAlmacenIndex extends Component
     public function mount()
     {
         $this->fecha_inicio = now()->subDays(7)->format('Y-m-d');
-        $this->fecha_fin = now()->format('Y-m-d');
+        $this->fecha_fin = now()->endOfDay()->format('Y-m-d');
+        $this->productos_disponibles = collect();
+        $this->producto_seleccionado = null;
+        $this->cantidad_producto = 1;
+        $this->asegurarProductoSeleccionado();
         $this->resetForm();
         $this->actualizarProductosDisponibles();
         $this->generarCodigo();
@@ -133,6 +137,8 @@ class TransferenciaAlmacenIndex extends Component
         ]);
         $this->fecha = now()->format('Y-m-d\TH:i');
         $this->estado = 'pendiente';
+        $this->productos_disponibles = collect();
+        $this->asegurarProductoSeleccionado();
     }
 
     public function updatingSearch()
@@ -182,9 +188,10 @@ class TransferenciaAlmacenIndex extends Component
             ->orderBy($this->sortField, $this->sortDirection);
 
         $this->transferenciasExportar = $query->get();
+        $transferencias = $query->latest()->paginate($this->perPage);
 
         return view('livewire.almacen.transferencia-almacen-index', [
-            'transferencias' => $query->paginate($this->perPage),
+            'transferencias' => $transferencias,
             'almacenes' => WarehouseAlmacen::where('estado', true)->get(),
             'productos' => ProductoAlmacen::where('estado', true)->get()
         ]);
@@ -197,7 +204,7 @@ class TransferenciaAlmacenIndex extends Component
         $codigoGenerado = false;
 
         while (!$codigoGenerado) {
-            $codigo = 'TRF' . str_pad($numero, 6, '0', STR_PAD_LEFT) . '-' . str_pad($usuarioId, 4, '0', STR_PAD_LEFT);
+            $codigo = 'TRF' . str_pad($numero, 3, '0', STR_PAD_LEFT) . '-' . str_pad($usuarioId, 2, '0', STR_PAD_LEFT);
 
             // Verificar si el código ya existe
             $existeCodigo = TransferenciaAlmacen::where('code', $codigo)->exists();
@@ -215,6 +222,8 @@ class TransferenciaAlmacenIndex extends Component
     {
         $this->resetForm();
         $this->generarCodigo();
+        $this->producto_seleccionado = null;
+        $this->cantidad_producto = 1;
         $this->modal_form_transferencia = true;
     }
 
@@ -242,6 +251,11 @@ class TransferenciaAlmacenIndex extends Component
             ->where('estado', true)
             ->get();
 
+        // Si no hay productos disponibles, inicializar como colección vacía
+        if (!$this->productos_disponibles) {
+            $this->productos_disponibles = collect();
+        }
+
         // Cargar productos seleccionados con sus cantidades
         $productosTransferencia = collect($this->transferencia->productos);
         $this->productos_seleccionados = $productosTransferencia->pluck('id')->toArray();
@@ -254,6 +268,10 @@ class TransferenciaAlmacenIndex extends Component
                 $producto->stock_disponible += $this->cantidades[$producto->id];
             }
         }
+
+        // Inicializar variables de selección
+        $this->producto_seleccionado = null;
+        $this->cantidad_producto = 1;
 
         $this->modal_form_transferencia = true;
     }
@@ -273,16 +291,27 @@ class TransferenciaAlmacenIndex extends Component
 
         $productos = collect($this->productos_seleccionados)
             ->map(function ($productoId) {
-                $producto = $this->productos_disponibles->first(function($p) use ($productoId) {
-                    return $p->id == $productoId;
-                });
+                $producto = null;
 
+                // Buscar en productos_disponibles si es una colección válida
+                if ($this->productos_disponibles && $this->productos_disponibles->count()) {
+                    $producto = $this->productos_disponibles->first(function($p) use ($productoId) {
+                        return $p->id == $productoId;
+                    });
+                }
+
+                // Si no se encuentra en productos_disponibles, buscar directamente en la base de datos
                 if (!$producto) {
                     $producto = ProductoAlmacen::find($productoId);
                 }
 
+                if (!$producto) {
+                    throw new \Exception("Producto con ID {$productoId} no encontrado.");
+                }
+
                 return [
                     'id' => $producto->id,
+                    'code' => $producto->code,
                     'nombre' => $producto->nombre,
                     'cantidad' => $this->cantidades[$productoId],
                     'unidad_medida' => $producto->unidad_medida
@@ -350,15 +379,32 @@ class TransferenciaAlmacenIndex extends Component
             return;
         }
 
-        $this->productos_disponibles = ProductoAlmacen::query()
+        $productos = ProductoAlmacen::query()
             ->where('estado', true)
             ->where('almacen_id', $this->almacen_origen_id)
             ->where('stock_actual', '>', 0)
             ->get();
+
+        $this->productos_disponibles = $productos ?: collect();
     }
 
     public function agregarProducto()
     {
+        // Asegurar que las variables estén definidas
+        $this->asegurarProductoSeleccionado();
+
+        // Verificar que productos_disponibles sea una colección válida
+        if (!$this->productos_disponibles || !$this->productos_disponibles->count()) {
+            session()->flash('error', 'No hay productos disponibles en el almacén origen.');
+            return;
+        }
+
+        // Verificar que producto_seleccionado esté definido
+        if (!$this->producto_seleccionado) {
+            session()->flash('error', 'Debe seleccionar un producto.');
+            return;
+        }
+
         $this->validate([
             'producto_seleccionado' => 'required|exists:productos_almacen,id',
             'cantidad_producto' => [
@@ -366,11 +412,20 @@ class TransferenciaAlmacenIndex extends Component
                 'numeric',
                 'min:1',
                 function ($attribute, $value, $fail) {
-                    $producto = $this->productos_disponibles->first(function($p) {
-                        return $p->id == $this->producto_seleccionado;
+                    // Capturar la variable en el scope de la función
+                    $productoSeleccionado = $this->producto_seleccionado;
+                    $productosDisponibles = $this->productos_disponibles;
+
+                    $producto = $productosDisponibles->first(function($p) use ($productoSeleccionado) {
+                        return $p->id == $productoSeleccionado;
                     });
 
-                    if (!$producto || !$producto->tieneStockSuficiente($value)) {
+                    if (!$producto) {
+                        $fail("El producto seleccionado no está disponible en el almacén origen.");
+                        return;
+                    }
+
+                    if (!$producto->tieneStockSuficiente($value)) {
                         $fail("La cantidad excede el stock disponible ({$producto->stock_actual})");
                     }
                 }
@@ -398,20 +453,48 @@ class TransferenciaAlmacenIndex extends Component
     {
         $this->actualizarProductosDisponibles();
         $this->reset(['productos_seleccionados', 'cantidades']);
+        $this->producto_seleccionado = null;
+        $this->cantidad_producto = 1;
     }
 
     public function updatedProductoSeleccionado()
     {
+        // Asegurar que las variables estén definidas
+        $this->asegurarProductoSeleccionado();
+
         if (!$this->producto_seleccionado) {
             return;
         }
 
-        $producto = $this->productos_disponibles->first(function($p) {
-            return $p->id == $this->producto_seleccionado;
+        // Verificar que productos_disponibles sea una colección válida
+        if (!$this->productos_disponibles || !$this->productos_disponibles->count()) {
+            return;
+        }
+
+        // Capturar la variable en el scope de la función
+        $productoSeleccionado = $this->producto_seleccionado;
+        $productosDisponibles = $this->productos_disponibles;
+
+        $producto = $productosDisponibles->first(function($p) use ($productoSeleccionado) {
+            return $p->id == $productoSeleccionado;
         });
 
         if ($producto) {
             $this->cantidad_producto = min($this->cantidad_producto, $producto->stock_actual);
+        }
+    }
+
+    /**
+     * Asegura que producto_seleccionado esté siempre definido
+     */
+    private function asegurarProductoSeleccionado()
+    {
+        if (!isset($this->producto_seleccionado)) {
+            $this->producto_seleccionado = null;
+        }
+
+        if (!isset($this->cantidad_producto)) {
+            $this->cantidad_producto = 1;
         }
     }
 

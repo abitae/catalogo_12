@@ -25,6 +25,7 @@ class TransferenciaAlmacenFactory extends Factory
             'productos' => $productos->map(function ($producto) {
                 return [
                     'id' => $producto->id,
+                    'code' => $producto->code,
                     'nombre' => $producto->nombre,
                     'cantidad' => $this->faker->numberBetween(1, 10),
                     'unidad_medida' => $producto->unidad_medida
