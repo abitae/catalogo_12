@@ -181,6 +181,10 @@
 
                             <td class="px-6 py-4 text-sm">
                                 <div class="flex items-center gap-2">
+                                    <flux:button wire:click="verDetalleTransferencia({{ $transferencia->id }})" size="xs"
+                                         icon="eye" title="Ver detalle de transferencia"
+                                        class="hover:bg-gray-600 transition-colors">
+                                    </flux:button>
                                     @if($transferencia->estado === 'pendiente')
                                         <flux:button wire:click="completarTransferencia({{ $transferencia->id }})" size="xs"
                                             icon="check" title="Completar transferencia"
@@ -472,6 +476,226 @@
                     @endif
                 </div>
             </form>
+        </div>
+    </flux:modal>
+
+    <!-- Modal Detalle Transferencia -->
+    <flux:modal wire:model="modal_detalle_transferencia" class="max-w-5xl">
+        <div class="p-6 space-y-4">
+            @if($transferencia_detalle)
+                <!-- Encabezado mejorado -->
+                <div class="flex justify-between items-start border-b border-zinc-200 dark:border-zinc-700 pb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
+                            <flux:icon name="arrow-path" class="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                        </div>
+                        <div>
+                            <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Detalle de la Transferencia</h2>
+                            <p class="text-zinc-600 dark:text-zinc-400 mt-1 flex items-center gap-2">
+                                <flux:icon name="hashtag" class="w-4 h-4" />
+                                {{ $transferencia_detalle->code }}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        @php
+                            $estadoIcon = match($transferencia_detalle->estado) {
+                                'completada' => 'check-circle',
+                                'cancelada' => 'x-circle',
+                                default => 'clock'
+                            };
+                        @endphp
+                        <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full shadow-sm
+                            @if($transferencia_detalle->estado === 'completada') bg-green-100 text-green-800 border border-green-200
+                            @elseif($transferencia_detalle->estado === 'cancelada') bg-red-100 text-red-800 border border-red-200
+                            @else bg-yellow-100 text-yellow-800 border border-yellow-200 @endif">
+                            <flux:icon name="{{ $estadoIcon }}" class="w-4 h-4 mr-1" />
+                            {{ ucfirst($transferencia_detalle->estado) }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Información de la transferencia -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Información básica -->
+                    <div class="space-y-4">
+                        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
+                            <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-3 flex items-center gap-2">
+                                <flux:icon name="information-circle" class="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                Información General
+                            </h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center p-2 bg-white dark:bg-zinc-800 rounded-lg border border-blue-100 dark:border-blue-900/50">
+                                    <span class="text-zinc-600 dark:text-zinc-400 font-medium">Fecha de Transferencia:</span>
+                                    <span class="font-medium text-zinc-900 dark:text-white flex items-center gap-2">
+                                        <flux:icon name="calendar" class="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                        {{ $transferencia_detalle->fecha_transferencia->format('d/m/Y h:i A') }}
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-center p-2 bg-white dark:bg-zinc-800 rounded-lg border border-blue-100 dark:border-blue-900/50">
+                                    <span class="text-zinc-600 dark:text-zinc-400 font-medium">Usuario:</span>
+                                    <span class="font-medium text-zinc-900 dark:text-white flex items-center gap-2">
+                                        <flux:icon name="user" class="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                        {{ $transferencia_detalle->usuario->name ?? 'Usuario no disponible' }}
+                                    </span>
+                                </div>
+                                @if($transferencia_detalle->observaciones)
+                                    <div class="flex justify-between items-start p-2 bg-white dark:bg-zinc-800 rounded-lg border border-blue-100 dark:border-blue-900/50">
+                                        <span class="text-zinc-600 dark:text-zinc-400 font-medium">Observaciones:</span>
+                                        <span class="font-medium text-zinc-900 dark:text-white text-right max-w-xs">{{ $transferencia_detalle->observaciones }}</span>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Información de almacenes -->
+                    <div class="space-y-4">
+                        <div class="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-800">
+                            <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-3 flex items-center gap-2">
+                                <flux:icon name="building-office-2" class="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                                Almacenes
+                            </h3>
+                            <div class="space-y-3">
+                                <div class="p-3 bg-white dark:bg-zinc-800 rounded-lg border border-purple-100 dark:border-purple-900/50">
+                                    <div class="text-center mb-2">
+                                        <span class="text-zinc-600 dark:text-zinc-400 text-sm font-medium">Almacén Origen</span>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="font-semibold text-zinc-900 dark:text-white text-base">{{ $transferencia_detalle->almacenOrigen->nombre }}</div>
+                                        <div class="text-sm text-zinc-500 dark:text-zinc-400">{{ $transferencia_detalle->almacenOrigen->direccion ?? 'Sin dirección' }}</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-center">
+                                    <div class="p-1 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+                                        <flux:icon name="arrow-down" class="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                                    </div>
+                                </div>
+                                <div class="p-3 bg-white dark:bg-zinc-800 rounded-lg border border-purple-100 dark:border-purple-900/50">
+                                    <div class="text-center mb-2">
+                                        <span class="text-zinc-600 dark:text-zinc-400 text-sm font-medium">Almacén Destino</span>
+                                    </div>
+                                    <div class="text-center">
+                                        <div class="font-semibold text-zinc-900 dark:text-white text-base">{{ $transferencia_detalle->almacenDestino->nombre }}</div>
+                                        <div class="text-sm text-zinc-500 dark:text-zinc-400">{{ $transferencia_detalle->almacenDestino->direccion ?? 'Sin dirección' }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Productos -->
+                <div class="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-4 border border-green-200 dark:border-green-800">
+                    <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-4 flex items-center gap-2">
+                        <flux:icon name="cube" class="w-4 h-4 text-green-600 dark:text-green-400" />
+                        Productos Transferidos
+                        <span class="ml-auto text-sm font-normal text-zinc-500 dark:text-zinc-400">
+                            {{ count($transferencia_detalle->productos) }} productos
+                        </span>
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-white dark:bg-zinc-800 rounded-lg">
+                                <tr>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">Producto</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">Cantidad</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">Unidad</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-green-200 dark:divide-green-800">
+                                @forelse ($transferencia_detalle->productos as $producto)
+                                    <tr class="hover:bg-white/50 dark:hover:bg-zinc-800/50 transition-colors">
+                                        <td class="px-3 py-2 text-sm text-zinc-900 dark:text-zinc-300">
+                                            <div class="flex flex-col">
+                                                <span class="font-semibold text-blue-600 dark:text-blue-400">{{ $producto['code'] }}</span>
+                                                <span class="text-zinc-600 dark:text-zinc-400">{{ $producto['nombre'] }}</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-3 py-2 text-sm text-zinc-900 dark:text-zinc-300">
+                                            <span class="font-semibold text-green-600 dark:text-green-400">{{ number_format($producto['cantidad'], 2) }}</span>
+                                        </td>
+                                        <td class="px-3 py-2 text-sm text-zinc-900 dark:text-zinc-300">
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                                                {{ $producto['unidad_medida'] }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="px-3 py-6 text-center text-zinc-500 dark:text-zinc-400">
+                                            <div class="flex flex-col items-center gap-2">
+                                                <flux:icon name="cube-transparent" class="w-6 h-6 text-zinc-400" />
+                                                <p>No hay productos en esta transferencia</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Resumen de transferencia integrado -->
+                    @if(count($transferencia_detalle->productos) > 0)
+                        <div class="mt-4 pt-4 border-t border-green-200 dark:border-green-800">
+                            <div class="flex justify-end">
+                                <div class="w-72 space-y-2">
+                                    <div class="flex justify-between items-center p-2 bg-white dark:bg-zinc-800 rounded-lg border border-green-100 dark:border-green-900/50">
+                                        <span class="text-zinc-600 dark:text-zinc-400 font-medium">Total de productos:</span>
+                                        <span class="font-semibold text-zinc-900 dark:text-white">{{ count($transferencia_detalle->productos) }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center p-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg border border-green-300 dark:border-green-700">
+                                        <span class="text-base font-bold">Cantidad total:</span>
+                                        <span class="text-lg font-bold">{{ number_format(collect($transferencia_detalle->productos)->sum('cantidad'), 2) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
+                <!-- Fecha de creación -->
+                <div class="border-t border-zinc-200 dark:border-zinc-700 pt-4">
+                    <div class="text-sm text-zinc-500 dark:text-zinc-400 flex items-center justify-between">
+                        <div class="flex items-center gap-4">
+                            <span class="flex items-center gap-2">
+                                <flux:icon name="calendar" class="w-4 h-4" />
+                                Creado el {{ $transferencia_detalle->created_at->format('d/m/Y h:i A') }}
+                            </span>
+                            @if($transferencia_detalle->updated_at != $transferencia_detalle->created_at)
+                                <span class="flex items-center gap-2">
+                                    <flux:icon name="clock" class="w-4 h-4" />
+                                    Última actualización: {{ $transferencia_detalle->updated_at->format('d/m/Y h:i A') }}
+                                </span>
+                            @endif
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <flux:icon name="user-circle" class="w-4 h-4" />
+                            <span>{{ $transferencia_detalle->usuario->name ?? 'Usuario no disponible' }}</span>
+                        </div>
+                    </div>
+                </div>
+            @else
+                <div class="text-center py-8">
+                    <div class="text-zinc-500 dark:text-zinc-400">
+                        <div class="p-3 bg-red-100 dark:bg-red-900/20 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+                            <flux:icon name="exclamation-triangle" class="w-8 h-8 text-red-500 dark:text-red-400" />
+                        </div>
+                        <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-2">Error al cargar</h3>
+                        <p>No se pudo cargar el detalle de la transferencia</p>
+                    </div>
+                </div>
+            @endif
+
+            <!-- Botón cerrar -->
+            <div class="flex justify-end pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                <flux:button
+                    wire:click="$set('modal_detalle_transferencia', false)"
+                    class="px-4 py-2"
+                >
+                    Cerrar
+                </flux:button>
+            </div>
         </div>
     </flux:modal>
 </div>

@@ -104,4 +104,9 @@ class WarehouseAlmacen extends Model
             $q->where('stock_actual', '>', 0);
         })->get();
     }
+    
+    public function ventas()
+    {
+        return $this->hasMany(VentaAlmacen::class, 'almacen_id');
+    }
 }

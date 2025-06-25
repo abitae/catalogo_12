@@ -41,7 +41,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('almacen/almacenes', WarehouseAlmacenIndex::class)->name('almacen.warehouses');
     Route::get('almacen/productos', ProductoAlmacenIndex::class)->name('almacen.products');
     Route::get('almacen/transferencias', TransferenciaAlmacenIndex::class)->name('almacen.transfers');
-    //ute::get('almacen/movimientos', MovimientoAlmacenIndex::class)->name('almacen.movements');
+    Route::get('almacen/movimientos', MovimientoAlmacenIndex::class)->name('almacen.movements');
 
     // Rutas del CRM
     Route::get('crm/leads', LeadCrmIndex::class)->name('crm.leads');

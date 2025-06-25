@@ -13,16 +13,19 @@ return new class extends Migration
     {
         Schema::create('venta_almacens', function (Blueprint $table) {
             $table->id();
-            $table->string('code')->unique();
             $table->foreignId('almacen_id')->constrained('almacenes');
-            $table->foreignId('cliente_id')->constrained('clientes')->nullable();
+            
+            $table->foreignId('user_id')->constrained('users');
             $table->string('tipo_pago')->nullable();
             $table->string('tipo_documento')->nullable();
             $table->string('numero_documento')->nullable();
-            $table->date('fecha_venta');
+            $table->string('tipo_operacion')->nullable();
+            $table->string('forma_pago')->nullable();
+            $table->string('tipo_moneda')->nullable();
+            $table->date('fecha_emision');
+            $table->date('fecha_vencimiento')->nullable();
             $table->string('estado')->nullable();
             $table->text('observaciones')->nullable();
-            $table->foreignId('usuario_id')->constrained('users');
             $table->decimal('subtotal', 10, 2);
             $table->decimal('descuento', 10, 2);
             $table->decimal('impuesto', 10, 2);

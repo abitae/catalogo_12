@@ -25,27 +25,46 @@ class MovimientoAlmacenExport implements FromCollection, WithHeadings, WithMappi
     {
         return [
             'Código',
+            'Tipo de Movimiento',
             'Almacén',
-            'Producto',
-            'Cantidad',
-            'Tipo',
-            'Fecha Movimiento',
+            'Tipo de Documento',
+            'Número de Documento',
+            'Tipo de Operación',
+            'Fecha de Emisión',
+            'Estado',
+            'Subtotal',
+            'Descuento',
+            'Impuesto',
+            'Total',
             'Observaciones',
-            'Motivo Movimiento'
+            'Usuario',
+            'Productos'
         ];
     }
 
     public function map($movimiento): array
     {
+        // Formatear productos como string
+        $productos = collect($movimiento->productos)->map(function($producto) {
+            return "{$producto['code']} - {$producto['nombre']} (Cant: {$producto['cantidad']} {$producto['unidad_medida']}, Precio: S/ {$producto['precio']})";
+        })->implode('; ');
+
         return [
             $movimiento->code,
+            ucfirst($movimiento->tipo_movimiento),
             $movimiento->almacen->nombre,
-            $movimiento->producto->nombre,
-            $movimiento->cantidad,
-            $movimiento->tipo,
-            $movimiento->fecha_movimiento,
+            ucfirst($movimiento->tipo_documento),
+            $movimiento->numero_documento,
+            ucfirst($movimiento->tipo_operacion),
+            $movimiento->fecha_emision->format('d/m/Y'),
+            ucfirst($movimiento->estado),
+            number_format($movimiento->subtotal, 2),
+            number_format($movimiento->descuento, 2),
+            number_format($movimiento->impuesto, 2),
+            number_format($movimiento->total, 2),
             $movimiento->observaciones,
-            $movimiento->motivo_movimiento
+            $movimiento->user->name,
+            $productos
         ];
     }
 }

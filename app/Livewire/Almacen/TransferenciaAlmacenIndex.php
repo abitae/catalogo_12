@@ -45,6 +45,10 @@ class TransferenciaAlmacenIndex extends Component
     public $transferencia = null;
     public $transferenciasExportar = null;
 
+    // Modal Detalle Transferencia
+    public $modal_detalle_transferencia = false;
+    public $transferencia_detalle = null;
+
     // Variables para el formulario
     public $code = '';
     public $almacen_origen_id = '';
@@ -332,30 +336,11 @@ class TransferenciaAlmacenIndex extends Component
 
         try {
             if ($this->transferencia_id) {
-                // Restaurar el stock de los productos eliminados
-                $productosAnteriores = collect($transferencia->productos);
-                $productosEliminados = $productosAnteriores->whereNotIn('id', $this->productos_seleccionados);
-
-                foreach ($productosEliminados as $producto) {
-                    $productoModel = ProductoAlmacen::find($producto['id']);
-                    if ($productoModel) {
-                        $productoModel->actualizarStock($producto['cantidad'], 'entrada');
-                    }
-                }
-
                 $transferencia->update($data);
                 $mensaje = 'Transferencia actualizada correctamente.';
             } else {
                 TransferenciaAlmacen::create($data);
                 $mensaje = 'Transferencia creada correctamente.';
-            }
-
-            // Actualizar stock de productos
-            foreach ($productos as $producto) {
-                $productoModel = ProductoAlmacen::find($producto['id']);
-                if ($productoModel) {
-                    $productoModel->actualizarStock($producto['cantidad'], 'salida');
-                }
             }
 
             $this->modal_form_transferencia = false;
@@ -508,7 +493,18 @@ class TransferenciaAlmacenIndex extends Component
                 return;
             }
 
-            // Actualizar stock en el almacén destino
+            // Actualizar stock en el almacén origen (salida)
+            foreach ($transferencia->productos as $producto) {
+                $productoModel = ProductoAlmacen::where('almacen_id', $transferencia->almacen_origen_id)
+                    ->where('id', $producto['id'])
+                    ->first();
+
+                if ($productoModel) {
+                    $productoModel->actualizarStock($producto['cantidad'], 'salida');
+                }
+            }
+
+            // Actualizar stock en el almacén destino (entrada)
             foreach ($transferencia->productos as $producto) {
                 $productoModel = ProductoAlmacen::where('almacen_id', $transferencia->almacen_destino_id)
                     ->where('id', $producto['id'])
@@ -537,19 +533,25 @@ class TransferenciaAlmacenIndex extends Component
                 return;
             }
 
-            // Restaurar stock en el almacén origen
-            foreach ($transferencia->productos as $producto) {
-                $productoModel = ProductoAlmacen::find($producto['id']);
-                if ($productoModel) {
-                    $productoModel->actualizarStock($producto['cantidad'], 'entrada');
-                }
-            }
+            // No es necesario restaurar stock porque la transferencia está pendiente
+            // y el stock no se ha movido aún
 
             $transferencia->estado = 'cancelada';
             $transferencia->save();
             session()->flash('message', 'Transferencia cancelada correctamente.');
         } catch (\Exception $e) {
             session()->flash('error', 'Error al cancelar la transferencia: ' . $e->getMessage());
+        }
+    }
+
+    public function verDetalleTransferencia($id)
+    {
+        try {
+            $this->transferencia_detalle = TransferenciaAlmacen::with(['almacenOrigen', 'almacenDestino', 'usuario'])
+                ->findOrFail($id);
+            $this->modal_detalle_transferencia = true;
+        } catch (\Exception $e) {
+            session()->flash('error', 'Error al cargar los detalles de la transferencia: ' . $e->getMessage());
         }
     }
 }

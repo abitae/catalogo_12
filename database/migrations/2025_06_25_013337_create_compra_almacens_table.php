@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('code')->unique();
             $table->foreignId('almacen_id')->constrained('almacenes');
-            $table->foreignId('proveedor_id')->constrained('proveedores')->nullable();
+           
             $table->string('tipo_pago')->nullable();
             $table->string('tipo_documento')->nullable();
             $table->string('numero_documento')->nullable();
