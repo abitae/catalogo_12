@@ -63,16 +63,23 @@ class ProductoCatalogoIndex extends Component
     // Configuración de búsqueda
     protected $searchFields = ['code', 'code_fabrica', 'code_peru', 'description'];
 
+    protected $listeners = [
+        'addCaracteristica' => 'addCaracteristica',
+        'removeCaracteristica' => 'removeCaracteristica',
+    ];
+
     public function mount()
     {
         $this->sortField = 'code';
+        if (!is_array($this->caracteristicas)) {
+            $this->caracteristicas = [];
+        }
     }
 
     public function clearFilters()
     {
         $this->reset([
             'search',
-            'sortField',
             'sortDirection',
             'brand_filter',
             'category_filter',
@@ -82,6 +89,7 @@ class ProductoCatalogoIndex extends Component
             'isActive_filter',
             'price_range'
         ]);
+        $this->sortField = 'code';
         $this->resetPage();
     }
 
@@ -122,11 +130,31 @@ class ProductoCatalogoIndex extends Component
 
         $this->productosExportar = $query->get();
 
+        // Estadísticas rápidas
+        $total = ProductoCatalogo::count();
+        $activos = ProductoCatalogo::where('isActive', 1)->count();
+        $inactivos = ProductoCatalogo::where('isActive', 0)->count();
+        $stock_bajo = ProductoCatalogo::where('stock', '<=', 5)->where('isActive', 1)->count();
+        $sin_stock = ProductoCatalogo::where('stock', '=', 0)->count();
+        $valor_total = ProductoCatalogo::where('isActive', 1)->get()->sum(function ($p) {
+            return $p->stock * $p->price_venta;
+        });
+
+        $estadisticas = [
+            'total' => $total,
+            'activos' => $activos,
+            'inactivos' => $inactivos,
+            'stock_bajo' => $stock_bajo,
+            'sin_stock' => $sin_stock,
+            'valor_total' => $valor_total,
+        ];
+
         return view('livewire.catalogo.producto-catalogo-index', [
             'productos' => $query->paginate($this->perPage),
             'brands' => BrandCatalogo::where('isActive', true)->orderBy('name')->get(),
             'categories' => CategoryCatalogo::where('isActive', true)->orderBy('name')->get(),
             'lines' => LineCatalogo::where('isActive', true)->orderBy('name')->get(),
+            'estadisticas' => $estadisticas,
         ]);
     }
 
@@ -176,7 +204,9 @@ class ProductoCatalogoIndex extends Component
             'garantia',
             'observaciones',
         ]);
-
+        if (!is_array($this->caracteristicas)) {
+            $this->caracteristicas = [];
+        }
         $this->modal_form_producto = true;
     }
 
@@ -202,7 +232,19 @@ class ProductoCatalogoIndex extends Component
         $this->image = $this->producto->image;
         $this->archivo = $this->producto->archivo;
         $this->archivo2 = $this->producto->archivo2;
-        $this->caracteristicas = $this->producto->caracteristicas;
+        // Convertir caracteristicas a array de pares key-value para el formulario
+        if (is_array($this->producto->caracteristicas)) {
+            $this->caracteristicas = [];
+            foreach ($this->producto->caracteristicas as $key => $value) {
+                $this->caracteristicas[] = ['key' => $key, 'value' => $value];
+            }
+        } else {
+            $this->caracteristicas = [];
+        }
+        // Refuerzo: asegurar que caracteristicas sea array
+        if (!is_array($this->caracteristicas)) {
+            $this->caracteristicas = [];
+        }
         $this->isActive = $this->producto->isActive;
 
         // Establecer las vistas previas
@@ -298,6 +340,10 @@ class ProductoCatalogoIndex extends Component
 
     public function guardarProducto()
     {
+        // Refuerzo: asegurar que caracteristicas sea array antes de cualquier foreach
+        if (!is_array($this->caracteristicas)) {
+            $this->caracteristicas = [];
+        }
         $ruleUniqueCode = $this->producto_id ? 'unique:producto_catalogos,code,' . $this->producto_id : 'unique:producto_catalogos,code';
 
         // Validaciones
@@ -317,6 +363,14 @@ class ProductoCatalogoIndex extends Component
             'observaciones' => 'nullable|string|max:1000',
             'isActive' => 'boolean',
         ];
+
+        // Validar características como array de pares clave-valor
+        if (is_array($this->caracteristicas)) {
+            foreach ($this->caracteristicas as $i => $car) {
+                $rules["caracteristicas.$i.key"] = 'required|string|max:255';
+                $rules["caracteristicas.$i.value"] = 'required|string|max:1000';
+            }
+        }
 
         // Agregar validaciones de archivos
         $rules = array_merge($rules, $this->validateImage('tempImage'));
@@ -347,10 +401,28 @@ class ProductoCatalogoIndex extends Component
             'observaciones.max' => 'Las observaciones no deben exceder los 1000 caracteres',
         ];
 
+        // Mensajes para características
+        if (is_array($this->caracteristicas)) {
+            foreach ($this->caracteristicas as $i => $car) {
+                $messages["caracteristicas.$i.key.required"] = 'Ingrese la clave de la característica';
+                $messages["caracteristicas.$i.value.required"] = 'Ingrese el valor de la característica';
+            }
+        }
+
         // Agregar mensajes de validación de archivos
         $messages = array_merge($messages, $this->getFileValidationMessages());
 
         $data = $this->validate($rules, $messages);
+
+        // Procesar características como array asociativo
+        $data['caracteristicas'] = [];
+        if (is_array($this->caracteristicas)) {
+            foreach ($this->caracteristicas as $car) {
+                if (!empty($car['key']) && !empty($car['value'])) {
+                    $data['caracteristicas'][$car['key']] = $car['value'];
+                }
+            }
+        }
 
         try {
             // Procesar archivos usando el trait
@@ -427,6 +499,19 @@ class ProductoCatalogoIndex extends Component
             $this->handleSuccess('Estado del producto actualizado correctamente', 'cambio de estado');
         } catch (\Exception $e) {
             $this->handleError($e, 'cambio de estado');
+        }
+    }
+
+    public function addCaracteristica()
+    {
+        $this->caracteristicas = is_array($this->caracteristicas) ? $this->caracteristicas : [];
+        $this->caracteristicas[] = ['key' => '', 'value' => ''];
+    }
+
+    public function removeCaracteristica($index)
+    {
+        if (is_array($this->caracteristicas) && isset($this->caracteristicas[$index])) {
+            array_splice($this->caracteristicas, $index, 1);
         }
     }
 }

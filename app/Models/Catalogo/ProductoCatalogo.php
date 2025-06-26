@@ -28,6 +28,9 @@ class ProductoCatalogo extends Model
         'caracteristicas',
         'isActive',
     ];
+    protected $casts = [
+        'caracteristicas' => 'array',
+    ];
     public function category()
     {
         return $this->belongsTo(CategoryCatalogo::class);
