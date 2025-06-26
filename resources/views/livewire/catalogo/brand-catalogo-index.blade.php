@@ -1,18 +1,54 @@
 <div class="p-6 bg-white dark:bg-zinc-900 min-h-screen">
     <!-- Encabezado y Búsqueda -->
     <div class="mb-6 bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 shadow-sm">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-            <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Catálogo de Marcas</h1>
-            <div class="w-full md:w-96">
-                <flux:input type="search" placeholder="Buscar..." wire:model.live="search" icon="magnifying-glass" />
+        <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Gestión de Marcas</h1>
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                    {{ $brands->total() }} marcas
+                </span>
             </div>
-            <div class="flex items-end gap-2">
-                <flux:button variant="primary" wire:click="nuevoMarca" icon="plus">
-                    Nueva Marca
+
+            <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+                <div class="w-full sm:w-80">
+                    <flux:input type="search" placeholder="Buscar marcas..." wire:model.live="search" icon="magnifying-glass" />
+                </div>
+
+                <div class="flex gap-2">
+                    <flux:button wire:click="toggleFilters" variant="outline" icon="funnel" class="whitespace-nowrap">
+                        {{ $showFilters ? 'Ocultar' : 'Mostrar' }} Filtros
+                    </flux:button>
+                    <flux:button variant="primary" wire:click="nuevoMarca" icon="plus" class="whitespace-nowrap">
+                        Nueva Marca
+                    </flux:button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros Avanzados -->
+    @if($showFilters)
+    <div class="mb-6 bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 shadow-sm">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Registros por página -->
+            <div>
+                <flux:label>Registros por página</flux:label>
+                <flux:select wire:model.live="perPage" class="w-full">
+                    @foreach([10, 25, 50, 100, 200, 500] as $option)
+                        <option value="{{ $option }}">{{ $option }}</option>
+                    @endforeach
+                </flux:select>
+            </div>
+
+            <!-- Botón Limpiar Filtros -->
+            <div class="flex items-end">
+                <flux:button wire:click="clearFilters" color="red" icon="trash" class="w-full">
+                    Limpiar Filtros
                 </flux:button>
             </div>
         </div>
     </div>
+    @endif
 
     <!-- Tabla de Marcas -->
     <div class="bg-white dark:bg-zinc-800 rounded-lg overflow-hidden shadow-sm">
@@ -20,63 +56,102 @@
             <table class="w-full">
                 <thead class="bg-zinc-50 dark:bg-zinc-700">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-500 transition-colors"
+                        <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-500 transition-colors"
                             wire:click="sortBy('name')">
                             <div class="flex items-center space-x-1">
                                 <span>Nombre</span>
-                                @if ($sortField === 'name')
-                                    <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}"
-                                        class="w-4 h-4" />
-                                @endif
+                                <flux:icon name="{{ $sortField === 'name' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}" class="w-4 h-4" />
                             </div>
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                             Logo
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                            Archivo
+                        <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                            Documentos
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-500 transition-colors"
+                            wire:click="sortBy('created_at')">
+                            <div class="flex items-center space-x-1">
+                                <span>Fecha Creación</span>
+                                <flux:icon name="{{ $sortField === 'created_at' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}" class="w-4 h-4" />
+                            </div>
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                             Estado
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                             Acciones
                         </th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
-                    @foreach ($brands as $brand)
-                        <tr class="hover:bg-zinc-100 dark:hover:bg-zinc-600 transition-colors duration-200 ease-in-out">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-300">
-                                {{ $brand->name }}
+                    @forelse ($brands as $brand)
+                        <tr wire:key="brand-{{ $brand->id }}" class="hover:bg-zinc-100 dark:hover:bg-zinc-600 transition-colors duration-200 ease-in-out">
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-300">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10">
+                                        @if($brand->logo)
+                                            <img class="h-10 w-10 rounded-lg object-cover" src="{{ asset('storage/' . $brand->logo) }}" alt="{{ $brand->name }}">
+                                        @else
+                                            <div class="h-10 w-10 rounded-lg bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
+                                                <flux:icon name="tag" class="w-5 h-5 text-zinc-400" />
+                                            </div>
+                                        @endif
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-zinc-900 dark:text-zinc-300">
+                                            {{ $brand->name }}
+                                        </div>
+                                        <div class="text-sm text-zinc-500 dark:text-zinc-400">
+                                            ID: {{ $brand->id }}
+                                        </div>
+                                    </div>
+                                </div>
                             </td>
-                            <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
+                            <td class="px-4 py-4 text-sm text-zinc-900 dark:text-zinc-300">
                                 @if($brand->logo)
-                                    <img src="{{ asset('storage/' . $brand->logo) }}" alt="Logo de la marca" class="w-10 h-10 rounded-full object-cover">
+                                    <div class="relative group">
+                                        <img src="{{ asset('storage/' . $brand->logo) }}"
+                                             alt="Logo de {{ $brand->name }}"
+                                             class="w-16 h-16 rounded-lg object-cover border-2 border-zinc-200 dark:border-zinc-600 hover:border-blue-300 transition-colors">
+                                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                            <flux:icon name="eye" class="w-6 h-6 text-white" />
+                                        </div>
+                                    </div>
                                 @else
-                                    <div class="w-10 h-10 rounded-full bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
+                                    <div class="w-16 h-16 rounded-lg bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center border-2 border-dashed border-zinc-300 dark:border-zinc-600">
                                         <flux:icon name="photo" class="w-6 h-6 text-zinc-400" />
                                     </div>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
+                            <td class="px-4 py-4 text-sm text-zinc-900 dark:text-zinc-300">
                                 @if($brand->archivo)
-                                    <a href="{{ asset('storage/' . $brand->archivo) }}" target="_blank" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
-                                        <flux:icon name="document" class="w-6 h-6" />
+                                    <a href="{{ asset('storage/' . $brand->archivo) }}" target="_blank"
+                                       class="inline-flex items-center gap-2 px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-xs hover:bg-blue-200 transition-colors"
+                                       title="Ver documento">
+                                        <flux:icon name="document" class="w-4 h-4" />
+                                        <span>Ver documento</span>
                                     </a>
                                 @else
-                                    <div class="w-10 h-10 rounded bg-zinc-200 dark:bg-zinc-700 flex items-center justify-center">
-                                        <flux:icon name="document" class="w-6 h-6 text-zinc-400" />
-                                    </div>
+                                    <span class="text-zinc-400 text-xs">Sin documentos</span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $brand->isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ $brand->isActive ? 'Activo' : 'Inactivo' }}
-                                </span>
+                            <td class="px-4 py-4 text-sm text-zinc-900 dark:text-zinc-300">
+                                <div class="flex flex-col">
+                                    <span class="text-sm">{{ $brand->created_at->format('d/m/Y') }}</span>
+                                    <span class="text-xs text-zinc-500">{{ $brand->created_at->format('H:i') }}</span>
+                                </div>
                             </td>
-                            <td class="px-6 py-4 text-sm">
+                            <td class="px-4 py-4 text-sm text-zinc-900 dark:text-zinc-300">
                                 <div class="flex items-center gap-2">
+                                    <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $brand->isActive ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }}">
+                                        {{ $brand->isActive ? 'Activa' : 'Inactiva' }}
+                                    </span>
+                                    <flux:button wire:click="toggleMarcaStatus({{ $brand->id }})" size="xs" variant="outline" icon="{{ $brand->isActive ? 'eye-slash' : 'eye' }}" title="{{ $brand->isActive ? 'Desactivar' : 'Activar' }}" />
+                                </div>
+                            </td>
+                            <td class="px-4 py-4 text-sm">
+                                <div class="flex items-center gap-1">
                                     <flux:button wire:click="editarMarca({{ $brand->id }})" size="xs"
                                         variant="primary" icon="pencil" title="Editar marca"
                                         class="hover:bg-blue-600 transition-colors">
@@ -88,138 +163,156 @@
                                 </div>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="6" class="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400">
+                                <div class="flex flex-col items-center space-y-2">
+                                    <flux:icon name="tag" class="w-12 h-12 text-zinc-300" />
+                                    <span class="text-lg font-medium">No se encontraron marcas</span>
+                                    <span class="text-sm">Intenta ajustar los filtros de búsqueda</span>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
-    </div>
 
-    <!-- Paginación -->
-    <div class="mt-4">
-        {{ $brands->links() }}
+        <!-- Paginación -->
+        @if($brands->hasPages())
+            <div class="px-4 py-3 bg-zinc-50 dark:bg-zinc-700 border-t border-zinc-200 dark:border-zinc-600">
+                {{ $brands->links() }}
+            </div>
+        @endif
     </div>
 
     <!-- Modal Form Marca -->
-    <flux:modal wire:model="modal_form_marca" variant="flyout" class="w-2/3 max-w-2xl">
-        <div class="space-y-6">
-            <div>
-                <flux:heading size="lg">{{ $marca_id ? 'Editar Marca' : 'Nueva Marca' }}</flux:heading>
-                <flux:text class="mt-2">Complete los datos de la marca.</flux:text>
+    <x-modal wire:model="modal_form_marca" max-width="2xl">
+        <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-xl">
+            <!-- Header del modal -->
+            <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
+                <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">
+                    {{ $marca_id ? 'Editar Marca' : 'Nueva Marca' }}
+                </h2>
             </div>
-            <form wire:submit.prevent="guardarMarca">
-                <div class="grid grid-cols-1 gap-4">
-                    <flux:input label="Nombre" wire:model="name" placeholder="Ingrese el nombre" />
-                </div>
 
-                <div class="mt-4">
-                    <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
-                        <!-- Logo -->
-                        <div class="col-span-1">
-                            <label class="block text-sm font-medium text-gray-700">Logo de la Marca</label>
-                            <div class="mt-1 flex items-center">
-                                <div class="flex-1">
-                                    <input type="file" wire:model.live="tempLogo" class="hidden" id="logo-upload" accept="image/*" wire:loading.attr="disabled">
-                                    <label for="logo-upload" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
-                                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                        Seleccionar Logo
-                                    </label>
-                                </div>
+            <!-- Contenido del modal -->
+            <div class="px-6 py-4">
+                <form wire:submit="guardarMarca">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Información Básica -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-medium text-zinc-900 dark:text-white border-b border-zinc-200 dark:border-zinc-700 pb-2">
+                                Información Básica
+                            </h3>
 
-                                <div class="ml-4 relative group">
-                                    @if($logoPreview)
-                                        <div class="relative">
-                                            <img src="{{ $logoPreview }}" alt="Vista previa del logo" class="h-20 w-20 object-cover rounded-full shadow-sm" loading="lazy">
-                                            <button type="button" wire:click="removeLogo" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600" title="Eliminar logo">
-                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    @endif
-                                </div>
+                            <div>
+                                <flux:label for="name">Nombre de la Marca *</flux:label>
+                                <flux:input wire:model="name" id="name" placeholder="Ingrese el nombre de la marca" />
+                                <flux:error field="name" />
                             </div>
-                            @error('tempLogo') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+
+                            <div>
+                                <flux:label for="isActive">Estado</flux:label>
+                                <flux:checkbox wire:model="isActive" id="isActive" label="Marca activa" />
+                                <flux:error field="isActive" />
+                            </div>
                         </div>
 
-                        <!-- Archivo -->
-                        <div class="col-span-1">
-                            <label class="block text-sm font-medium text-gray-700">Archivo de la Marca</label>
-                            <div class="mt-1 flex items-center">
-                                <div class="flex-1">
-                                    <input type="file" wire:model.live="tempArchivo" class="hidden" id="archivo-upload" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" wire:loading.attr="disabled">
-                                    <label for="archivo-upload" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200">
-                                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                        </svg>
-                                        Seleccionar Archivo
-                                    </label>
-                                </div>
+                        <!-- Archivos -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-medium text-zinc-900 dark:text-white border-b border-zinc-200 dark:border-zinc-700 pb-2">
+                                Archivos
+                            </h3>
 
-                                <div class="ml-4 relative group">
-                                    @if($archivoPreview)
-                                        <div class="relative">
-                                            <div class="flex items-center space-x-2 bg-zinc-50 dark:bg-zinc-700 p-2 rounded-lg">
-                                                <flux:icon name="document" class="w-8 h-8 text-blue-600" />
-                                                <div class="flex flex-col">
-                                                    <span class="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                                                        {{ $archivoPreview }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <button type="button" wire:click="removeArchivo" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600" title="Eliminar archivo">
-                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                </svg>
-                                            </button>
+                            <div>
+                                <flux:label>Logo de la Marca</flux:label>
+                                <div class="mt-1">
+                                    @if($logoPreview)
+                                        <div class="relative inline-block mb-2">
+                                            <img src="{{ $logoPreview }}" alt="Vista previa del logo" class="w-32 h-32 rounded-lg object-cover border">
+                                            <flux:button wire:click="removeLogo" size="xs" variant="danger" icon="x-mark" class="absolute -top-2 -right-2" />
                                         </div>
                                     @endif
+                                    <flux:input wire:model="tempLogo" type="file" accept="image/*" />
                                 </div>
+                                <flux:error field="tempLogo" />
                             </div>
-                            @error('tempArchivo')
-                                <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
-                            @enderror
-                            <p class="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-                                Formatos permitidos: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX (máx. 20MB)
+
+                            <div>
+                                <flux:label>Documento</flux:label>
+                                <div class="mt-1">
+                                    @if($archivoPreview)
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <flux:icon name="document" class="w-4 h-4" />
+                                            <span class="text-sm">{{ $archivoPreview }}</span>
+                                            <flux:button wire:click="removeArchivo" size="xs" variant="danger" icon="x-mark" />
+                                        </div>
+                                    @endif
+                                    <flux:input wire:model="tempArchivo" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" />
+                                </div>
+                                <flux:error field="tempArchivo" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-2 mt-6">
+                        <flux:button variant="light" wire:click="$set('modal_form_marca', false)">
+                            Cancelar
+                        </flux:button>
+                        <flux:button type="submit" variant="primary">
+                            {{ $marca_id ? 'Actualizar' : 'Crear' }} Marca
+                        </flux:button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </x-modal>
+
+    <!-- Modal Confirmar Eliminación -->
+    <x-modal wire:model="modal_form_eliminar_marca" max-width="md">
+        <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-xl">
+            <!-- Header del modal -->
+            <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
+                <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">
+                    Confirmar Eliminación
+                </h2>
+            </div>
+
+            <!-- Contenido del modal -->
+            <div class="px-6 py-4">
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3">
+                        <flux:icon name="exclamation-triangle" class="w-8 h-8 text-red-500" />
+                        <div>
+                            <h3 class="text-lg font-medium text-zinc-900 dark:text-white">
+                                ¿Eliminar Marca?
+                            </h3>
+                            <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                                Esta acción no se puede deshacer. Se eliminarán todos los archivos asociados.
                             </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                        <div class="flex items-center gap-2">
+                            <flux:icon name="information-circle" class="w-5 h-5 text-red-500" />
+                            <span class="text-sm font-medium text-red-800 dark:text-red-200">
+                                Se eliminarán todos los productos asociados a esta marca
+                            </span>
                         </div>
                     </div>
                 </div>
 
-                <div class="mt-4">
-                    <flux:checkbox label="Activo" wire:model="isActive" />
-                </div>
-
-                <div class="flex justify-end mt-6">
-                    <flux:button type="button" wire:click="$set('modal_form_marca', false)" class="mr-2">
+                <div class="flex justify-end gap-2 mt-6">
+                    <flux:button variant="light" wire:click="$set('modal_form_eliminar_marca', false)">
                         Cancelar
                     </flux:button>
-                    <flux:button type="submit" variant="primary">
-                        {{ $marca_id ? 'Actualizar' : 'Guardar' }}
+                    <flux:button variant="danger" wire:click="confirmarEliminarMarca">
+                        Eliminar Marca
                     </flux:button>
                 </div>
-            </form>
-        </div>
-    </flux:modal>
-
-    <!-- Modal Form Eliminar Marca -->
-    @if($marca_id)
-    <flux:modal wire:model="modal_form_eliminar_marca" class="w-2/3 max-w-2xl">
-        <div class="space-y-6">
-            <div>
-                <flux:heading size="lg">Eliminar Marca</flux:heading>
-                <flux:text class="mt-2">¿Está seguro de querer eliminar esta marca?</flux:text>
-            </div>
-            <div class="flex justify-end mt-6">
-                <flux:button type="button" wire:click="$set('modal_form_eliminar_marca', false)" class="mr-2">
-                    Cancelar
-                </flux:button>
-                <flux:button variant="danger" wire:click="confirmarEliminarMarca">
-                    Eliminar
-                </flux:button>
             </div>
         </div>
-    </flux:modal>
-    @endif
+    </x-modal>
 </div>

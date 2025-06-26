@@ -26,6 +26,7 @@ class ProductoAlmacen extends Model
         'stock_actual',
         'precio_unitario',
         'almacen_id',
+        'lote',
         'estado',
         'codigo_barras',
         'marca',
@@ -86,6 +87,11 @@ class ProductoAlmacen extends Model
         return $query->where('categoria', $categoria);
     }
 
+    public function scopePorLote(Builder $query, string $lote): Builder
+    {
+        return $query->where('lote', $lote);
+    }
+
     public function scopeBuscar(Builder $query, string $termino): Builder
     {
         return $query->where(function ($q) use ($termino) {
@@ -93,7 +99,8 @@ class ProductoAlmacen extends Model
               ->orWhere('code', 'like', "%{$termino}%")
               ->orWhere('codigo_barras', 'like', "%{$termino}%")
               ->orWhere('marca', 'like', "%{$termino}%")
-              ->orWhere('modelo', 'like', "%{$termino}%");
+              ->orWhere('modelo', 'like', "%{$termino}%")
+              ->orWhere('lote', 'like', "%{$termino}%");
         });
     }
 
@@ -425,6 +432,270 @@ class ProductoAlmacen extends Model
         }
 
         return $errores;
+    }
+
+    // Métodos específicos para manejo de lotes
+    /**
+     * Obtiene productos por lote específico
+     * @param string $lote Número de lote
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public static function getProductosPorLote($lote)
+    {
+        return self::porLote($lote)->get();
+    }
+
+    /**
+     * Obtiene todos los lotes únicos
+     * @return \Illuminate\Support\Collection
+     */
+    public static function getLotesUnicos()
+    {
+        return self::distinct()->pluck('lote')->filter();
+    }
+
+    /**
+     * Obtiene productos con stock por lote
+     * @param string $lote Número de lote
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public static function getProductosConStockPorLote($lote)
+    {
+        return self::porLote($lote)->conStock()->get();
+    }
+
+    /**
+     * Verifica si existe stock suficiente en un lote específico
+     * @param string $lote Número de lote
+     * @param float $cantidad Cantidad requerida
+     * @return bool True si hay stock suficiente
+     */
+    public static function tieneStockSuficienteEnLote($lote, $cantidad)
+    {
+        return self::porLote($lote)->sum('stock_actual') >= $cantidad;
+    }
+
+    /**
+     * Obtiene el stock total por lote
+     * @param string $lote Número de lote
+     * @return float Stock total del lote
+     */
+    public static function getStockTotalPorLote($lote)
+    {
+        return self::porLote($lote)->sum('stock_actual');
+    }
+
+    /**
+     * Obtiene productos que necesitan reposición por lote
+     * @param string $lote Número de lote
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public static function getProductosNecesitanReposicionPorLote($lote)
+    {
+        return self::porLote($lote)->stockBajo()->get();
+    }
+
+    /**
+     * Obtiene estadísticas por lote
+     * @param string $lote Número de lote
+     * @return array Estadísticas del lote
+     */
+    public static function getEstadisticasPorLote($lote)
+    {
+        $productos = self::porLote($lote);
+
+        return [
+            'total_productos' => $productos->count(),
+            'productos_con_stock' => $productos->conStock()->count(),
+            'productos_stock_bajo' => $productos->stockBajo()->count(),
+            'stock_total' => $productos->sum('stock_actual'),
+            'valor_total' => $productos->sum(DB::raw('stock_actual * precio_unitario')),
+            'productos_activos' => $productos->activos()->count()
+        ];
+    }
+
+    /**
+     * Obtiene productos por lote y almacén
+     * @param string $lote Número de lote
+     * @param int $almacenId ID del almacén
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public static function getProductosPorLoteYAlmacen($lote, $almacenId)
+    {
+        return self::porLote($lote)->porAlmacen($almacenId)->get();
+    }
+
+    /**
+     * Verifica si existe stock suficiente en un lote específico de un almacén
+     * @param string $lote Número de lote
+     * @param int $almacenId ID del almacén
+     * @param float $cantidad Cantidad requerida
+     * @return bool True si hay stock suficiente
+     */
+    public static function tieneStockSuficienteEnLoteYAlmacen($lote, $almacenId, $cantidad)
+    {
+        return self::porLote($lote)->porAlmacen($almacenId)->sum('stock_actual') >= $cantidad;
+    }
+
+    /**
+     * Obtiene el stock total por lote en un almacén específico
+     * @param string $lote Número de lote
+     * @param int $almacenId ID del almacén
+     * @return float Stock total del lote en el almacén
+     */
+    public static function getStockTotalPorLoteYAlmacen($lote, $almacenId)
+    {
+        return self::porLote($lote)->porAlmacen($almacenId)->sum('stock_actual');
+    }
+
+    /**
+     * Verifica si existe un producto con el mismo código en el mismo almacén y lote
+     * @param string $code Código del producto
+     * @param int $almacenId ID del almacén
+     * @param string|null $lote Número de lote
+     * @param int|null $excludeId ID del producto a excluir (para edición)
+     * @return bool True si existe un duplicado
+     */
+    public static function existeDuplicado($code, $almacenId, $lote = null, $excludeId = null)
+    {
+        $query = self::where('code', $code)
+            ->where('almacen_id', $almacenId)
+            ->where('lote', $lote);
+
+        if ($excludeId) {
+            $query->where('id', '!=', $excludeId);
+        }
+
+        return $query->exists();
+    }
+
+    /**
+     * Obtiene productos por código, almacén y lote
+     * @param string $code Código del producto
+     * @param int $almacenId ID del almacén
+     * @param string|null $lote Número de lote
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public static function getProductosPorCodigoAlmacenLote($code, $almacenId, $lote = null)
+    {
+        return self::where('code', $code)
+            ->where('almacen_id', $almacenId)
+            ->where('lote', $lote)
+            ->get();
+    }
+
+    /**
+     * Obtiene todos los productos con el mismo código en diferentes lotes
+     * @param string $code Código del producto
+     * @param int $almacenId ID del almacén
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public static function getProductosPorCodigoEnAlmacen($code, $almacenId)
+    {
+        return self::where('code', $code)
+            ->where('almacen_id', $almacenId)
+            ->orderBy('lote')
+            ->get();
+    }
+
+    /**
+     * Obtiene estadísticas de productos por código en un almacén
+     * @param string $code Código del producto
+     * @param int $almacenId ID del almacén
+     * @return array Estadísticas del producto
+     */
+    public static function getEstadisticasProductoPorCodigo($code, $almacenId)
+    {
+        $productos = self::where('code', $code)
+            ->where('almacen_id', $almacenId)
+            ->get();
+
+        $totalStock = $productos->sum('stock_actual');
+        $totalValor = $productos->sum(function($producto) {
+            return $producto->stock_actual * $producto->precio_unitario;
+        });
+        $lotesCount = $productos->count();
+        $stockBajo = $productos->where('stock_actual', '<=', 'stock_minimo')->count();
+
+        return [
+            'total_stock' => $totalStock,
+            'total_valor' => $totalValor,
+            'lotes_count' => $lotesCount,
+            'stock_bajo_count' => $stockBajo,
+            'productos' => $productos
+        ];
+    }
+
+    /**
+     * Busca productos considerando código, almacén y lote
+     * @param Builder $query
+     * @param string $termino Término de búsqueda
+     * @param int|null $almacenId ID del almacén (opcional)
+     * @param string|null $lote Número de lote (opcional)
+     * @return Builder
+     */
+    public function scopeBuscarAvanzado(Builder $query, string $termino, $almacenId = null, $lote = null): Builder
+    {
+        $query->where(function ($q) use ($termino) {
+            $q->where('nombre', 'like', "%{$termino}%")
+              ->orWhere('code', 'like', "%{$termino}%")
+              ->orWhere('codigo_barras', 'like', "%{$termino}%")
+              ->orWhere('marca', 'like', "%{$termino}%")
+              ->orWhere('modelo', 'like', "%{$termino}%")
+              ->orWhere('lote', 'like', "%{$termino}%");
+        });
+
+        if ($almacenId) {
+            $query->where('almacen_id', $almacenId);
+        }
+
+        if ($lote) {
+            $query->where('lote', $lote);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Obtiene productos agrupados por código en un almacén
+     * @param int $almacenId ID del almacén
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public static function getProductosAgrupadosPorCodigo($almacenId)
+    {
+        return self::where('almacen_id', $almacenId)
+            ->orderBy('code')
+            ->orderBy('lote')
+            ->get()
+            ->groupBy('code');
+    }
+
+    /**
+     * Obtiene el stock disponible en un lote específico
+     * @param string $lote Número de lote
+     * @param int $almacenId ID del almacén
+     * @return float Stock disponible
+     */
+    public static function getStockPorLote($lote, $almacenId)
+    {
+        return self::where('lote', $lote)
+            ->where('almacen_id', $almacenId)
+            ->sum('stock_actual');
+    }
+
+    /**
+     * Verifica si el producto tiene stock suficiente considerando el lote específico
+     * @param float $cantidad Cantidad requerida
+     * @param string|null $loteEspecifico Lote específico a verificar
+     * @return bool True si tiene stock suficiente
+     */
+    public function tieneStockSuficienteEnLoteEspecifico($cantidad, $loteEspecifico = null)
+    {
+        if ($loteEspecifico && $this->lote !== $loteEspecifico) {
+            return false;
+        }
+
+        return $this->stock_actual >= $cantidad;
     }
 
     // Eventos del modelo

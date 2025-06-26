@@ -12,6 +12,8 @@ use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class TransferenciaAlmacenIndex extends Component
 {
@@ -62,9 +64,11 @@ class TransferenciaAlmacenIndex extends Component
     // Productos seleccionados
     public $productos_seleccionados = [];
     public $cantidades = [];
+    public $lotes = [];
     public $productos_disponibles;
     public $producto_seleccionado = null;
     public $cantidad_producto = 1;
+    public $lote_producto = '';
 
     protected function rules()
     {
@@ -132,12 +136,14 @@ class TransferenciaAlmacenIndex extends Component
             'almacen_destino_id',
             'productos_seleccionados',
             'cantidades',
+            'lotes',
             'fecha',
             'estado',
             'observaciones',
             'transferencia_id',
             'producto_seleccionado',
-            'cantidad_producto'
+            'cantidad_producto',
+            'lote_producto'
         ]);
         $this->fecha = now()->format('Y-m-d\TH:i');
         $this->estado = 'pendiente';
@@ -228,6 +234,7 @@ class TransferenciaAlmacenIndex extends Component
         $this->generarCodigo();
         $this->producto_seleccionado = null;
         $this->cantidad_producto = 1;
+        $this->lote_producto = '';
         $this->modal_form_transferencia = true;
     }
 
@@ -318,7 +325,8 @@ class TransferenciaAlmacenIndex extends Component
                     'code' => $producto->code,
                     'nombre' => $producto->nombre,
                     'cantidad' => $this->cantidades[$productoId],
-                    'unidad_medida' => $producto->unidad_medida
+                    'unidad_medida' => $producto->unidad_medida,
+                    'lote' => $this->lotes[$productoId] ?? null
                 ];
             })
             ->toArray();
@@ -335,18 +343,50 @@ class TransferenciaAlmacenIndex extends Component
         ];
 
         try {
+            DB::beginTransaction();
+
             if ($this->transferencia_id) {
                 $transferencia->update($data);
                 $mensaje = 'Transferencia actualizada correctamente.';
+
+                Log::info('Transferencia actualizada', [
+                    'user_id' => Auth::id(),
+                    'transferencia_id' => $this->transferencia_id,
+                    'code' => $this->code,
+                    'almacen_origen_id' => $this->almacen_origen_id,
+                    'almacen_destino_id' => $this->almacen_destino_id,
+                    'productos_count' => count($productos)
+                ]);
             } else {
-                TransferenciaAlmacen::create($data);
+                $transferencia = TransferenciaAlmacen::create($data);
                 $mensaje = 'Transferencia creada correctamente.';
+
+                Log::info('Transferencia creada', [
+                    'user_id' => Auth::id(),
+                    'transferencia_id' => $transferencia->id,
+                    'code' => $this->code,
+                    'almacen_origen_id' => $this->almacen_origen_id,
+                    'almacen_destino_id' => $this->almacen_destino_id,
+                    'productos_count' => count($productos)
+                ]);
             }
+
+            DB::commit();
 
             $this->modal_form_transferencia = false;
             $this->resetForm();
             session()->flash('message', $mensaje);
         } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error al guardar transferencia', [
+                'user_id' => Auth::id(),
+                'transferencia_id' => $this->transferencia_id,
+                'code' => $this->code,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             session()->flash('error', 'Error al guardar la transferencia: ' . $e->getMessage());
         }
     }
@@ -371,6 +411,79 @@ class TransferenciaAlmacenIndex extends Component
             ->get();
 
         $this->productos_disponibles = $productos ?: collect();
+    }
+
+    /**
+     * Actualiza los productos disponibles basándose en el lote seleccionado
+     */
+    public function actualizarProductosPorLote()
+    {
+        if (!$this->almacen_origen_id || empty($this->lote_producto)) {
+            $this->actualizarProductosDisponibles();
+            return;
+        }
+
+        $productos = ProductoAlmacen::query()
+            ->where('estado', true)
+            ->where('almacen_id', $this->almacen_origen_id)
+            ->where('lote', $this->lote_producto)
+            ->where('stock_actual', '>', 0)
+            ->get();
+
+        $this->productos_disponibles = $productos ?: collect();
+    }
+
+    /**
+     * Obtiene los lotes disponibles en el almacén origen
+     */
+    public function getLotesDisponibles()
+    {
+        if (!$this->almacen_origen_id) {
+            return collect();
+        }
+
+        return ProductoAlmacen::where('almacen_id', $this->almacen_origen_id)
+            ->where('estado', true)
+            ->where('stock_actual', '>', 0)
+            ->whereNotNull('lote')
+            ->where('lote', '!=', '')
+            ->distinct()
+            ->pluck('lote')
+            ->filter();
+    }
+
+    /**
+     * Obtiene productos disponibles en un lote específico
+     */
+    public function getProductosEnLote($lote)
+    {
+        if (!$this->almacen_origen_id || empty($lote)) {
+            return collect();
+        }
+
+        return ProductoAlmacen::where('almacen_id', $this->almacen_origen_id)
+            ->where('estado', true)
+            ->where('lote', $lote)
+            ->where('stock_actual', '>', 0)
+            ->get();
+    }
+
+    /**
+     * Sugiere automáticamente productos cuando se selecciona un lote
+     */
+    public function updatedLoteProducto()
+    {
+        if (!empty($this->lote_producto)) {
+            $this->actualizarProductosPorLote();
+
+            // Si solo hay un producto en el lote, seleccionarlo automáticamente
+            if ($this->productos_disponibles->count() === 1) {
+                $this->producto_seleccionado = $this->productos_disponibles->first()->id;
+                $this->updatedProductoSeleccionado();
+            }
+        } else {
+            $this->actualizarProductosDisponibles();
+        }
     }
 
     public function agregarProducto()
@@ -410,26 +523,46 @@ class TransferenciaAlmacenIndex extends Component
                         return;
                     }
 
-                    if (!$producto->tieneStockSuficiente($value)) {
-                        $fail("La cantidad excede el stock disponible ({$producto->stock_actual})");
+                    // Si se especifica un lote, validar stock por lote
+                    if (!empty($this->lote_producto)) {
+                        $stockLote = ProductoAlmacen::tieneStockSuficienteEnLoteYAlmacen(
+                            $this->lote_producto,
+                            $this->almacen_origen_id,
+                            $value
+                        );
+
+                        if (!$stockLote) {
+                            $stockDisponible = ProductoAlmacen::getStockTotalPorLoteYAlmacen(
+                                $this->lote_producto,
+                                $this->almacen_origen_id
+                            );
+                            $fail("Stock insuficiente en lote {$this->lote_producto}. Disponible: {$stockDisponible}, Solicitado: {$value}");
+                        }
+                    } else {
+                        // Validación tradicional sin lote específico
+                        if (!$producto->tieneStockSuficiente($value)) {
+                            $fail("La cantidad excede el stock disponible ({$producto->stock_actual})");
+                        }
                     }
                 }
-            ]
+            ],
+            'lote_producto' => 'nullable|string|max:255'
         ]);
 
         if (!in_array($this->producto_seleccionado, $this->productos_seleccionados)) {
             $this->productos_seleccionados[] = $this->producto_seleccionado;
             $this->cantidades[$this->producto_seleccionado] = $this->cantidad_producto;
+            $this->lotes[$this->producto_seleccionado] = $this->lote_producto;
         }
 
-        $this->reset(['producto_seleccionado', 'cantidad_producto']);
+        $this->reset(['producto_seleccionado', 'cantidad_producto', 'lote_producto']);
     }
 
     public function quitarProducto($productoId)
     {
         $key = array_search($productoId, $this->productos_seleccionados);
         if ($key !== false) {
-            unset($this->productos_seleccionados[$key], $this->cantidades[$productoId]);
+            unset($this->productos_seleccionados[$key], $this->cantidades[$productoId], $this->lotes[$productoId]);
             $this->productos_seleccionados = array_values($this->productos_seleccionados);
         }
     }
@@ -437,9 +570,10 @@ class TransferenciaAlmacenIndex extends Component
     public function updatedAlmacenOrigenId()
     {
         $this->actualizarProductosDisponibles();
-        $this->reset(['productos_seleccionados', 'cantidades']);
+        $this->reset(['productos_seleccionados', 'cantidades', 'lotes']);
         $this->producto_seleccionado = null;
         $this->cantidad_producto = 1;
+        $this->lote_producto = '';
     }
 
     public function updatedProductoSeleccionado()
@@ -481,16 +615,37 @@ class TransferenciaAlmacenIndex extends Component
         if (!isset($this->cantidad_producto)) {
             $this->cantidad_producto = 1;
         }
+
+        if (!isset($this->lote_producto)) {
+            $this->lote_producto = '';
+        }
     }
 
     public function completarTransferencia($id)
     {
         try {
+            DB::beginTransaction();
+
             $transferencia = TransferenciaAlmacen::findOrFail($id);
 
             if ($transferencia->estado !== 'pendiente') {
                 session()->flash('error', 'Solo se pueden completar transferencias pendientes.');
                 return;
+            }
+
+            // Validar stock en el almacén origen antes de completar
+            foreach ($transferencia->productos as $producto) {
+                $productoModel = ProductoAlmacen::where('almacen_id', $transferencia->almacen_origen_id)
+                    ->where('id', $producto['id'])
+                    ->first();
+
+                if ($productoModel) {
+                    if (!$productoModel->tieneStockSuficiente($producto['cantidad'])) {
+                        throw new \Exception("Stock insuficiente para el producto {$producto['code']} en el almacén origen. Disponible: {$productoModel->stock_actual}, Solicitado: {$producto['cantidad']}");
+                    }
+                } else {
+                    throw new \Exception("Producto {$producto['code']} no encontrado en el almacén origen.");
+                }
             }
 
             // Actualizar stock en el almacén origen (salida)
@@ -500,7 +655,20 @@ class TransferenciaAlmacenIndex extends Component
                     ->first();
 
                 if ($productoModel) {
+                    $stockAnteriorOrigen = $productoModel->stock_actual;
                     $productoModel->actualizarStock($producto['cantidad'], 'salida');
+
+                    Log::info('Stock actualizado en almacén origen', [
+                        'user_id' => Auth::id(),
+                        'transferencia_id' => $transferencia->id,
+                        'producto_id' => $producto['id'],
+                        'producto_code' => $producto['code'],
+                        'almacen_origen_id' => $transferencia->almacen_origen_id,
+                        'cantidad' => $producto['cantidad'],
+                        'stock_anterior' => $stockAnteriorOrigen,
+                        'stock_nuevo' => $productoModel->stock_actual,
+                        'lote' => $producto['lote'] ?? null
+                    ]);
                 }
             }
 
@@ -511,14 +679,70 @@ class TransferenciaAlmacenIndex extends Component
                     ->first();
 
                 if ($productoModel) {
+                    $stockAnteriorDestino = $productoModel->stock_actual;
                     $productoModel->actualizarStock($producto['cantidad'], 'entrada');
+
+                    Log::info('Stock actualizado en almacén destino', [
+                        'user_id' => Auth::id(),
+                        'transferencia_id' => $transferencia->id,
+                        'producto_id' => $producto['id'],
+                        'producto_code' => $producto['code'],
+                        'almacen_destino_id' => $transferencia->almacen_destino_id,
+                        'cantidad' => $producto['cantidad'],
+                        'stock_anterior' => $stockAnteriorDestino,
+                        'stock_nuevo' => $productoModel->stock_actual,
+                        'lote' => $producto['lote'] ?? null
+                    ]);
+                } else {
+                    // Si el producto no existe en el almacén destino, crearlo
+                    $productoOrigen = ProductoAlmacen::where('almacen_id', $transferencia->almacen_origen_id)
+                        ->where('id', $producto['id'])
+                        ->first();
+
+                    if ($productoOrigen) {
+                        $nuevoProducto = $productoOrigen->replicate();
+                        $nuevoProducto->almacen_id = $transferencia->almacen_destino_id;
+                        $nuevoProducto->stock_actual = $producto['cantidad'];
+                        $nuevoProducto->save();
+
+                        Log::info('Producto creado en almacén destino', [
+                            'user_id' => Auth::id(),
+                            'transferencia_id' => $transferencia->id,
+                            'producto_id' => $producto['id'],
+                            'producto_code' => $producto['code'],
+                            'almacen_destino_id' => $transferencia->almacen_destino_id,
+                            'stock_inicial' => $producto['cantidad'],
+                            'lote' => $producto['lote'] ?? null
+                        ]);
+                    }
                 }
             }
 
             $transferencia->estado = 'completada';
             $transferencia->save();
+
+            DB::commit();
+
+            Log::info('Transferencia completada', [
+                'user_id' => Auth::id(),
+                'transferencia_id' => $transferencia->id,
+                'code' => $transferencia->code,
+                'almacen_origen_id' => $transferencia->almacen_origen_id,
+                'almacen_destino_id' => $transferencia->almacen_destino_id,
+                'productos_count' => count($transferencia->productos)
+            ]);
+
             session()->flash('message', 'Transferencia completada correctamente.');
         } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error al completar transferencia', [
+                'user_id' => Auth::id(),
+                'transferencia_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             session()->flash('error', 'Error al completar la transferencia: ' . $e->getMessage());
         }
     }
@@ -526,6 +750,8 @@ class TransferenciaAlmacenIndex extends Component
     public function cancelarTransferencia($id)
     {
         try {
+            DB::beginTransaction();
+
             $transferencia = TransferenciaAlmacen::findOrFail($id);
 
             if ($transferencia->estado !== 'pendiente') {
@@ -533,13 +759,31 @@ class TransferenciaAlmacenIndex extends Component
                 return;
             }
 
-            // No es necesario restaurar stock porque la transferencia está pendiente
-            // y el stock no se ha movido aún
-
             $transferencia->estado = 'cancelada';
             $transferencia->save();
+
+            DB::commit();
+
+            Log::info('Transferencia cancelada', [
+                'user_id' => Auth::id(),
+                'transferencia_id' => $transferencia->id,
+                'code' => $transferencia->code,
+                'almacen_origen_id' => $transferencia->almacen_origen_id,
+                'almacen_destino_id' => $transferencia->almacen_destino_id,
+                'productos_count' => count($transferencia->productos)
+            ]);
+
             session()->flash('message', 'Transferencia cancelada correctamente.');
         } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error al cancelar transferencia', [
+                'user_id' => Auth::id(),
+                'transferencia_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             session()->flash('error', 'Error al cancelar la transferencia: ' . $e->getMessage());
         }
     }

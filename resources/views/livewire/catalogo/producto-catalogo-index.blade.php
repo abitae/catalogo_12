@@ -1,32 +1,38 @@
 <div class="p-6 bg-white dark:bg-zinc-900 min-h-screen">
     <!-- Encabezado y Búsqueda -->
     <div class="mb-6 bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 shadow-sm">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-            <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Catálogo de Productos</h1>
-            <div class="w-full md:w-96">
-                <flux:input type="search" placeholder="Search..." wire:model.live="search" icon="magnifying-glass" />
+        <div class="flex flex-col lg:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-4">
+                <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Catálogo de Productos</h1>
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                    {{ $productos->total() }} productos
+                </span>
             </div>
-            <div class="flex items-end gap-2">
-                <flux:button wire:click="exportarProductos" icon="arrow-down-tray">
-                    Exportar
-                </flux:button>
-            </div>
-            <div class="flex items-end">
-                <flux:button wire:click="importar" icon="arrow-up-tray">
-                    Importar
-                </flux:button>
-            </div>
-            <div class="flex items-end gap-2">
-                <flux:button variant="primary" wire:click="nuevoProducto" icon="plus">
-                    Nuevo
-                </flux:button>
+
+            <div class="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+                <div class="w-full sm:w-80">
+                    <flux:input type="search" placeholder="Buscar productos..." wire:model.live="search" icon="magnifying-glass" />
+                </div>
+
+                <div class="flex gap-2">
+                    <flux:button wire:click="toggleFilters" variant="outline" icon="funnel" class="whitespace-nowrap">
+                        {{ $showFilters ? 'Ocultar' : 'Mostrar' }} Filtros
+                    </flux:button>
+                    <flux:button wire:click="exportarProductos" icon="arrow-down-tray" variant="outline" class="whitespace-nowrap">
+                        Exportar
+                    </flux:button>
+                    <flux:button variant="primary" wire:click="nuevoProducto" icon="plus" class="whitespace-nowrap">
+                        Nuevo Producto
+                    </flux:button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Filtros -->
+    <!-- Filtros Avanzados -->
+    @if($showFilters)
     <div class="mb-6 bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 shadow-sm">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             <!-- Marca -->
             <div>
                 <flux:label>Marca</flux:label>
@@ -70,17 +76,14 @@
                 </flux:select>
             </div>
 
-            <!-- Registros por página -->
+            <!-- Rango de Precio -->
             <div>
-                <flux:label>Registros por página</flux:label>
-                <flux:select wire:model.live="perPage" class="w-full">
-                    <option value="10">10</option>
-                    <option value="25">25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                    <option value="200">200</option>
-                    <option value="500">500</option>
-                    <option value="1000">1000</option>
+                <flux:label>Rango de Precio</flux:label>
+                <flux:select wire:model.live="price_range" class="w-full">
+                    <option value="">Todos los precios</option>
+                    <option value="low">Hasta S/ 100</option>
+                    <option value="medium">S/ 100 - S/ 500</option>
+                    <option value="high">Más de S/ 500</option>
                 </flux:select>
             </div>
 
@@ -94,6 +97,16 @@
                 </flux:select>
             </div>
 
+            <!-- Registros por página -->
+            <div>
+                <flux:label>Registros por página</flux:label>
+                <flux:select wire:model.live="perPage" class="w-full">
+                    @foreach([10, 25, 50, 100, 200, 500, 1000] as $option)
+                        <option value="{{ $option }}">{{ $option }}</option>
+                    @endforeach
+                </flux:select>
+            </div>
+
             <!-- Botón Limpiar Filtros -->
             <div class="flex items-end">
                 <flux:button wire:click="clearFilters" color="red" icon="trash" class="w-full">
@@ -102,6 +115,7 @@
             </div>
         </div>
     </div>
+    @endif
 
     <!-- Tabla de Productos -->
     <div class="bg-white dark:bg-zinc-800 rounded-lg overflow-hidden shadow-sm">
@@ -109,88 +123,157 @@
             <table class="w-full">
                 <thead class="bg-zinc-50 dark:bg-zinc-700">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-500 transition-colors"
+                        <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-500 transition-colors"
                             wire:click="sortBy('code')">
                             <div class="flex items-center space-x-1">
                                 <span>Códigos</span>
-                                @if ($sortField === 'code')
-                                    <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}"
-                                        class="w-4 h-4" />
-                                @endif
+                                <flux:icon name="{{ $sortField === 'code' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}" class="w-4 h-4" />
                             </div>
                         </th>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                            Imagen
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-500 transition-colors"
+                            wire:click="sortBy('description')">
                             <div class="flex items-center space-x-1">
-                                Imagen
+                                <span>Descripción</span>
+                                <flux:icon name="{{ $sortField === 'description' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}" class="w-4 h-4" />
                             </div>
                         </th>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                            Descripción</th>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                            Marca / Categoria / Línea</th>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                            Stock</th>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                            Doc</th>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                            Precio</th>
-
-                        <th
-                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                            Acciones</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                            Categorización
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-500 transition-colors"
+                            wire:click="sortBy('stock')">
+                            <div class="flex items-center space-x-1">
+                                <span>Stock</span>
+                                <flux:icon name="{{ $sortField === 'stock' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}" class="w-4 h-4" />
+                            </div>
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                            Documentos
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-500 transition-colors"
+                            wire:click="sortBy('price_venta')">
+                            <div class="flex items-center space-x-1">
+                                <span>Precio Venta</span>
+                                <flux:icon name="{{ $sortField === 'price_venta' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}" class="w-4 h-4" />
+                            </div>
+                        </th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                            Acciones
+                        </th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
-                    @foreach ($productos as $producto)
+                    @forelse ($productos as $producto)
                         <tr wire:key="producto-{{ $producto->id }}" class="hover:bg-zinc-100 dark:hover:bg-zinc-600 transition-colors duration-200 ease-in-out">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-300">
-                                <div class="flex flex-col">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $producto->isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                        {{ $producto->isActive ? 'Activo' : 'Inactivo' }}
-                                    </span>
-                                    <span>{{ $producto->code ?? '' }}</span>
-                                    <span>{{ $producto->code_fabrica ?? '' }}</span>
-                                    <span>{{ $producto->code_peru ?? '' }}</span>
+                            <td class="px-4 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-300">
+                                <div class="flex flex-col space-y-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $producto->isActive ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }}">
+                                            {{ $producto->isActive ? 'Activo' : 'Inactivo' }}
+                                        </span>
+                                        <flux:button wire:click="toggleProductStatus({{ $producto->id }})" size="xs" variant="outline" icon="{{ $producto->isActive ? 'eye-slash' : 'eye' }}" title="{{ $producto->isActive ? 'Desactivar' : 'Activar' }}" />
+                                    </div>
+                                    <div class="font-medium">{{ $producto->code ?? 'N/A' }}</div>
+                                    <div class="text-xs text-zinc-500">{{ $producto->code_fabrica ?? 'N/A' }}</div>
+                                    <div class="text-xs text-zinc-500">{{ $producto->code_peru ?? 'N/A' }}</div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
-                                <img src="{{ $producto->image ? asset('storage/' . $producto->image) : 'https://placehold.co/600x400' }}"
-                                    alt="Imagen del producto" class="w-20 h-20 rounded-full">
-
+                            <td class="px-4 py-4 text-sm text-zinc-900 dark:text-zinc-300">
+                                <div class="relative group">
+                                    <img src="{{ $producto->image ? asset('storage/' . $producto->image) : 'https://placehold.co/600x400/e2e8f0/64748b?text=Sin+Imagen' }}"
+                                        alt="Imagen del producto"
+                                        class="w-16 h-16 rounded-lg object-cover border-2 border-zinc-200 dark:border-zinc-600 hover:border-blue-300 transition-colors">
+                                    @if($producto->image)
+                                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                            <flux:icon name="eye" class="w-6 h-6 text-white" />
+                                        </div>
+                                    @endif
+                                </div>
                             </td>
-                            <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">{{ $producto->description }}
+                            <td class="px-4 py-4 text-sm text-zinc-900 dark:text-zinc-300">
+                                <div class="max-w-xs">
+                                    <div class="font-medium">{{ Str::limit($producto->description, 50) }}</div>
+                                    @if($producto->garantia)
+                                        <div class="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                                            <flux:icon name="shield-check" class="w-3 h-3 inline mr-1" />
+                                            {{ $producto->garantia }}
+                                        </div>
+                                    @endif
+                                    @if($producto->dias_entrega > 0)
+                                        <div class="text-xs text-green-600 dark:text-green-400 mt-1">
+                                            <flux:icon name="clock" class="w-3 h-3 inline mr-1" />
+                                            {{ $producto->dias_entrega }} días
+                                        </div>
+                                    @endif
+                                </div>
                             </td>
-                            <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
-                                {{ $producto->brand->name ?? 'N/A' }} /
-                                {{ $producto->category->name ?? 'N/A' }} /
-                                {{ $producto->line->name ?? 'N/A' }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-300">{{ $producto->stock }}</td>
-                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-300">
-                                @if($producto->archivo)
-                                    <a href="{{ asset('storage/' . $producto->archivo) }}" target="_blank" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
-                                        <flux:icon name="document" class="w-6 h-6" />
-                                    </a>
-                                @endif
-                                @if($producto->archivo2)
-                                    <a href="{{ asset('storage/' . $producto->archivo2) }}" target="_blank" class="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300">
-                                        <flux:icon name="document" class="w-6 h-6" />
-                                    </a>
-                                @endif
+                            <td class="px-4 py-4 text-sm text-zinc-900 dark:text-zinc-300">
+                                <div class="space-y-1">
+                                    <div class="flex items-center gap-1">
+                                        <flux:icon name="tag" class="w-3 h-3 text-blue-500" />
+                                        <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">{{ $producto->brand->name ?? 'N/A' }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <flux:icon name="folder" class="w-3 h-3 text-green-500" />
+                                        <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">{{ $producto->category->name ?? 'N/A' }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-1">
+                                        <flux:icon name="cube" class="w-3 h-3 text-purple-500" />
+                                        <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded">{{ $producto->line->name ?? 'N/A' }}</span>
+                                    </div>
+                                </div>
                             </td>
-                            <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-300">S/
-                                {{ number_format($producto->price_venta, 2) }}</td>
-                            <td class="px-6 py-4 text-sm">
+                            <td class="px-4 py-4 text-sm text-zinc-900 dark:text-zinc-300">
                                 <div class="flex items-center gap-2">
+                                    <span class="font-medium {{ $producto->stock > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400' }}">
+                                        {{ $producto->stock }}
+                                    </span>
+                                    @if($producto->stock > 0)
+                                        <flux:icon name="check-circle" class="w-4 h-4 text-green-500" />
+                                    @else
+                                        <flux:icon name="x-circle" class="w-4 h-4 text-red-500" />
+                                    @endif
+                                </div>
+                            </td>
+                            <td class="px-4 py-4 text-sm text-zinc-900 dark:text-zinc-300">
+                                <div class="flex gap-1">
+                                    @if($producto->archivo)
+                                        <a href="{{ asset('storage/' . $producto->archivo) }}" target="_blank"
+                                           class="p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                                           title="Ver documento principal">
+                                            <flux:icon name="document" class="w-5 h-5" />
+                                        </a>
+                                    @endif
+                                    @if($producto->archivo2)
+                                        <a href="{{ asset('storage/' . $producto->archivo2) }}" target="_blank"
+                                           class="p-1 text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300 transition-colors"
+                                           title="Ver documento secundario">
+                                            <flux:icon name="document-text" class="w-5 h-5" />
+                                        </a>
+                                    @endif
+                                    @if(!$producto->archivo && !$producto->archivo2)
+                                        <span class="text-zinc-400 text-xs">Sin documentos</span>
+                                    @endif
+                                </div>
+                            </td>
+                            <td class="px-4 py-4 text-sm text-zinc-900 dark:text-zinc-300">
+                                <div class="space-y-1">
+                                    <div class="font-medium text-green-600 dark:text-green-400">
+                                        S/ {{ number_format($producto->price_venta, 2) }}
+                                    </div>
+                                    <div class="text-xs text-zinc-500">
+                                        Compra: S/ {{ number_format($producto->price_compra, 2) }}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-4 py-4 text-sm">
+                                <div class="flex items-center gap-1">
                                     <flux:button wire:click="editarProducto({{ $producto->id }})" size="xs"
                                         variant="primary" icon="pencil" title="Editar producto"
                                         class="hover:bg-blue-600 transition-colors">
-
                                     </flux:button>
                                     <flux:button wire:click="eliminarProducto({{ $producto->id }})" size="xs"
                                         variant="danger" icon="trash" title="Eliminar producto"
@@ -199,228 +282,286 @@
                                 </div>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="8" class="px-4 py-8 text-center text-zinc-500 dark:text-zinc-400">
+                                <div class="flex flex-col items-center space-y-2">
+                                    <flux:icon name="inbox" class="w-12 h-12 text-zinc-300" />
+                                    <span class="text-lg font-medium">No se encontraron productos</span>
+                                    <span class="text-sm">Intenta ajustar los filtros de búsqueda</span>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
-    </div>
 
-    <!-- Paginación -->
-    <div class="mt-4">
-        {{ $productos->links() }}
+        <!-- Paginación -->
+        @if($productos->hasPages())
+            <div class="px-4 py-3 bg-zinc-50 dark:bg-zinc-700 border-t border-zinc-200 dark:border-zinc-600">
+                {{ $productos->links() }}
+            </div>
+        @endif
     </div>
 
     <!-- Modal Form Producto -->
-    <flux:modal wire:model="modal_form_producto" variant="flyout" class="w-2/3 max-w-2xl">
-        <div class="space-y-6">
-            <div>
-                <flux:heading size="lg">{{ $producto_id ? 'Editar Producto' : 'Nuevo Producto' }}</flux:heading>
-                <flux:text class="mt-2">Complete los datos del producto.</flux:text>
+    <x-modal wire:model="modal_form_producto" max-width="4xl">
+        <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-xl">
+            <!-- Header del modal -->
+            <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
+                <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">
+                    {{ $producto_id ? 'Editar Producto' : 'Nuevo Producto' }}
+                </h2>
             </div>
-            <form wire:submit.prevent="guardarProducto">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <flux:select label="Marca" wire:model="brand_id">
-                        <option value="">Seleccione una marca</option>
-                        @foreach ($brands as $brand)
-                            <option value="{{ $brand->id }}">{{ $brand->name }}</option>
-                        @endforeach
-                    </flux:select>
 
-                    <flux:select label="Categoría" wire:model="category_id">
-                        <option value="">Seleccione una categoría</option>
-                        @foreach ($categories as $category)
-                            <option value="{{ $category->id }}">{{ $category->name }}</option>
-                        @endforeach
-                    </flux:select>
+            <!-- Contenido del modal -->
+            <div class="px-6 py-4">
+                <form wire:submit="guardarProducto">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Información Básica -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-medium text-zinc-900 dark:text-white border-b border-zinc-200 dark:border-zinc-700 pb-2">
+                                Información Básica
+                            </h3>
 
-                    <flux:select label="Línea" wire:model="line_id">
-                        <option value="">Seleccione una línea</option>
-                        @foreach ($lines as $line)
-                            <option value="{{ $line->id }}">{{ $line->name }}</option>
-                        @endforeach
-                    </flux:select>
-
-                    <flux:input label="Código" wire:model="code" placeholder="Ingrese el código" />
-                    <flux:input label="Código Fábrica" wire:model="code_fabrica"
-                        placeholder="Ingrese el código de fábrica" />
-                    <flux:input label="Código Perú" wire:model="code_peru" placeholder="Ingrese el código Perú" />
-                    <flux:input label="Precio Compra" type="number" step="0.01" wire:model="price_compra"
-                        placeholder="0.00" />
-                    <flux:input label="Precio Venta" type="number" step="0.01" wire:model="price_venta"
-                        placeholder="0.00" />
-                    <flux:input label="Stock" type="number" wire:model="stock" placeholder="0" />
-                    <flux:input label="Días Entrega" type="number" wire:model="dias_entrega" placeholder="0" />
-                    <flux:input label="Garantía" wire:model="garantia" placeholder="Ingrese la garantía" />
-                </div>
-
-                <div class="mt-4">
-                    <flux:textarea label="Descripción" wire:model="description"
-                        placeholder="Ingrese la descripción" />
-                    <flux:textarea label="Observaciones" wire:model="observaciones"
-                        placeholder="Ingrese observaciones" />
-                </div>
-
-                <div class="mt-4">
-                    <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
-                        <!-- Imagen -->
-                        <div class="col-span-1">
-                            <label class="block text-sm font-medium text-gray-700">Imagen del Producto</label>
-                            <div class="mt-1 flex items-center">
-                                <div class="flex-1">
-                                    <input
-                                        type="file"
-                                        wire:model.live="tempImage"
-                                        class="hidden"
-                                        id="image-upload"
-                                        accept="image/*"
-                                        wire:loading.attr="disabled"
-                                    >
-                                    <label
-                                        for="image-upload"
-                                        class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
-                                    >
-                                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                        Seleccionar Imagen
-                                    </label>
-                                </div>
-
-                                <div class="ml-4 relative group">
-                                    @if($imagePreview)
-                                        <div class="relative">
-                                            <img
-                                                src="{{ $imagePreview }}"
-                                                alt="Vista previa"
-                                                class="h-20 w-20 object-cover rounded shadow-sm"
-                                                loading="lazy"
-                                            >
-                                            <button
-                                                type="button"
-                                                wire:click="removeImage"
-                                                class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
-                                                title="Eliminar imagen"
-                                            >
-                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    @endif
-                                </div>
+                            <div>
+                                <flux:label for="code">Código del Producto *</flux:label>
+                                <flux:input wire:model="code" id="code" placeholder="Ingrese el código" />
+                                <flux:error field="code" />
                             </div>
-                            @error('tempImage') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                            <div wire:loading wire:target="tempImage" class="mt-2">
-                                <div class="flex items-center text-sm text-gray-500">
-                                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Subiendo imagen...
-                                </div>
+
+                            <div>
+                                <flux:label for="code_fabrica">Código de Fábrica *</flux:label>
+                                <flux:input wire:model="code_fabrica" id="code_fabrica" placeholder="Ingrese el código de fábrica" />
+                                <flux:error field="code_fabrica" />
+                            </div>
+
+                            <div>
+                                <flux:label for="code_peru">Código Perú *</flux:label>
+                                <flux:input wire:model="code_peru" id="code_peru" placeholder="Ingrese el código Perú" />
+                                <flux:error field="code_peru" />
+                            </div>
+
+                            <div>
+                                <flux:label for="description">Descripción *</flux:label>
+                                <flux:textarea wire:model="description" id="description" placeholder="Ingrese la descripción del producto" rows="3" />
+                                <flux:error field="description" />
                             </div>
                         </div>
 
-                        <!-- Archivo 1 -->
-                        <div class="col-span-1">
-                            <label class="block text-sm font-medium text-gray-700">Archivo Adjunto 1</label>
-                            <div class="mt-1 flex items-center">
-                                <div class="flex-1">
-                                    <input type="file" wire:model.live="tempArchivo" class="hidden" id="archivo-upload" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
-                                    <label for="archivo-upload" class="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                        Seleccionar Archivo
-                                    </label>
-                                </div>
-                                @if($archivoPreview)
-                                    <div class="ml-4 flex items-center group">
-                                        <span class="text-sm text-gray-500">{{ $archivoPreview }}</span>
-                                        <button type="button" wire:click="removeArchivo" class="ml-2 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                @endif
+                        <!-- Categorización -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-medium text-zinc-900 dark:text-white border-b border-zinc-200 dark:border-zinc-700 pb-2">
+                                Categorización
+                            </h3>
+
+                            <div>
+                                <flux:label for="brand_id">Marca *</flux:label>
+                                <flux:select wire:model="brand_id" id="brand_id">
+                                    <option value="">Seleccione una marca</option>
+                                    @foreach ($brands as $brand)
+                                        <option value="{{ $brand->id }}">{{ $brand->name }}</option>
+                                    @endforeach
+                                </flux:select>
+                                <flux:error field="brand_id" />
                             </div>
-                            @error('tempArchivo') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                            <div wire:loading wire:target="tempArchivo" class="mt-2">
-                                <div class="flex items-center text-sm text-gray-500">
-                                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Subiendo archivo...
-                                </div>
+
+                            <div>
+                                <flux:label for="category_id">Categoría *</flux:label>
+                                <flux:select wire:model="category_id" id="category_id">
+                                    <option value="">Seleccione una categoría</option>
+                                    @foreach ($categories as $category)
+                                        <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                    @endforeach
+                                </flux:select>
+                                <flux:error field="category_id" />
+                            </div>
+
+                            <div>
+                                <flux:label for="line_id">Línea *</flux:label>
+                                <flux:select wire:model="line_id" id="line_id">
+                                    <option value="">Seleccione una línea</option>
+                                    @foreach ($lines as $line)
+                                        <option value="{{ $line->id }}">{{ $line->name }}</option>
+                                    @endforeach
+                                </flux:select>
+                                <flux:error field="line_id" />
                             </div>
                         </div>
 
-                        <!-- Archivo 2 -->
-                        <div class="col-span-1">
-                            <label class="block text-sm font-medium text-gray-700">Archivo Adjunto 2</label>
-                            <div class="mt-1 flex items-center">
-                                <div class="flex-1">
-                                    <input type="file" wire:model.live="tempArchivo2" class="hidden" id="archivo2-upload" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
-                                    <label for="archivo2-upload" class="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                                        Seleccionar Archivo
-                                    </label>
-                                </div>
-                                @if($archivo2Preview)
-                                    <div class="ml-4 flex items-center group">
-                                        <span class="text-sm text-gray-500">{{ $archivo2Preview }}</span>
-                                        <button type="button" wire:click="removeArchivo2" class="ml-2 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                @endif
+                        <!-- Precios y Stock -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-medium text-zinc-900 dark:text-white border-b border-zinc-200 dark:border-zinc-700 pb-2">
+                                Precios y Stock
+                            </h3>
+
+                            <div>
+                                <flux:label for="price_compra">Precio de Compra *</flux:label>
+                                <flux:input wire:model="price_compra" id="price_compra" type="number" step="0.01" min="0" placeholder="0.00" />
+                                <flux:error field="price_compra" />
                             </div>
-                            @error('tempArchivo2') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                            <div wire:loading wire:target="tempArchivo2" class="mt-2">
-                                <div class="flex items-center text-sm text-gray-500">
-                                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Subiendo archivo...
-                                </div>
+
+                            <div>
+                                <flux:label for="price_venta">Precio de Venta *</flux:label>
+                                <flux:input wire:model="price_venta" id="price_venta" type="number" step="0.01" min="0" placeholder="0.00" />
+                                <flux:error field="price_venta" />
+                            </div>
+
+                            <div>
+                                <flux:label for="stock">Stock *</flux:label>
+                                <flux:input wire:model="stock" id="stock" type="number" min="0" placeholder="0" />
+                                <flux:error field="stock" />
+                            </div>
+
+                            <div>
+                                <flux:label for="dias_entrega">Días de Entrega</flux:label>
+                                <flux:input wire:model="dias_entrega" id="dias_entrega" type="number" min="0" placeholder="0" />
+                                <flux:error field="dias_entrega" />
+                            </div>
+                        </div>
+
+                        <!-- Información Adicional -->
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-medium text-zinc-900 dark:text-white border-b border-zinc-200 dark:border-zinc-700 pb-2">
+                                Información Adicional
+                            </h3>
+
+                            <div>
+                                <flux:label for="garantia">Garantía</flux:label>
+                                <flux:input wire:model="garantia" id="garantia" placeholder="Ej: 1 año" />
+                                <flux:error field="garantia" />
+                            </div>
+
+                            <div>
+                                <flux:label for="observaciones">Observaciones</flux:label>
+                                <flux:textarea wire:model="observaciones" id="observaciones" placeholder="Observaciones adicionales" rows="3" />
+                                <flux:error field="observaciones" />
+                            </div>
+
+                            <div>
+                                <flux:label for="isActive">Estado</flux:label>
+                                <flux:checkbox wire:model="isActive" id="isActive" label="Producto activo" />
+                                <flux:error field="isActive" />
                             </div>
                         </div>
                     </div>
+
+                    <!-- Archivos -->
+                    <div class="mt-6 space-y-4">
+                        <h3 class="text-lg font-medium text-zinc-900 dark:text-white border-b border-zinc-200 dark:border-zinc-700 pb-2">
+                            Archivos
+                        </h3>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Imagen -->
+                            <div>
+                                <flux:label>Imagen del Producto</flux:label>
+                                <div class="mt-1">
+                                    @if($imagePreview)
+                                        <div class="relative inline-block">
+                                            <img src="{{ $imagePreview }}" alt="Vista previa" class="w-32 h-32 rounded-lg object-cover border">
+                                            <flux:button wire:click="removeImage" size="xs" variant="danger" icon="x-mark" class="absolute -top-2 -right-2" />
+                                        </div>
+                                    @endif
+                                    <flux:input wire:model="tempImage" type="file" accept="image/*" />
+                                </div>
+                                <flux:error field="tempImage" />
+                            </div>
+
+                            <!-- Archivo 1 -->
+                            <div>
+                                <flux:label>Documento Principal</flux:label>
+                                <div class="mt-1">
+                                    @if($archivoPreview)
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <flux:icon name="document" class="w-4 h-4" />
+                                            <span class="text-sm">{{ $archivoPreview }}</span>
+                                            <flux:button wire:click="removeArchivo" size="xs" variant="danger" icon="x-mark" />
+                                        </div>
+                                    @endif
+                                    <flux:input wire:model="tempArchivo" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" />
+                                </div>
+                                <flux:error field="tempArchivo" />
+                            </div>
+
+                            <!-- Archivo 2 -->
+                            <div>
+                                <flux:label>Documento Secundario</flux:label>
+                                <div class="mt-1">
+                                    @if($archivo2Preview)
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <flux:icon name="document-text" class="w-4 h-4" />
+                                            <span class="text-sm">{{ $archivo2Preview }}</span>
+                                            <flux:button wire:click="removeArchivo2" size="xs" variant="danger" icon="x-mark" />
+                                        </div>
+                                    @endif
+                                    <flux:input wire:model="tempArchivo2" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" />
+                                </div>
+                                <flux:error field="tempArchivo2" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-2 mt-6">
+                        <flux:button wire:click="$set('modal_form_producto', false)">
+                            Cancelar
+                        </flux:button>
+                        <flux:button type="submit" variant="primary">
+                            {{ $producto_id ? 'Actualizar' : 'Crear' }} Producto
+                        </flux:button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </x-modal>
+
+    <!-- Modal Confirmar Eliminación -->
+    <x-modal wire:model="modal_form_eliminar_producto" max-width="md">
+        <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-xl">
+            <!-- Header del modal -->
+            <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
+                <h2 class="text-xl font-semibold text-zinc-900 dark:text-white">
+                    Confirmar Eliminación
+                </h2>
+            </div>
+
+            <!-- Contenido del modal -->
+            <div class="px-6 py-4">
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3">
+                        <flux:icon name="exclamation-triangle" class="w-8 h-8 text-red-500" />
+                        <div>
+                            <h3 class="text-lg font-medium text-zinc-900 dark:text-white">
+                                ¿Eliminar Producto?
+                            </h3>
+                            <p class="text-sm text-zinc-600 dark:text-zinc-400">
+                                Esta acción no se puede deshacer. Se eliminarán todos los archivos asociados.
+                            </p>
+                        </div>
+                    </div>
+
+                    @if($producto)
+                    <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                        <div class="flex items-center gap-2">
+                            <flux:icon name="information-circle" class="w-5 h-5 text-red-500" />
+                            <span class="text-sm font-medium text-red-800 dark:text-red-200">
+                                Producto: {{ $producto->code }} - {{ $producto->description }}
+                            </span>
+                        </div>
+                    </div>
+                    @endif
                 </div>
 
-                <div class="mt-4">
-                    <flux:checkbox label="Activo" wire:model="isActive" />
-                </div>
-
-                <div class="flex justify-end mt-6">
-                    <flux:button type="button" wire:click="$set('modal_form_producto', false)" class="mr-2">
+                <div class="flex justify-end gap-2 mt-6">
+                    <flux:button wire:click="$set('modal_form_eliminar_producto', false)">
                         Cancelar
                     </flux:button>
-                    <flux:button type="submit" variant="primary">
-                        {{ $producto_id ? 'Actualizar' : 'Guardar' }}
+                    <flux:button variant="danger" wire:click="confirmarEliminarProducto">
+                        Eliminar Producto
                     </flux:button>
                 </div>
-            </form>
-        </div>
-    </flux:modal>
-    <!-- Modal Form Eliminar Producto -->
-    @if($producto_id)
-    <flux:modal wire:model="modal_form_eliminar_producto" class="w-2/3 max-w-2xl">
-        <div class="space-y-6">
-            <div>
-                <flux:heading size="lg">Eliminar Producto</flux:heading>
-                <flux:text class="mt-2">¿Está seguro de querer eliminar este producto?</flux:text>
-            </div>
-            <div class="flex justify-end mt-6">
-                <flux:button type="button" wire:click="$set('modal_form_eliminar_producto', false)" class="mr-2">
-                    Cancelar
-                </flux:button>
-                <flux:button variant="danger" wire:click="confirmarEliminarProducto">
-                    Eliminar
-                </flux:button>
             </div>
         </div>
-    </flux:modal>
-    @endif
+    </x-modal>
 </div>

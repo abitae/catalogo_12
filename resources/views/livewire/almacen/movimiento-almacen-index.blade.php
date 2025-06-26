@@ -21,6 +21,49 @@
         </div>
     </div>
 
+    <!-- Estadísticas Rápidas -->
+    <div class="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-4 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90">Entradas del Periodo</p>
+                    <p class="text-2xl font-bold">{{ $movimientos->where('tipo_movimiento', 'entrada')->where('estado', 'completado')->sum('total') ? 'S/ ' . number_format($movimientos->where('tipo_movimiento', 'entrada')->where('estado', 'completado')->sum('total'), 2) : 'S/ 0.00' }}</p>
+                </div>
+                <flux:icon name="arrow-down" class="w-8 h-8 opacity-80" />
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-red-500 to-red-600 rounded-lg p-4 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90">Salidas del Periodo</p>
+                    <p class="text-2xl font-bold">{{ $movimientos->where('tipo_movimiento', 'salida')->where('estado', 'completado')->sum('total') ? 'S/ ' . number_format($movimientos->where('tipo_movimiento', 'salida')->where('estado', 'completado')->sum('total'), 2) : 'S/ 0.00' }}</p>
+                </div>
+                <flux:icon name="arrow-up" class="w-8 h-8 opacity-80" />
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90">Pendientes</p>
+                    <p class="text-2xl font-bold">{{ $movimientos->where('estado', 'pendiente')->count() }}</p>
+                </div>
+                <flux:icon name="clock" class="w-8 h-8 opacity-80" />
+            </div>
+        </div>
+
+        <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-4 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm opacity-90">Total Movimientos</p>
+                    <p class="text-2xl font-bold">{{ $movimientos->count() }}</p>
+                </div>
+                <flux:icon name="document-text" class="w-8 h-8 opacity-80" />
+            </div>
+        </div>
+    </div>
+
     <!-- Filtros -->
     <div class="mb-6 bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 shadow-sm">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -112,7 +155,9 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                             Almacén
                         </th>
-
+                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                            Productos/Lotes
+                        </th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                             Total
                         </th>
@@ -128,7 +173,10 @@
                     @forelse ($movimientos as $movimiento)
                         <tr wire:key="movimiento-{{ $movimiento->id }}" class="hover:bg-zinc-100 dark:hover:bg-zinc-600 transition-colors duration-200 ease-in-out">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-300">
-                                {{ $movimiento->code }}
+                                <div class="flex flex-col">
+                                    <span class="font-medium">{{ $movimiento->code }}</span>
+                                    <span class="text-xs text-zinc-500">{{ $movimiento->user->name ?? 'N/A' }}</span>
+                                </div>
                             </td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
                                 <div class="flex flex-col">
@@ -140,31 +188,75 @@
                                     <span class="text-xs text-zinc-500 mt-1">
                                         {{ ucfirst($movimiento->tipo_documento) }}: {{ $movimiento->numero_documento }}
                                     </span>
+                                    <span class="text-xs text-zinc-500">
+                                        {{ ucfirst($movimiento->tipo_operacion) }}
+                                    </span>
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
-                                {{ $movimiento->almacen->nombre }}
+                                <div class="flex flex-col">
+                                    <span class="font-medium">{{ $movimiento->almacen->nombre }}</span>
+                                    <span class="text-xs text-zinc-500">{{ $movimiento->almacen->direccion ?? 'Sin dirección' }}</span>
+                                </div>
                             </td>
-
+                            <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
+                                <div class="space-y-2 max-h-32 overflow-y-auto">
+                                    @forelse ($movimiento->productos as $producto)
+                                        <div class="flex items-center justify-between p-2 bg-zinc-50 dark:bg-zinc-700 rounded-md border border-zinc-200 dark:border-zinc-600">
+                                            <div class="flex-1 min-w-0">
+                                                <div class="font-medium text-zinc-800 dark:text-zinc-200 truncate">
+                                                    {{ $producto['code'] }}
+                                                </div>
+                                                <div class="text-xs text-zinc-600 dark:text-zinc-400 truncate">
+                                                    {{ Str::limit($producto['nombre'], 25) }}
+                                                </div>
+                                                @if(isset($producto['lote']) && !empty($producto['lote']))
+                                                    <div class="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                                                        Lote: {{ $producto['lote'] }}
+                                                    </div>
+                                                @endif
+                                            </div>
+                                            <div class="flex items-center space-x-2 ml-2">
+                                                <span class="px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-medium rounded-full">
+                                                    {{ $producto['cantidad'] }}
+                                                </span>
+                                                <span class="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                                                    {{ $producto['unidad_medida'] }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <div class="text-center py-3 text-zinc-500 dark:text-zinc-400 italic">
+                                            <flux:icon name="cube" class="w-4 h-4 mx-auto mb-1" />
+                                            No hay productos
+                                        </div>
+                                    @endforelse
+                                </div>
+                            </td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
                                 <div class="flex flex-col">
                                     <span class="font-medium">S/ {{ number_format($movimiento->total, 2) }}</span>
                                     <span class="text-xs text-zinc-500">
                                         Sub: S/ {{ number_format($movimiento->subtotal, 2) }}
                                     </span>
+                                    @if($movimiento->descuento > 0)
+                                        <span class="text-xs text-green-600">
+                                            Desc: S/ {{ number_format($movimiento->descuento, 2) }}
+                                        </span>
+                                    @endif
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
-                                {{ $movimiento->fecha_emision }}
-                                <br>
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                                    @if($movimiento->estado === 'completado') bg-green-100 text-green-800
-                                    @elseif($movimiento->estado === 'cancelado') bg-red-100 text-red-800
-                                    @else bg-yellow-100 text-yellow-800 @endif">
-                                    {{ ucfirst($movimiento->estado) }}
-                                </span>
+                                <div class="flex flex-col">
+                                    <span>{{ $movimiento->fecha_emision->format('d/m/Y H:i') }}</span>
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full mt-1
+                                        @if($movimiento->estado === 'completado') bg-green-100 text-green-800
+                                        @elseif($movimiento->estado === 'cancelado') bg-red-100 text-red-800
+                                        @else bg-yellow-100 text-yellow-800 @endif">
+                                        {{ ucfirst($movimiento->estado) }}
+                                    </span>
+                                </div>
                             </td>
-
                             <td class="px-6 py-4 text-sm">
                                 <div class="flex items-center gap-2">
                                     <flux:button wire:click="verDetalleMovimiento({{ $movimiento->id }})" size="xs"
@@ -191,18 +283,22 @@
                     @empty
                         <tr>
                             <td colspan="7" class="px-6 py-4 text-center text-zinc-500">
-                                No hay movimientos disponibles
+                                <div class="flex flex-col items-center py-8">
+                                    <flux:icon name="document-text" class="w-12 h-12 text-zinc-400 mb-4" />
+                                    <p class="text-lg font-medium text-zinc-600 dark:text-zinc-400">No hay movimientos disponibles</p>
+                                    <p class="text-sm text-zinc-500 dark:text-zinc-500">Intenta ajustar los filtros o crear un nuevo movimiento</p>
+                                </div>
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-    </div>
 
-    <!-- Paginación -->
-    <div class="mt-4">
-        {{ $movimientos->links() }}
+        <!-- Paginación -->
+        <div class="px-6 py-3 bg-zinc-50 dark:bg-zinc-700 border-t border-zinc-200 dark:border-zinc-600">
+            {{ $movimientos->links() }}
+        </div>
     </div>
 
     <!-- Modal Form Movimiento -->
@@ -351,6 +447,28 @@
 
                     <!-- Formulario para agregar productos -->
                     <div class="mt-4 p-4 bg-zinc-50 dark:bg-zinc-700 rounded-lg">
+                        <!-- Selector de lotes -->
+                        <div class="mb-4">
+                            <flux:select
+                                label="Filtrar por Lote (Opcional)"
+                                wire:model.live="lote_producto"
+                                :disabled="!$almacen_id || ($movimiento_id && $estado !== 'pendiente')"
+                                class="w-full md:w-1/3"
+                            >
+                                <option value="">Todos los lotes</option>
+                                @foreach ($this->getLotesDisponibles() as $lote)
+                                    <option value="{{ $lote }}">
+                                        Lote: {{ $lote }}
+                                        @php
+                                            $productosEnLote = $this->getProductosEnLote($lote);
+                                            $totalStock = $productosEnLote->sum('stock_actual');
+                                        @endphp
+                                        ({{ $productosEnLote->count() }} productos, {{ number_format($totalStock, 2) }} unidades)
+                                    </option>
+                                @endforeach
+                            </flux:select>
+                        </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                             <div class="md:col-span-2">
                                 <flux:select
@@ -366,6 +484,9 @@
                                             @if($tipo_movimiento === 'salida')
                                                 (Stock: {{ number_format($producto->stock_actual, 2) }} {{ $producto->unidad_medida }})
                                             @endif
+                                            @if($producto->lote)
+                                                - Lote: {{ $producto->lote }}
+                                            @endif
                                         </option>
                                     @endforeach
                                 </flux:select>
@@ -380,6 +501,15 @@
                                     placeholder="1"
                                     :disabled="!$producto_seleccionado || ($movimiento_id && $estado !== 'pendiente')"
                                     :error="$errors->first('cantidad_producto')"
+                                />
+                            </div>
+                            <div>
+                                <flux:input
+                                    label="Lote"
+                                    wire:model.live="lote_producto"
+                                    placeholder="Número de lote (opcional)"
+                                    :disabled="!$producto_seleccionado || ($movimiento_id && $estado !== 'pendiente')"
+                                    :error="$errors->first('lote_producto')"
                                 />
                             </div>
                             <div>
@@ -459,6 +589,7 @@
                                     <tr>
                                         <th class="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">Producto</th>
                                         <th class="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">Cantidad</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">Lote</th>
                                         <th class="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">Precio</th>
                                         <th class="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">Subtotal</th>
                                         <th class="px-4 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">Unidad</th>
@@ -509,6 +640,22 @@
                                                         </span>
                                                     </div>
                                                     @error('cantidades.' . $productoId)
+                                                        <div class="text-red-500 text-xs mt-1">{{ $message }}</div>
+                                                    @enderror
+                                                </td>
+                                                <td class="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-300">
+                                                    <div class="flex items-center gap-1">
+                                                        <span class="text-zinc-500 dark:text-zinc-400 text-xs">Lote:</span>
+                                                        <flux:input
+                                                            type="text"
+                                                            wire:model.live="lotes.{{ $productoId }}"
+                                                            placeholder="Número de lote (opcional)"
+                                                            class="w-24"
+                                                            :disabled="$movimiento_id && $estado !== 'pendiente' || (isset($producto->estado) && !$producto->estado)"
+                                                            :error="$errors->first('lotes.' . $productoId)"
+                                                        />
+                                                    </div>
+                                                    @error('lotes.' . $productoId)
                                                         <div class="text-red-500 text-xs mt-1">{{ $message }}</div>
                                                     @enderror
                                                 </td>
@@ -699,7 +846,7 @@
                     <div class="space-y-4">
                         <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
                             <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-3 flex items-center gap-2">
-                                <flux:icon name="information-circle" class="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                <flux:icon name="information" class="w-4 h-4 text-blue-600 dark:text-blue-400" />
                                 Información General
                             </h3>
                             <div class="space-y-3">
@@ -731,7 +878,7 @@
                                 <div class="flex justify-between items-center p-2 bg-white dark:bg-zinc-800 rounded-lg border border-blue-100 dark:border-blue-900/50">
                                     <span class="text-zinc-600 dark:text-zinc-400 font-medium">Usuario:</span>
                                     <span class="font-medium text-zinc-900 dark:text-white flex items-center gap-2">
-                                        <flux:icon name="user" class="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                        <flux:icon name="user" class="w-4 h-4" />
                                         {{ $movimiento_detalle->user->name }}
                                     </span>
                                 </div>
@@ -766,7 +913,7 @@
                                     <div class="flex justify-between items-center p-2 bg-white dark:bg-zinc-800 rounded-lg border border-purple-100 dark:border-purple-900/50">
                                         <span class="text-zinc-600 dark:text-zinc-400 font-medium">Fecha de Vencimiento:</span>
                                         <span class="font-medium text-zinc-900 dark:text-white flex items-center gap-2">
-                                            <flux:icon name="calendar-days" class="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                                            <flux:icon name="calendar" class="w-4 h-4 text-purple-600 dark:text-purple-400" />
                                             {{ $movimiento_detalle->fecha_vencimiento }}
                                         </span>
                                     </div>
@@ -799,6 +946,7 @@
                                 <tr>
                                     <th class="px-3 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">Producto</th>
                                     <th class="px-3 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">Cantidad</th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">Lote</th>
                                     <th class="px-3 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">Precio Unitario</th>
                                     <th class="px-3 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">Subtotal</th>
                                     <th class="px-3 py-2 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">Unidad</th>
@@ -815,6 +963,9 @@
                                         </td>
                                         <td class="px-3 py-2 text-sm text-zinc-900 dark:text-zinc-300">
                                             <span class="font-semibold text-green-600 dark:text-green-400">{{ number_format($producto['cantidad'], 2) }}</span>
+                                        </td>
+                                        <td class="px-3 py-2 text-sm text-zinc-900 dark:text-zinc-300">
+                                            <span class="font-semibold text-purple-600 dark:text-purple-400">{{ $producto['lote'] }}</span>
                                         </td>
                                         <td class="px-3 py-2 text-sm text-zinc-900 dark:text-zinc-300">
                                             <span class="font-semibold">S/ {{ number_format($producto['precio'], 2) }}</span>
@@ -834,7 +985,7 @@
                                     <tr>
                                         <td colspan="5" class="px-3 py-6 text-center text-zinc-500 dark:text-zinc-400">
                                             <div class="flex flex-col items-center gap-2">
-                                                <flux:icon name="cube-transparent" class="w-6 h-6 text-zinc-400" />
+                                                <flux:icon name="cube" class="w-6 h-6 text-zinc-400" />
                                                 <p>No hay productos en este movimiento</p>
                                             </div>
                                         </td>
@@ -873,7 +1024,7 @@
                 @if($movimiento_detalle->observaciones)
                     <div class="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-xl p-4 border border-indigo-200 dark:border-indigo-800">
                         <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-3 flex items-center gap-2">
-                            <flux:icon name="chat-bubble-left-right" class="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                            <flux:icon name="chat-bubble-left" class="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                             Observaciones
                         </h3>
                         <div class="bg-white dark:bg-zinc-800 p-3 rounded-lg border border-indigo-100 dark:border-indigo-900/50">
@@ -900,7 +1051,7 @@
                             @endif
                         </div>
                         <div class="flex items-center gap-2">
-                            <flux:icon name="user-circle" class="w-4 h-4" />
+                            <flux:icon name="user" class="w-4 h-4" />
                             <span>{{ $movimiento_detalle->user->name }}</span>
                         </div>
                     </div>

@@ -32,6 +32,10 @@
                     <flux:navlist.item icon="folder-git-2" :href="route('crm.deals')" :current="request()->routeIs('crm.deals')" wire:navigate>{{ __('Negociaciones') }}</flux:navlist.item>
                     <flux:navlist.item icon="folder-git-2" :href="route('crm.activities')" :current="request()->routeIs('crm.activities')" wire:navigate>{{ __('Actividades') }}</flux:navlist.item>
                 </flux:navlist.group>
+                <flux:navlist.group :expanded="request()->routeIs('almacen.reportes.*')" expandable heading="Reportes">
+                    <flux:navlist.item icon="folder-git-2" :href="route('almacen.reportes.lotes')" :current="request()->routeIs('almacen.reportes.lotes')" wire:navigate>{{ __('Reportes') }}</flux:navlist.item>
+                    <flux:navlist.item icon="folder-git-2" :href="route('almacen.alertas.lotes')" :current="request()->routeIs('almacen.alertas.lotes')" wire:navigate>{{ __('Alertas') }}</flux:navlist.item>
+                </flux:navlist.group>
             </flux:navlist>
 
             <flux:spacer />

@@ -4,6 +4,8 @@ use App\Livewire\Almacen\MovimientoAlmacenIndex;
 use App\Livewire\Almacen\ProductoAlmacenIndex;
 use App\Livewire\Almacen\TransferenciaAlmacenIndex;
 use App\Livewire\Almacen\WarehouseAlmacenIndex;
+use App\Livewire\Almacen\ReporteLotesIndex;
+use App\Livewire\Almacen\AlertasLotesIndex;
 use App\Livewire\Catalogo\BrandCatalogoIndex;
 use App\Livewire\Catalogo\CategoryCatalogoIndex;
 use App\Livewire\Catalogo\LineCatalogoIndex;
@@ -42,6 +44,26 @@ Route::middleware(['auth'])->group(function () {
     Route::get('almacen/productos', ProductoAlmacenIndex::class)->name('almacen.products');
     Route::get('almacen/transferencias', TransferenciaAlmacenIndex::class)->name('almacen.transfers');
     Route::get('almacen/movimientos', MovimientoAlmacenIndex::class)->name('almacen.movements');
+
+    // Rutas de Lotes (Nuevas)
+    Route::get('almacen/reportes/lotes', ReporteLotesIndex::class)->name('almacen.reportes.lotes');
+    Route::get('almacen/alertas/lotes', AlertasLotesIndex::class)->name('almacen.alertas.lotes');
+
+    // Rutas adicionales para funcionalidades de lotes
+    Route::get('almacen/reportes/lotes/export', function () {
+        // Ruta para exportación de reportes de lotes
+        return redirect()->route('almacen.reportes.lotes');
+    })->name('almacen.reportes.lotes.export');
+
+    Route::get('almacen/lotes/{lote}/detalle', function ($lote) {
+        // Ruta para ver detalles específicos de un lote
+        return redirect()->route('almacen.reportes.lotes', ['lote_filter' => $lote]);
+    })->name('almacen.lotes.detalle');
+
+    Route::get('almacen/lotes/{lote}/movimientos', function ($lote) {
+        // Ruta para ver movimientos de un lote específico
+        return redirect()->route('almacen.movements', ['lote_filter' => $lote]);
+    })->name('almacen.lotes.movimientos');
 
     // Rutas del CRM
     Route::get('crm/leads', LeadCrmIndex::class)->name('crm.leads');

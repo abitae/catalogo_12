@@ -13,6 +13,16 @@ return new class extends Migration
             $table->string('code')->unique();
             $table->string('tipo_movimiento');
             $table->foreignId('almacen_id')->constrained('almacenes');
+            $table->foreignId('producto_id')->nullable()->constrained('productos_almacen');
+            $table->string('lote')->nullable();
+            $table->decimal('cantidad', 10, 2)->nullable();
+            $table->dateTime('fecha_movimiento')->nullable();
+            $table->string('motivo')->nullable();
+            $table->string('documento_referencia')->nullable();
+            $table->string('estado')->nullable();
+            $table->text('observaciones')->nullable();
+            $table->foreignId('usuario_id')->nullable()->constrained('users');
+            $table->foreignId('transferencia_id')->nullable()->constrained('transferencias_almacen');
             $table->foreignId('user_id')->constrained('users');
             $table->string('tipo_pago')->nullable();
             $table->string('tipo_documento')->nullable();
@@ -23,8 +33,6 @@ return new class extends Migration
             $table->date('fecha_emision');
             $table->date('fecha_vencimiento')->nullable();
             $table->json('productos')->nullable();
-            $table->string('estado')->nullable();
-            $table->text('observaciones')->nullable();
             $table->decimal('subtotal', 10, 2)->nullable();
             $table->decimal('descuento', 10, 2)->nullable();
             $table->decimal('impuesto', 10, 2)->nullable();

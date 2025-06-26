@@ -7,27 +7,23 @@ use App\Models\Catalogo\BrandCatalogo;
 use App\Models\Catalogo\CategoryCatalogo;
 use App\Models\Catalogo\LineCatalogo;
 use App\Models\Catalogo\ProductoCatalogo;
+use App\Traits\FileUploadTrait;
+use App\Traits\NotificationTrait;
+use App\Traits\TableTrait;
 use Livewire\Component;
-use Livewire\WithPagination;
-use Illuminate\Support\Facades\Storage;
-use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ProductoCatalogoIndex extends Component
 {
-    use WithPagination, WithFileUploads;
+    use TableTrait, FileUploadTrait, NotificationTrait;
 
-    public $search = '';
-    public $sortField = 'code';
-    public $sortDirection = 'asc';
-    public $perPage = 10;
-
-    // Filtros
+    // Filtros específicos de productos
     public $brand_filter = '';
     public $category_filter = '';
     public $line_filter = '';
     public $stock_status = '';
     public $isActive_filter = '';
+    public $price_range = '';
 
     // Modal Form Producto
     public $modal_form_producto = false;
@@ -64,20 +60,12 @@ class ProductoCatalogoIndex extends Component
     public $archivoPreview = null;
     public $archivo2Preview = null;
 
+    // Configuración de búsqueda
+    protected $searchFields = ['code', 'code_fabrica', 'code_peru', 'description'];
 
-    public function updatingSearch()
+    public function mount()
     {
-        $this->resetPage();
-    }
-
-    public function sortBy($field)
-    {
-        if ($this->sortField === $field) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            $this->sortField = $field;
-            $this->sortDirection = 'asc';
-        }
+        $this->sortField = 'code';
     }
 
     public function clearFilters()
@@ -91,14 +79,15 @@ class ProductoCatalogoIndex extends Component
             'line_filter',
             'perPage',
             'stock_status',
-            'isActive_filter'
+            'isActive_filter',
+            'price_range'
         ]);
         $this->resetPage();
     }
 
     public function render()
     {
-        $query = ProductoCatalogo::query()
+        $query = ProductoCatalogo::with(['brand', 'category', 'line'])
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('code', 'like', '%' . $this->search . '%')
@@ -126,16 +115,34 @@ class ProductoCatalogoIndex extends Component
             ->when($this->isActive_filter !== '', function ($query) {
                 $query->where('isActive', $this->isActive_filter);
             })
+            ->when($this->price_range, function ($query) {
+                $this->applyPriceRangeFilter($query);
+            })
             ->orderBy($this->sortField, $this->sortDirection);
 
         $this->productosExportar = $query->get();
 
         return view('livewire.catalogo.producto-catalogo-index', [
             'productos' => $query->paginate($this->perPage),
-            'brands' => BrandCatalogo::where('isActive', true)->get(),
-            'categories' => CategoryCatalogo::where('isActive', true)->get(),
-            'lines' => LineCatalogo::where('isActive', true)->get(),
+            'brands' => BrandCatalogo::where('isActive', true)->orderBy('name')->get(),
+            'categories' => CategoryCatalogo::where('isActive', true)->orderBy('name')->get(),
+            'lines' => LineCatalogo::where('isActive', true)->orderBy('name')->get(),
         ]);
+    }
+
+    protected function applyPriceRangeFilter($query)
+    {
+        switch ($this->price_range) {
+            case 'low':
+                $query->where('price_venta', '<=', 100);
+                break;
+            case 'medium':
+                $query->whereBetween('price_venta', [100, 500]);
+                break;
+            case 'high':
+                $query->where('price_venta', '>', 500);
+                break;
+        }
     }
 
     public function nuevoProducto()
@@ -177,7 +184,8 @@ class ProductoCatalogoIndex extends Component
     {
         $this->resetValidation();
         $this->producto_id = $id;
-        $this->producto = ProductoCatalogo::find($id);
+        $this->producto = ProductoCatalogo::with(['brand', 'category', 'line'])->findOrFail($id);
+
         $this->brand_id = $this->producto->brand_id;
         $this->category_id = $this->producto->category_id;
         $this->line_id = $this->producto->line_id;
@@ -214,33 +222,32 @@ class ProductoCatalogoIndex extends Component
     public function eliminarProducto($id)
     {
         $this->producto_id = $id;
-        $this->producto = ProductoCatalogo::find($id);
-        if ($this->producto) {
-            $this->modal_form_eliminar_producto = true;
-        }
+        $this->producto = ProductoCatalogo::findOrFail($id);
+        $this->modal_form_eliminar_producto = true;
     }
 
     public function confirmarEliminarProducto()
     {
-        if ($this->producto->image && Storage::exists($this->producto->image)) {
-            Storage::delete($this->producto->image);
+        try {
+            // Eliminar archivos asociados
+            $this->deleteFile($this->producto->image);
+            $this->deleteFile($this->producto->archivo);
+            $this->deleteFile($this->producto->archivo2);
+
+            $this->producto->delete();
+
+            $this->modal_form_eliminar_producto = false;
+            $this->reset(['producto_id', 'producto']);
+
+            $this->handleSuccess('Producto eliminado correctamente', 'eliminación de producto');
+        } catch (\Exception $e) {
+            $this->handleError($e, 'eliminación de producto');
         }
-        if ($this->producto->archivo && Storage::exists($this->producto->archivo)) {
-            Storage::delete($this->producto->archivo);
-        }
-        if ($this->producto->archivo2 && Storage::exists($this->producto->archivo2)) {
-            Storage::delete($this->producto->archivo2);
-        }
-        $this->producto->delete();
-        $this->modal_form_eliminar_producto = false;
-        $this->reset(['producto_id', 'producto']);
     }
 
     public function updatedTempImage()
     {
-        $this->validate([
-            'tempImage' => 'image|mimes:jpeg,png,jpg,gif,svg|max:20480'
-        ]);
+        $this->validate($this->validateImage('tempImage'));
 
         if ($this->tempImage) {
             $this->imagePreview = $this->tempImage->temporaryUrl();
@@ -249,9 +256,7 @@ class ProductoCatalogoIndex extends Component
 
     public function updatedTempArchivo()
     {
-        $this->validate([
-            'tempArchivo' => 'file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx|max:20480'
-        ]);
+        $this->validate($this->validateFile('tempArchivo'));
 
         if ($this->tempArchivo) {
             $this->archivoPreview = $this->tempArchivo->getClientOriginalName();
@@ -260,9 +265,7 @@ class ProductoCatalogoIndex extends Component
 
     public function updatedTempArchivo2()
     {
-        $this->validate([
-            'tempArchivo2' => 'file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx|max:20480'
-        ]);
+        $this->validate($this->validateFile('tempArchivo2'));
 
         if ($this->tempArchivo2) {
             $this->archivo2Preview = $this->tempArchivo2->getClientOriginalName();
@@ -271,9 +274,7 @@ class ProductoCatalogoIndex extends Component
 
     public function removeImage()
     {
-        if ($this->image && Storage::exists($this->image)) {
-            Storage::delete($this->image);
-        }
+        $this->deleteFile($this->image);
         $this->image = null;
         $this->tempImage = null;
         $this->imagePreview = null;
@@ -281,9 +282,7 @@ class ProductoCatalogoIndex extends Component
 
     public function removeArchivo()
     {
-        if ($this->archivo && Storage::exists($this->archivo)) {
-            Storage::delete($this->archivo);
-        }
+        $this->deleteFile($this->archivo);
         $this->archivo = null;
         $this->tempArchivo = null;
         $this->archivoPreview = null;
@@ -291,9 +290,7 @@ class ProductoCatalogoIndex extends Component
 
     public function removeArchivo2()
     {
-        if ($this->archivo2 && Storage::exists($this->archivo2)) {
-            Storage::delete($this->archivo2);
-        }
+        $this->deleteFile($this->archivo2);
         $this->archivo2 = null;
         $this->tempArchivo2 = null;
         $this->archivo2Preview = null;
@@ -301,30 +298,30 @@ class ProductoCatalogoIndex extends Component
 
     public function guardarProducto()
     {
-
         $ruleUniqueCode = $this->producto_id ? 'unique:producto_catalogos,code,' . $this->producto_id : 'unique:producto_catalogos,code';
 
-
-        // validaciones
+        // Validaciones
         $rules = [
             'brand_id' => 'required|exists:brand_catalogos,id',
             'category_id' => 'required|exists:category_catalogos,id',
             'line_id' => 'required|exists:line_catalogos,id',
-            'code' => $ruleUniqueCode,
+            'code' => 'required|string|max:255|' . $ruleUniqueCode,
             'code_fabrica' => 'required|string|max:255',
             'code_peru' => 'required|string|max:255',
-            'price_compra' => 'required|numeric',
-            'price_venta' => 'required|numeric',
-            'stock' => 'required|numeric',
-            'dias_entrega' => 'nullable|numeric',
-            'description' => 'required|string|max:255',
+            'price_compra' => 'required|numeric|min:0',
+            'price_venta' => 'required|numeric|min:0',
+            'stock' => 'required|integer|min:0',
+            'dias_entrega' => 'nullable|integer|min:0',
+            'description' => 'required|string|max:500',
             'garantia' => 'nullable|string|max:255',
-            'observaciones' => 'nullable|string|max:255',
-            'tempImage' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:20480',
-            'tempArchivo' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx|max:20480',
-            'tempArchivo2' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx|max:20480',
+            'observaciones' => 'nullable|string|max:1000',
             'isActive' => 'boolean',
         ];
+
+        // Agregar validaciones de archivos
+        $rules = array_merge($rules, $this->validateImage('tempImage'));
+        $rules = array_merge($rules, $this->validateFile('tempArchivo'));
+        $rules = array_merge($rules, $this->validateFile('tempArchivo2'));
 
         $messages = [
             'brand_id.required' => 'Por favor, seleccione una marca',
@@ -338,102 +335,98 @@ class ProductoCatalogoIndex extends Component
             'code_fabrica.required' => 'Por favor, ingrese el código de fábrica',
             'code_peru.required' => 'Por favor, ingrese el código Perú',
             'price_compra.required' => 'Por favor, ingrese el precio de compra',
+            'price_compra.min' => 'El precio de compra debe ser mayor o igual a 0',
             'price_venta.required' => 'Por favor, ingrese el precio de venta',
+            'price_venta.min' => 'El precio de venta debe ser mayor o igual a 0',
             'stock.required' => 'Por favor, ingrese la cantidad en stock',
+            'stock.min' => 'El stock debe ser mayor o igual a 0',
             'description.required' => 'Por favor, ingrese la descripción del producto',
-            'isActive.required' => 'Por favor, seleccione el estado del producto',
-            'isActive.boolean' => 'El estado seleccionado no es válido',
-            'tempImage.image' => 'El archivo debe ser una imagen válida',
-            'tempImage.mimes' => 'La imagen debe ser en formato: jpeg, png, jpg, gif o svg',
-            'tempImage.max' => 'La imagen no debe superar los 20MB',
-            'tempArchivo.file' => 'El archivo adjunto no es válido',
-            'tempArchivo.mimes' => 'El archivo debe ser en formato: pdf, doc, docx, xls, xlsx, ppt o pptx',
-            'tempArchivo.max' => 'El archivo no debe superar los 20MB',
-            'tempArchivo2.file' => 'El segundo archivo adjunto no es válido',
-            'tempArchivo2.mimes' => 'El segundo archivo debe ser en formato: pdf, doc, docx, xls, xlsx, ppt o pptx',
-            'tempArchivo2.max' => 'El segundo archivo no debe superar los 20MB',
-            'observaciones.string' => 'Las observaciones deben ser texto',
-            'observaciones.max' => 'Las observaciones no deben exceder los 255 caracteres',
-            'dias_entrega.numeric' => 'Los días de entrega deben ser un número',
-            'dias_entrega.max' => 'Los días de entrega no deben exceder los 255 caracteres',
-            'garantia.string' => 'La garantía debe ser texto',
-            'garantia.max' => 'La garantía no debe exceder los 255 caracteres'
+            'description.max' => 'La descripción no debe exceder los 500 caracteres',
+            'dias_entrega.min' => 'Los días de entrega deben ser mayor o igual a 0',
+            'garantia.max' => 'La garantía no debe exceder los 255 caracteres',
+            'observaciones.max' => 'Las observaciones no deben exceder los 1000 caracteres',
         ];
+
+        // Agregar mensajes de validación de archivos
+        $messages = array_merge($messages, $this->getFileValidationMessages());
 
         $data = $this->validate($rules, $messages);
 
-        // Procesar imagen
-        if ($this->tempImage) {
-            // Eliminar imagen anterior si existe
-            if ($this->image && Storage::exists($this->image)) {
-                Storage::delete($this->image);
+        try {
+            // Procesar archivos usando el trait
+            $data['image'] = $this->processImage($this->tempImage, $this->image, 'productos/images');
+            $data['archivo'] = $this->processFile($this->tempArchivo, $this->archivo, 'productos/archivos');
+            $data['archivo2'] = $this->processFile($this->tempArchivo2, $this->archivo2, 'productos/archivos');
+
+            if ($this->producto_id) {
+                $producto = ProductoCatalogo::findOrFail($this->producto_id);
+                $producto->update($data);
+                $message = 'Producto actualizado correctamente';
+                $context = 'actualización de producto';
+            } else {
+                ProductoCatalogo::create($data);
+                $message = 'Producto creado correctamente';
+                $context = 'creación de producto';
             }
-            $imagePath = $this->tempImage->store('productos/images', 'public');
-            $data['image'] = $imagePath;
-        }
 
-        // Procesar archivo 1
-        if ($this->tempArchivo) {
-            // Eliminar archivo anterior si existe
-            if ($this->archivo && Storage::exists($this->archivo)) {
-                Storage::delete($this->archivo);
-            }
-            $archivoPath = $this->tempArchivo->store('productos/archivos', 'public');
-            $data['archivo'] = $archivoPath;
-        }
+            $this->modal_form_producto = false;
+            $this->reset([
+                'producto_id',
+                'producto',
+                'tempImage',
+                'tempArchivo',
+                'tempArchivo2',
+                'imagePreview',
+                'archivoPreview',
+                'archivo2Preview',
+                'image',
+                'archivo',
+                'archivo2',
+                'caracteristicas',
+                'isActive',
+                'brand_id',
+                'category_id',
+                'line_id',
+                'code',
+                'code_fabrica',
+                'code_peru',
+                'price_compra',
+                'price_venta',
+                'stock',
+                'dias_entrega',
+                'description',
+                'garantia',
+                'observaciones',
+            ]);
+            $this->resetValidation();
 
-        // Procesar archivo 2
-        if ($this->tempArchivo2) {
-            // Eliminar archivo anterior si existe
-            if ($this->archivo2 && Storage::exists($this->archivo2)) {
-                Storage::delete($this->archivo2);
-            }
-            $archivo2Path = $this->tempArchivo2->store('productos/archivos', 'public');
-            $data['archivo2'] = $archivo2Path;
+            $this->handleSuccess($message, $context);
+        } catch (\Exception $e) {
+            $this->handleError($e, 'guardado de producto');
         }
-
-        if ($this->producto_id) {
-            $producto = ProductoCatalogo::find($this->producto_id);
-            $producto->update($data);
-        } else {
-            ProductoCatalogo::create($data);
-        }
-
-        $this->modal_form_producto = false;
-        $this->reset([
-            'producto_id',
-            'producto',
-            'tempImage',
-            'tempArchivo',
-            'tempArchivo2',
-            'imagePreview',
-            'archivoPreview',
-            'archivo2Preview',
-            'image',
-            'archivo',
-            'archivo2',
-            'caracteristicas',
-            'isActive',
-            'brand_id',
-            'category_id',
-            'line_id',
-            'code',
-            'code_fabrica',
-            'code_peru',
-            'price_compra',
-            'price_venta',
-            'stock',
-            'dias_entrega',
-            'description',
-            'garantia',
-            'observaciones',
-        ]);
-        $this->resetValidation();
     }
 
     public function exportarProductos()
     {
-        return Excel::download(new ProducCatalogoExport($this->productosExportar), 'productos_' . date('Y-m-d_H-i-s') . '.xlsx');
-        $this->reset(['productosExportar']);
+        try {
+            return Excel::download(
+                new ProducCatalogoExport($this->productosExportar),
+                'productos_' . date('Y-m-d_H-i-s') . '.xlsx'
+            );
+        } catch (\Exception $e) {
+            $this->handleError($e, 'exportación de productos');
+        }
+    }
+
+    public function toggleProductStatus($id)
+    {
+        try {
+            $producto = ProductoCatalogo::findOrFail($id);
+            $producto->update(['isActive' => !$producto->isActive]);
+
+            $this->handleSuccess('Estado del producto actualizado correctamente', 'cambio de estado');
+        } catch (\Exception $e) {
+            $this->handleError($e, 'cambio de estado');
+        }
     }
 }

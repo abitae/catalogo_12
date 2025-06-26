@@ -13,6 +13,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class MovimientoAlmacenIndex extends Component
 {
@@ -71,10 +72,12 @@ class MovimientoAlmacenIndex extends Component
     public $productos_seleccionados = [];
     public $cantidades = [];
     public $precios = [];
+    public $lotes = [];
     public $productos_disponibles;
     public $producto_seleccionado = null;
     public $cantidad_producto = 1;
     public $precio_producto = 0;
+    public $lote_producto = '';
 
     protected function rules()
     {
@@ -171,6 +174,7 @@ class MovimientoAlmacenIndex extends Component
         $this->productos_seleccionados = [];
         $this->cantidades = [];
         $this->precios = [];
+        $this->lotes = [];
         $this->asegurarProductoSeleccionado();
         $this->resetForm();
         $this->actualizarProductosDisponibles();
@@ -200,7 +204,8 @@ class MovimientoAlmacenIndex extends Component
             'movimiento_id',
             'producto_seleccionado',
             'cantidad_producto',
-            'precio_producto'
+            'precio_producto',
+            'lote_producto'
         ]);
         $this->fecha_emision = now()->format('Y-m-d');
         $this->tipo_movimiento = 'entrada';
@@ -209,6 +214,7 @@ class MovimientoAlmacenIndex extends Component
         $this->productos_seleccionados = [];
         $this->cantidades = [];
         $this->precios = [];
+        $this->lotes = [];
         $this->asegurarProductoSeleccionado();
     }
 
@@ -419,7 +425,8 @@ class MovimientoAlmacenIndex extends Component
                     'nombre' => $producto->nombre,
                     'cantidad' => $this->cantidades[$productoId],
                     'precio' => $this->precios[$productoId],
-                    'unidad_medida' => $producto->unidad_medida
+                    'unidad_medida' => $producto->unidad_medida,
+                    'lote' => $this->lotes[$productoId] ?? null
                 ];
             })
             ->toArray();
@@ -447,18 +454,52 @@ class MovimientoAlmacenIndex extends Component
         ];
 
         try {
+            DB::beginTransaction();
+
             if ($this->movimiento_id) {
                 $movimiento->update($data);
                 $mensaje = 'Movimiento actualizado correctamente.';
+
+                Log::info('Movimiento actualizado', [
+                    'user_id' => Auth::id(),
+                    'movimiento_id' => $this->movimiento_id,
+                    'code' => $this->code,
+                    'tipo_movimiento' => $this->tipo_movimiento,
+                    'almacen_id' => $this->almacen_id,
+                    'total' => $this->total,
+                    'productos_count' => count($productos)
+                ]);
             } else {
-                MovimientoAlmacen::create($data);
+                $movimiento = MovimientoAlmacen::create($data);
                 $mensaje = 'Movimiento creado correctamente.';
+
+                Log::info('Movimiento creado', [
+                    'user_id' => Auth::id(),
+                    'movimiento_id' => $movimiento->id,
+                    'code' => $this->code,
+                    'tipo_movimiento' => $this->tipo_movimiento,
+                    'almacen_id' => $this->almacen_id,
+                    'total' => $this->total,
+                    'productos_count' => count($productos)
+                ]);
             }
+
+            DB::commit();
 
             $this->modal_form_movimiento = false;
             $this->resetForm();
             session()->flash('message', $mensaje);
         } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error al guardar movimiento', [
+                'user_id' => Auth::id(),
+                'movimiento_id' => $this->movimiento_id,
+                'code' => $this->code,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             session()->flash('error', 'Error al guardar el movimiento: ' . $e->getMessage());
         }
     }
@@ -486,6 +527,85 @@ class MovimientoAlmacenIndex extends Component
         }
 
         $this->productos_disponibles = $productos->get() ?: collect();
+    }
+
+    /**
+     * Actualiza los productos disponibles basándose en el lote seleccionado
+     */
+    public function actualizarProductosPorLote()
+    {
+        if (!$this->almacen_id || empty($this->lote_producto)) {
+            $this->actualizarProductosDisponibles();
+            return;
+        }
+
+        $productos = ProductoAlmacen::query()
+            ->where('estado', true)
+            ->where('almacen_id', $this->almacen_id)
+            ->where('lote', $this->lote_producto);
+
+        // Si es salida, solo mostrar productos con stock disponible en el lote
+        if ($this->tipo_movimiento === 'salida') {
+            $productos->where('stock_actual', '>', 0);
+        }
+
+        $this->productos_disponibles = $productos->get() ?: collect();
+    }
+
+    /**
+     * Obtiene los lotes disponibles en el almacén seleccionado
+     */
+    public function getLotesDisponibles()
+    {
+        if (!$this->almacen_id) {
+            return collect();
+        }
+
+        return ProductoAlmacen::where('almacen_id', $this->almacen_id)
+            ->where('estado', true)
+            ->whereNotNull('lote')
+            ->where('lote', '!=', '')
+            ->distinct()
+            ->pluck('lote')
+            ->filter();
+    }
+
+    /**
+     * Obtiene productos disponibles en un lote específico
+     */
+    public function getProductosEnLote($lote)
+    {
+        if (!$this->almacen_id || empty($lote)) {
+            return collect();
+        }
+
+        $productos = ProductoAlmacen::where('almacen_id', $this->almacen_id)
+            ->where('estado', true)
+            ->where('lote', $lote);
+
+        if ($this->tipo_movimiento === 'salida') {
+            $productos->where('stock_actual', '>', 0);
+        }
+
+        return $productos->get();
+    }
+
+    /**
+     * Sugiere automáticamente productos cuando se selecciona un lote
+     */
+    public function updatedLoteProducto()
+    {
+        if (!empty($this->lote_producto)) {
+            $this->actualizarProductosPorLote();
+
+            // Si solo hay un producto en el lote, seleccionarlo automáticamente
+            if ($this->productos_disponibles->count() === 1) {
+                $this->producto_seleccionado = $this->productos_disponibles->first()->id;
+                $this->updatedProductoSeleccionado();
+            }
+        } else {
+            $this->actualizarProductosDisponibles();
+        }
     }
 
     public function agregarProducto()
@@ -526,22 +646,42 @@ class MovimientoAlmacenIndex extends Component
                             return;
                         }
 
-                        if (!$producto->tieneStockSuficiente($value)) {
-                            $fail("La cantidad excede el stock disponible ({$producto->stock_actual})");
+                        // Si se especifica un lote, validar stock por lote
+                        if (!empty($this->lote_producto)) {
+                            $stockLote = ProductoAlmacen::tieneStockSuficienteEnLoteYAlmacen(
+                                $this->lote_producto,
+                                $this->almacen_id,
+                                $value
+                            );
+
+                            if (!$stockLote) {
+                                $stockDisponible = ProductoAlmacen::getStockTotalPorLoteYAlmacen(
+                                    $this->lote_producto,
+                                    $this->almacen_id
+                                );
+                                $fail("Stock insuficiente en lote {$this->lote_producto}. Disponible: {$stockDisponible}, Solicitado: {$value}");
+                            }
+                        } else {
+                            // Validación tradicional sin lote específico
+                            if (!$producto->tieneStockSuficiente($value)) {
+                                $fail("La cantidad excede el stock disponible ({$producto->stock_actual})");
+                            }
                         }
                     }
                 }
             ],
-            'precio_producto' => 'required|numeric|min:0'
+            'precio_producto' => 'required|numeric|min:0',
+            'lote_producto' => 'nullable|string|max:255'
         ]);
 
         if (!in_array($this->producto_seleccionado, $this->productos_seleccionados)) {
             $this->productos_seleccionados[] = $this->producto_seleccionado;
             $this->cantidades[$this->producto_seleccionado] = $this->cantidad_producto;
             $this->precios[$this->producto_seleccionado] = $this->precio_producto;
+            $this->lotes[$this->producto_seleccionado] = $this->lote_producto;
         }
 
-        $this->reset(['producto_seleccionado', 'cantidad_producto', 'precio_producto']);
+        $this->reset(['producto_seleccionado', 'cantidad_producto', 'precio_producto', 'lote_producto']);
         $this->calcularTotales();
     }
 
@@ -549,7 +689,7 @@ class MovimientoAlmacenIndex extends Component
     {
         $key = array_search($productoId, $this->productos_seleccionados);
         if ($key !== false) {
-            unset($this->productos_seleccionados[$key], $this->cantidades[$productoId], $this->precios[$productoId]);
+            unset($this->productos_seleccionados[$key], $this->cantidades[$productoId], $this->precios[$productoId], $this->lotes[$productoId]);
             $this->productos_seleccionados = array_values($this->productos_seleccionados);
         }
         $this->calcularTotales();
@@ -558,20 +698,22 @@ class MovimientoAlmacenIndex extends Component
     public function updatedAlmacenId()
     {
         $this->actualizarProductosDisponibles();
-        $this->reset(['productos_seleccionados', 'cantidades', 'precios']);
+        $this->reset(['productos_seleccionados', 'cantidades', 'precios', 'lotes']);
         $this->producto_seleccionado = null;
         $this->cantidad_producto = 1;
         $this->precio_producto = 0;
+        $this->lote_producto = '';
         $this->calcularTotales();
     }
 
     public function updatedTipoMovimiento()
     {
         $this->actualizarProductosDisponibles();
-        $this->reset(['productos_seleccionados', 'cantidades', 'precios']);
+        $this->reset(['productos_seleccionados', 'cantidades', 'precios', 'lotes']);
         $this->producto_seleccionado = null;
         $this->cantidad_producto = 1;
         $this->precio_producto = 0;
+        $this->lote_producto = '';
         $this->calcularTotales();
     }
 
@@ -671,11 +813,17 @@ class MovimientoAlmacenIndex extends Component
         if (!isset($this->precio_producto)) {
             $this->precio_producto = 0;
         }
+
+        if (!isset($this->lote_producto)) {
+            $this->lote_producto = '';
+        }
     }
 
     public function completarMovimiento($id)
     {
         try {
+            DB::beginTransaction();
+
             $movimiento = MovimientoAlmacen::findOrFail($id);
 
             if ($movimiento->estado !== 'pendiente') {
@@ -683,18 +831,64 @@ class MovimientoAlmacenIndex extends Component
                 return;
             }
 
+            // Validar stock antes de completar
+            foreach ($movimiento->productos as $producto) {
+                $productoModel = ProductoAlmacen::find($producto['id']);
+                if ($productoModel) {
+                    if ($movimiento->tipo_movimiento === 'salida') {
+                        if (!$productoModel->tieneStockSuficiente($producto['cantidad'])) {
+                            throw new \Exception("Stock insuficiente para el producto {$producto['code']}. Disponible: {$productoModel->stock_actual}, Solicitado: {$producto['cantidad']}");
+                        }
+                    }
+                }
+            }
+
             // Actualizar stock de productos cuando se completa el movimiento
             foreach ($movimiento->productos as $producto) {
                 $productoModel = ProductoAlmacen::find($producto['id']);
                 if ($productoModel) {
+                    $stockAnterior = $productoModel->stock_actual;
                     $productoModel->actualizarStock($producto['cantidad'], $movimiento->tipo_movimiento);
+
+                    Log::info('Stock actualizado al completar movimiento', [
+                        'user_id' => Auth::id(),
+                        'movimiento_id' => $movimiento->id,
+                        'producto_id' => $producto['id'],
+                        'producto_code' => $producto['code'],
+                        'tipo_movimiento' => $movimiento->tipo_movimiento,
+                        'cantidad' => $producto['cantidad'],
+                        'stock_anterior' => $stockAnterior,
+                        'stock_nuevo' => $productoModel->stock_actual,
+                        'lote' => $producto['lote'] ?? null
+                    ]);
                 }
             }
 
             $movimiento->estado = 'completado';
             $movimiento->save();
+
+            DB::commit();
+
+            Log::info('Movimiento completado', [
+                'user_id' => Auth::id(),
+                'movimiento_id' => $movimiento->id,
+                'code' => $movimiento->code,
+                'tipo_movimiento' => $movimiento->tipo_movimiento,
+                'almacen_id' => $movimiento->almacen_id,
+                'total' => $movimiento->total
+            ]);
+
             session()->flash('message', 'Movimiento completado correctamente. El stock ha sido actualizado.');
         } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error al completar movimiento', [
+                'user_id' => Auth::id(),
+                'movimiento_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             session()->flash('error', 'Error al completar el movimiento: ' . $e->getMessage());
         }
     }
@@ -702,6 +896,8 @@ class MovimientoAlmacenIndex extends Component
     public function cancelarMovimiento($id)
     {
         try {
+            DB::beginTransaction();
+
             $movimiento = MovimientoAlmacen::findOrFail($id);
 
             if ($movimiento->estado !== 'pendiente') {
@@ -709,22 +905,31 @@ class MovimientoAlmacenIndex extends Component
                 return;
             }
 
-            // Si el movimiento ya fue completado, restaurar el stock
-            if ($movimiento->estado === 'completado') {
-                foreach ($movimiento->productos as $producto) {
-                    $productoModel = ProductoAlmacen::find($producto['id']);
-                    if ($productoModel) {
-                        // Si era entrada, restar; si era salida, sumar
-                        $tipoAjuste = $movimiento->tipo_movimiento === 'entrada' ? 'salida' : 'entrada';
-                        $productoModel->actualizarStock($producto['cantidad'], $tipoAjuste);
-                    }
-                }
-            }
-
             $movimiento->estado = 'cancelado';
             $movimiento->save();
+
+            DB::commit();
+
+            Log::info('Movimiento cancelado', [
+                'user_id' => Auth::id(),
+                'movimiento_id' => $movimiento->id,
+                'code' => $movimiento->code,
+                'tipo_movimiento' => $movimiento->tipo_movimiento,
+                'almacen_id' => $movimiento->almacen_id,
+                'total' => $movimiento->total
+            ]);
+
             session()->flash('message', 'Movimiento cancelado correctamente.');
         } catch (\Exception $e) {
+            DB::rollBack();
+
+            Log::error('Error al cancelar movimiento', [
+                'user_id' => Auth::id(),
+                'movimiento_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             session()->flash('error', 'Error al cancelar el movimiento: ' . $e->getMessage());
         }
     }

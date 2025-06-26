@@ -28,7 +28,8 @@ class TransferenciaAlmacenFactory extends Factory
                     'code' => $producto->code,
                     'nombre' => $producto->nombre,
                     'cantidad' => $this->faker->numberBetween(1, 10),
-                    'unidad_medida' => $producto->unidad_medida
+                    'unidad_medida' => $producto->unidad_medida,
+                    'lote' => $producto->lote ?? 'LOTE-' . $this->faker->unique()->numberBetween(1000, 9999) . '-' . $this->faker->date('Y')
                 ];
             })->toArray(),
             'fecha_transferencia' => $this->faker->dateTimeBetween('-1 month', 'now'),

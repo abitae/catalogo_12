@@ -20,6 +20,7 @@ return new class extends Migration
             $table->decimal('stock_actual', 10, 2);
             $table->decimal('precio_unitario', 10, 2);
             $table->foreignId('almacen_id')->constrained('almacenes');
+            $table->string('lote')->nullable();
             $table->boolean('estado')->default(true);
             $table->string('codigo_barras')->nullable();
             $table->string('marca')->nullable();

@@ -137,7 +137,7 @@ class TransferenciaAlmacen extends Model
             $errores[] = 'La transferencia debe contener al menos un producto';
         }
 
-        // Validar stock disponible
+        // Validar stock disponible por lote
         foreach ($this->productos as $producto) {
             $productoModel = ProductoAlmacen::where('almacen_id', $this->almacen_origen_id)
                 ->where('id', $producto['id'])
@@ -148,8 +148,26 @@ class TransferenciaAlmacen extends Model
                 continue;
             }
 
-            if (!$productoModel->tieneStockSuficiente($producto['cantidad'])) {
-                $errores[] = "Stock insuficiente para {$producto['nombre']}. Disponible: {$productoModel->stock_actual}, Solicitado: {$producto['cantidad']}";
+            // Si se especifica un lote, validar stock por lote
+            if (!empty($producto['lote'])) {
+                $stockLote = ProductoAlmacen::tieneStockSuficienteEnLoteYAlmacen(
+                    $producto['lote'],
+                    $this->almacen_origen_id,
+                    $producto['cantidad']
+                );
+
+                if (!$stockLote) {
+                    $stockDisponible = ProductoAlmacen::getStockTotalPorLoteYAlmacen(
+                        $producto['lote'],
+                        $this->almacen_origen_id
+                    );
+                    $errores[] = "Stock insuficiente en lote {$producto['lote']} para {$producto['nombre']}. Disponible: {$stockDisponible}, Solicitado: {$producto['cantidad']}";
+                }
+            } else {
+                // Validación tradicional sin lote específico
+                if (!$productoModel->tieneStockSuficiente($producto['cantidad'])) {
+                    $errores[] = "Stock insuficiente para {$producto['nombre']}. Disponible: {$productoModel->stock_actual}, Solicitado: {$producto['cantidad']}";
+                }
             }
         }
 
@@ -328,6 +346,9 @@ class TransferenciaAlmacen extends Model
     {
         $productoDestino = ProductoAlmacen::where('almacen_id', $this->almacen_destino_id)
             ->where('id', $producto['id'])
+            ->when(!empty($producto['lote']), function ($query) use ($producto) {
+                return $query->where('lote', $producto['lote']);
+            })
             ->first();
 
         if ($productoDestino) {
@@ -337,7 +358,7 @@ class TransferenciaAlmacen extends Model
             // Producto no existe en destino, crearlo
             $productoOrigen = ProductoAlmacen::find($producto['id']);
             if ($productoOrigen) {
-                $this->crearProductoEnDestino($productoOrigen, $producto['cantidad']);
+                $this->crearProductoEnDestino($productoOrigen, $producto['cantidad'], $producto['lote'] ?? null);
             }
         }
     }
@@ -347,7 +368,7 @@ class TransferenciaAlmacen extends Model
      * @param ProductoAlmacen $productoOrigen Producto del almacén origen
      * @param float $cantidad Cantidad a transferir
      */
-    private function crearProductoEnDestino($productoOrigen, $cantidad)
+    private function crearProductoEnDestino($productoOrigen, $cantidad, $lote = null)
     {
         ProductoAlmacen::create([
             'code' => $productoOrigen->code,
@@ -364,7 +385,8 @@ class TransferenciaAlmacen extends Model
             'codigo_barras' => $productoOrigen->codigo_barras,
             'marca' => $productoOrigen->marca,
             'modelo' => $productoOrigen->modelo,
-            'imagen' => $productoOrigen->imagen
+            'imagen' => $productoOrigen->imagen,
+            'lote' => $lote
         ]);
     }
 
@@ -374,14 +396,23 @@ class TransferenciaAlmacen extends Model
      */
     private function reservarStockOrigen($producto)
     {
-        $productoOrigen = ProductoAlmacen::where('almacen_id', $this->almacen_origen_id)
-            ->where('id', $producto['id'])
-            ->first();
+        $query = ProductoAlmacen::where('almacen_id', $this->almacen_origen_id)
+            ->where('id', $producto['id']);
+
+        // Si se especifica un lote, filtrar por lote
+        if (!empty($producto['lote'])) {
+            $query->where('lote', $producto['lote']);
+        }
+
+        $productoOrigen = $query->first();
 
         if ($productoOrigen && $productoOrigen->tieneStockSuficiente($producto['cantidad'])) {
             $productoOrigen->actualizarStock($producto['cantidad'], 'salida');
         } else {
-            throw new Exception("Stock insuficiente para {$producto['nombre']}");
+            $mensaje = !empty($producto['lote'])
+                ? "Stock insuficiente en lote {$producto['lote']} para {$producto['nombre']}"
+                : "Stock insuficiente para {$producto['nombre']}";
+            throw new Exception($mensaje);
         }
     }
 
@@ -391,9 +422,15 @@ class TransferenciaAlmacen extends Model
      */
     private function restaurarStockOrigen($producto)
     {
-        $productoOrigen = ProductoAlmacen::where('almacen_id', $this->almacen_origen_id)
-            ->where('id', $producto['id'])
-            ->first();
+        $query = ProductoAlmacen::where('almacen_id', $this->almacen_origen_id)
+            ->where('id', $producto['id']);
+
+        // Si se especifica un lote, filtrar por lote
+        if (!empty($producto['lote'])) {
+            $query->where('lote', $producto['lote']);
+        }
+
+        $productoOrigen = $query->first();
 
         if ($productoOrigen) {
             $productoOrigen->actualizarStock($producto['cantidad'], 'entrada');
@@ -437,6 +474,7 @@ class TransferenciaAlmacen extends Model
                 'tipo_movimiento' => 'salida',
                 'almacen_id' => $this->almacen_origen_id,
                 'producto_id' => $producto['id'],
+                'lote' => $producto['lote'] ?? null,
                 'cantidad' => $producto['cantidad'],
                 'fecha_movimiento' => now(),
                 'motivo' => "Transferencia {$this->code} - Salida",
@@ -453,6 +491,7 @@ class TransferenciaAlmacen extends Model
                 'tipo_movimiento' => 'entrada',
                 'almacen_id' => $this->almacen_destino_id,
                 'producto_id' => $producto['id'],
+                'lote' => $producto['lote'] ?? null,
                 'cantidad' => $producto['cantidad'],
                 'fecha_movimiento' => now(),
                 'motivo' => "Transferencia {$this->code} - Entrada",

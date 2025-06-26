@@ -23,6 +23,7 @@ class ProductoAlmacenFactory extends Factory
             'stock_actual' => $this->faker->randomFloat(2, 20, 100),
             'precio_unitario' => $this->faker->randomFloat(2, 10, 1000),
             'almacen_id' => WarehouseAlmacen::inRandomOrder()->first()->id,
+            'lote' => 'LOTE-' . $this->faker->unique()->numberBetween(1000, 9999) . '-' . $this->faker->date('Y'),
             'estado' => true,
             'codigo_barras' => $this->faker->ean13,
             'marca' => $this->faker->company,
