@@ -12,22 +12,23 @@ return new class extends Migration
             $table->id();
             $table->string('nombre');
             $table->string('estado')->default('nueva');
-            $table->unsignedBigInteger('tipo_negocio_id');
-            $table->unsignedBigInteger('marca_id');
-            $table->unsignedBigInteger('lead_id');
             $table->decimal('valor', 10, 2);
             $table->string('etapa');
-            $table->integer('probabilidad');
+            $table->integer('probabilidad')->nullable();
             $table->timestamp('fecha_cierre_esperada')->nullable();
+            $table->string('fuente')->nullable();
             $table->text('descripcion')->nullable();
-            $table->unsignedBigInteger('asignado_a')->nullable();
+            $table->text('notas')->nullable();
+            $table->string('image')->nullable();
+            $table->string('archivo')->nullable();
             $table->timestamp('ultima_fecha_actividad')->nullable();
+            $table->foreignId('tipo_negocio_id')->nullable()->constrained('tipos_negocio_crm');
+            $table->foreignId('marca_id')->nullable()->constrained('marcas_crm');
+            $table->foreignId('customer_id')->constrained('customers');
+            $table->foreignId('contact_id')->nullable()->constrained('contacts_crm');
+            $table->foreignId('user_id')->nullable()->constrained('users');
             $table->timestamps();
             $table->softDeletes();
-
-            $table->foreign('tipo_negocio_id')->references('id')->on('tipos_negocio_crm');
-            $table->foreign('marca_id')->references('id')->on('marcas_crm');
-            $table->foreign('lead_id')->references('id')->on('leads_crm');
         });
     }
 

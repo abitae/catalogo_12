@@ -10,9 +10,9 @@ return new class extends Migration
     {
         Schema::create('producto_catalogos', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('brand_id')->constrained('brand_catalogos')->onDelete('cascade');
-            $table->foreignId('category_id')->constrained('category_catalogos')->onDelete('cascade');
-            $table->foreignId('line_id')->constrained('line_catalogos')->onDelete('cascade');
+            $table->foreignId('brand_id')->constrained('brand_catalogos');
+            $table->foreignId('category_id')->constrained('category_catalogos');
+            $table->foreignId('line_id')->constrained('line_catalogos');
             $table->string('code');
             $table->string('code_fabrica')->nullable();
             $table->string('code_peru')->nullable();

@@ -13,21 +13,15 @@ return new class extends Migration
             $table->string('tipo');
             $table->string('asunto');
             $table->text('descripcion')->nullable();
-            $table->timestamp('fecha_vencimiento')->nullable();
             $table->string('estado')->default('pendiente');
             $table->string('prioridad')->default('normal');
-            $table->unsignedBigInteger('lead_id')->nullable();
-            $table->unsignedBigInteger('opportunity_id')->nullable();
-            $table->unsignedBigInteger('contact_id')->nullable();
-            $table->unsignedBigInteger('deal_id')->nullable();
-            $table->unsignedBigInteger('asignado_a')->nullable();
-            $table->timestamp('fecha_completado')->nullable();
+            $table->string('image')->nullable();
+            $table->string('archivo')->nullable();
+            $table->foreignId('opportunity_id')->constrained('opportunities_crm');
+            $table->foreignId('contact_id')->constrained('contacts_crm');
+            $table->foreignId('user_id')->constrained('users')->nullable();
             $table->timestamps();
             $table->softDeletes();
-
-            $table->foreign('lead_id')->references('id')->on('leads_crm');
-            $table->foreign('opportunity_id')->references('id')->on('opportunities_crm');
-            $table->foreign('deal_id')->references('id')->on('deals_crm');
         });
     }
 

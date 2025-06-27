@@ -3,28 +3,29 @@
 namespace App\Livewire\Crm;
 
 use App\Models\Crm\ActivityCrm;
-use App\Models\Crm\LeadCrm;
 use App\Models\Crm\OpportunityCrm;
-use App\Models\Crm\DealCrm;
+use App\Models\Crm\ContactCrm;
+use App\Models\User;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\WithFileUploads;
 
 class ActivityCrmIndex extends Component
 {
-    use WithPagination;
+    use WithPagination, WithFileUploads;
 
     public $search = '';
-    public $sortField = 'fecha_vencimiento';
-    public $sortDirection = 'asc';
+    public $sortField = 'created_at';
+    public $sortDirection = 'desc';
     public $perPage = 10;
 
     // Filtros
     public $tipo_filter = '';
     public $estado_filter = '';
     public $prioridad_filter = '';
-    public $lead_filter = '';
     public $opportunity_filter = '';
-    public $deal_filter = '';
+    public $contact_filter = '';
+    public $user_filter = '';
 
     // Modal Form Actividad
     public $modal_form_activity = false;
@@ -36,14 +37,69 @@ class ActivityCrmIndex extends Component
     public $tipo = '';
     public $asunto = '';
     public $descripcion = '';
-    public $fecha_vencimiento = '';
     public $estado = 'pendiente';
     public $prioridad = 'normal';
-    public $lead_id = '';
     public $opportunity_id = '';
-    public $deal_id = '';
-    public $asignado_a = '';
-    public $fecha_completado = '';
+    public $contact_id = '';
+    public $user_id = '';
+    public $image = '';
+    public $archivo = '';
+
+    // Manejo de archivos
+    public $tempImage = null;
+    public $tempArchivo = null;
+    public $imagePreview = null;
+
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'tipo_filter' => ['except' => ''],
+        'estado_filter' => ['except' => ''],
+        'prioridad_filter' => ['except' => ''],
+        'opportunity_filter' => ['except' => ''],
+        'contact_filter' => ['except' => ''],
+        'user_filter' => ['except' => ''],
+        'sortField' => ['except' => 'created_at'],
+        'sortDirection' => ['except' => 'desc'],
+        'perPage' => ['except' => 10],
+    ];
+
+    protected function rules()
+    {
+        return [
+            'tipo' => 'required|string|in:llamada,reunion,email,tarea',
+            'asunto' => 'required|string|max:255',
+            'descripcion' => 'nullable|string',
+            'estado' => 'required|string|in:pendiente,completada,cancelada',
+            'prioridad' => 'required|string|in:baja,normal,alta,urgente',
+            'opportunity_id' => 'nullable|exists:opportunities_crm,id',
+            'contact_id' => 'nullable|exists:contacts_crm,id',
+            'user_id' => 'nullable|exists:users,id',
+            'tempImage' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:20480',
+            'tempArchivo' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx|max:10240',
+        ];
+    }
+
+    protected function messages()
+    {
+        return [
+            'tipo.required' => 'El tipo es requerido',
+            'tipo.in' => 'El tipo seleccionado no es válido',
+            'asunto.required' => 'El asunto es requerido',
+            'estado.required' => 'El estado es requerido',
+            'estado.in' => 'El estado seleccionado no es válido',
+            'prioridad.required' => 'La prioridad es requerida',
+            'prioridad.in' => 'La prioridad seleccionada no es válida',
+            'opportunity_id.exists' => 'La oportunidad seleccionada no existe',
+            'contact_id.exists' => 'El contacto seleccionado no existe',
+            'user_id.exists' => 'El usuario seleccionado no existe',
+            'tempImage.image' => 'El archivo debe ser una imagen',
+            'tempImage.mimes' => 'La imagen debe ser JPEG, PNG, JPG, GIF o SVG',
+            'tempImage.max' => 'La imagen no debe exceder 20MB',
+            'tempArchivo.file' => 'El archivo debe ser válido',
+            'tempArchivo.mimes' => 'El archivo debe ser PDF, DOC, DOCX, XLS, XLSX, PPT o PPTX',
+            'tempArchivo.max' => 'El archivo no debe exceder 10MB',
+        ];
+    }
 
     public function updatingSearch()
     {
@@ -69,9 +125,9 @@ class ActivityCrmIndex extends Component
             'tipo_filter',
             'estado_filter',
             'prioridad_filter',
-            'lead_filter',
             'opportunity_filter',
-            'deal_filter',
+            'contact_filter',
+            'user_filter',
             'perPage'
         ]);
         $this->resetPage();
@@ -80,6 +136,7 @@ class ActivityCrmIndex extends Component
     public function render()
     {
         $query = ActivityCrm::query()
+            ->with(['oportunidad', 'contacto', 'usuario'])
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('asunto', 'like', '%' . $this->search . '%')
@@ -95,22 +152,25 @@ class ActivityCrmIndex extends Component
             ->when($this->prioridad_filter, function ($query) {
                 $query->where('prioridad', $this->prioridad_filter);
             })
-            ->when($this->lead_filter, function ($query) {
-                $query->where('lead_id', $this->lead_filter);
-            })
             ->when($this->opportunity_filter, function ($query) {
                 $query->where('opportunity_id', $this->opportunity_filter);
             })
-            ->when($this->deal_filter, function ($query) {
-                $query->where('deal_id', $this->deal_filter);
+            ->when($this->contact_filter, function ($query) {
+                $query->where('contact_id', $this->contact_filter);
+            })
+            ->when($this->user_filter, function ($query) {
+                $query->where('user_id', $this->user_filter);
             })
             ->orderBy($this->sortField, $this->sortDirection);
 
         return view('livewire.crm.activity-crm-index', [
             'activities' => $query->paginate($this->perPage),
-            'leads' => LeadCrm::all(),
             'opportunities' => OpportunityCrm::all(),
-            'deals' => DealCrm::all()
+            'contacts' => ContactCrm::all(),
+            'users' => User::all(),
+            'tipos' => ['llamada', 'reunion', 'email', 'tarea'],
+            'estados' => ['pendiente', 'completada', 'cancelada'],
+            'prioridades' => ['baja', 'normal', 'alta', 'urgente'],
         ]);
     }
 
@@ -126,14 +186,13 @@ class ActivityCrmIndex extends Component
         $this->tipo = $this->activity->tipo;
         $this->asunto = $this->activity->asunto;
         $this->descripcion = $this->activity->descripcion;
-        $this->fecha_vencimiento = $this->activity->fecha_vencimiento;
         $this->estado = $this->activity->estado;
         $this->prioridad = $this->activity->prioridad;
-        $this->lead_id = $this->activity->lead_id;
         $this->opportunity_id = $this->activity->opportunity_id;
-        $this->deal_id = $this->activity->deal_id;
-        $this->asignado_a = $this->activity->asignado_a;
-        $this->fecha_completado = $this->activity->fecha_completado;
+        $this->contact_id = $this->activity->contact_id;
+        $this->user_id = $this->activity->user_id;
+        $this->image = $this->activity->image;
+        $this->archivo = $this->activity->archivo;
 
         $this->modal_form_activity = true;
     }
@@ -154,38 +213,38 @@ class ActivityCrmIndex extends Component
         $this->reset(['activity_id', 'activity']);
     }
 
+    public function updatedTempImage()
+    {
+        if ($this->tempImage) {
+            $this->imagePreview = $this->tempImage->temporaryUrl();
+        }
+    }
+
+    public function removeImage()
+    {
+        $this->tempImage = null;
+        $this->imagePreview = null;
+        $this->image = '';
+    }
+
     public function guardarActivity()
     {
-        $rules = [
-            'tipo' => 'required|string|in:llamada,reunion,email,tarea',
-            'asunto' => 'required|string|max:255',
-            'descripcion' => 'nullable|string',
-            'fecha_vencimiento' => 'required|date',
-            'estado' => 'required|string|in:pendiente,completada,cancelada',
-            'prioridad' => 'required|string|in:baja,normal,alta,urgente',
-            'lead_id' => 'nullable|exists:leads_crm,id',
-            'opportunity_id' => 'nullable|exists:opportunities_crm,id',
-            'deal_id' => 'nullable|exists:deals_crm,id',
-            'asignado_a' => 'nullable|integer',
-            'fecha_completado' => 'nullable|date'
-        ];
+        $data = $this->validate();
 
-        $messages = [
-            'tipo.required' => 'El tipo es requerido',
-            'tipo.in' => 'El tipo seleccionado no es válido',
-            'asunto.required' => 'El asunto es requerido',
-            'fecha_vencimiento.required' => 'La fecha de vencimiento es requerida',
-            'fecha_vencimiento.date' => 'La fecha de vencimiento debe ser una fecha válida',
-            'estado.required' => 'El estado es requerido',
-            'estado.in' => 'El estado seleccionado no es válido',
-            'prioridad.required' => 'La prioridad es requerida',
-            'prioridad.in' => 'La prioridad seleccionada no es válida',
-            'lead_id.exists' => 'El lead seleccionado no existe',
-            'opportunity_id.exists' => 'La oportunidad seleccionada no existe',
-            'deal_id.exists' => 'El deal seleccionado no existe'
-        ];
+        // Manejar imagen
+        if ($this->tempImage) {
+            $imagePath = $this->tempImage->store('activities/images', 'public');
+            $data['image'] = $imagePath;
+        }
 
-        $data = $this->validate($rules, $messages);
+        // Manejar archivo
+        if ($this->tempArchivo) {
+            $archivoPath = $this->tempArchivo->store('activities/files', 'public');
+            $data['archivo'] = $archivoPath;
+        }
+
+        // Remover campos temporales
+        unset($data['tempImage'], $data['tempArchivo']);
 
         if ($this->activity_id) {
             $activity = ActivityCrm::find($this->activity_id);
@@ -201,14 +260,16 @@ class ActivityCrmIndex extends Component
             'tipo',
             'asunto',
             'descripcion',
-            'fecha_vencimiento',
             'estado',
             'prioridad',
-            'lead_id',
             'opportunity_id',
-            'deal_id',
-            'asignado_a',
-            'fecha_completado'
+            'contact_id',
+            'user_id',
+            'image',
+            'archivo',
+            'tempImage',
+            'tempArchivo',
+            'imagePreview'
         ]);
         $this->resetValidation();
     }

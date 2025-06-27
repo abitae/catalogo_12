@@ -11,13 +11,13 @@ use App\Models\Almacen\ProductoAlmacen;
 use App\Models\Almacen\TransferenciaAlmacen;
 use App\Models\Almacen\MovimientoAlmacen;
 use App\Models\User;
-use App\Models\Crm\TipeNegocioCrm;
 use App\Models\Crm\MarcaCrm;
-use App\Models\Crm\LeadCrm;
 use App\Models\Crm\OpportunityCrm;
-use App\Models\Crm\DealCrm;
 use App\Models\Crm\ActivityCrm;
 use App\Models\Crm\ContactCrm;
+use App\Models\Crm\TipoNegocioCrm;
+use App\Models\Shared\Customer;
+use App\Models\Shared\TipoCustomer;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -38,6 +38,9 @@ class DatabaseSeeder extends Seeder
             'created_at' => now(),
             'updated_at' => now(),
         ]);
+        // Crear datos clientes
+        TipoCustomer::factory(5)->create();
+        Customer::factory(100)->create();
         // Crear datos de prueba para el catálogo
         BrandCatalogo::factory(20)->create();
         CategoryCatalogo::factory(20)->create();
@@ -50,12 +53,12 @@ class DatabaseSeeder extends Seeder
         MovimientoAlmacen::factory(200)->create();
 
         // Crear datos de prueba para el CRM
-        TipeNegocioCrm::factory(10)->create();
+        TipoNegocioCrm::factory(10)->create();
         MarcaCrm::factory(10)->create();
-        LeadCrm::factory(100)->create();
         OpportunityCrm::factory(100)->create();
-        DealCrm::factory(100)->create();
-        ActivityCrm::factory(200)->create();
         ContactCrm::factory(100)->create();
+        ActivityCrm::factory(200)->create();
+
+
     }
 }

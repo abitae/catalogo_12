@@ -5,6 +5,9 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 use App\Models\Almacen\MovimientoAlmacen;
+use App\Models\Crm\ActivityCrm;
+use App\Models\Crm\ContactCrm;
+use App\Models\Crm\OpportunityCrm;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -63,5 +66,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(MovimientoAlmacen::class, 'user_id');
     }
+    public function oportunidades()
+    {
+        return $this->hasMany(OpportunityCrm::class, 'user_id');
+    }
+    public function actividades()
+    {
+        return $this->hasMany(ActivityCrm::class, 'user_id');
+    }
+    
 
 }

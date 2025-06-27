@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class TipeNegocioCrm extends Model
+class TipoNegocioCrm extends Model
 {
     use HasFactory, SoftDeletes;
 
@@ -14,11 +14,13 @@ class TipeNegocioCrm extends Model
 
     protected $fillable = [
         'nombre',
+        'codigo',
         'descripcion',
-        'estado',
+        'activo',
     ];
 
     protected $casts = [
+        'activo' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime'
@@ -27,5 +29,15 @@ class TipeNegocioCrm extends Model
     public function oportunidades()
     {
         return $this->hasMany(OpportunityCrm::class, 'tipo_negocio_id');
+    }
+
+    public function scopeActivos($query)
+    {
+        return $query->where('activo', true);
+    }
+
+    public function scopeInactivos($query)
+    {
+        return $query->where('activo', false);
     }
 }

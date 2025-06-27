@@ -3,7 +3,7 @@
 namespace App\Livewire\Crm;
 
 use App\Models\Crm\ContactCrm;
-use App\Models\Crm\LeadCrm;
+use App\Models\Shared\Customer;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -17,7 +17,7 @@ class ContactCrmIndex extends Component
     public $perPage = 10;
 
     // Filtros
-    public $lead_filter = '';
+    public $customer_filter = '';
     public $empresa_filter = '';
     public $es_principal_filter = '';
 
@@ -34,11 +34,46 @@ class ContactCrmIndex extends Component
     public $telefono = '';
     public $cargo = '';
     public $empresa = '';
-    public $lead_id = '';
     public $customer_id = '';
     public $notas = '';
-    public $ultima_fecha_contacto = '';
     public $es_principal = false;
+
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'customer_filter' => ['except' => ''],
+        'empresa_filter' => ['except' => ''],
+        'es_principal_filter' => ['except' => ''],
+        'sortField' => ['except' => 'nombre'],
+        'sortDirection' => ['except' => 'asc'],
+        'perPage' => ['except' => 10],
+    ];
+
+    protected function rules()
+    {
+        return [
+            'nombre' => 'required|string|max:255',
+            'apellido' => 'required|string|max:255',
+            'correo' => 'required|email|max:255',
+            'telefono' => 'nullable|string|max:20',
+            'cargo' => 'nullable|string|max:255',
+            'empresa' => 'nullable|string|max:255',
+            'customer_id' => 'required|exists:customers,id',
+            'notas' => 'nullable|string',
+            'es_principal' => 'boolean'
+        ];
+    }
+
+    protected function messages()
+    {
+        return [
+            'nombre.required' => 'El nombre es requerido',
+            'apellido.required' => 'El apellido es requerido',
+            'correo.required' => 'El correo es requerido',
+            'correo.email' => 'El correo debe ser válido',
+            'customer_id.required' => 'El cliente es requerido',
+            'customer_id.exists' => 'El cliente seleccionado no existe'
+        ];
+    }
 
     public function updatingSearch()
     {
@@ -61,7 +96,7 @@ class ContactCrmIndex extends Component
             'search',
             'sortField',
             'sortDirection',
-            'lead_filter',
+            'customer_filter',
             'empresa_filter',
             'es_principal_filter',
             'perPage'
@@ -72,6 +107,7 @@ class ContactCrmIndex extends Component
     public function render()
     {
         $query = ContactCrm::query()
+            ->with(['cliente'])
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('nombre', 'like', '%' . $this->search . '%')
@@ -80,8 +116,8 @@ class ContactCrmIndex extends Component
                         ->orWhere('empresa', 'like', '%' . $this->search . '%');
                 });
             })
-            ->when($this->lead_filter, function ($query) {
-                $query->where('lead_id', $this->lead_filter);
+            ->when($this->customer_filter, function ($query) {
+                $query->where('customer_id', $this->customer_filter);
             })
             ->when($this->empresa_filter, function ($query) {
                 $query->where('empresa', 'like', '%' . $this->empresa_filter . '%');
@@ -93,7 +129,7 @@ class ContactCrmIndex extends Component
 
         return view('livewire.crm.contact-crm-index', [
             'contactos' => $query->paginate($this->perPage),
-            'leads' => LeadCrm::all()
+            'customers' => Customer::all()
         ]);
     }
 
@@ -112,10 +148,8 @@ class ContactCrmIndex extends Component
         $this->telefono = $this->contacto->telefono;
         $this->cargo = $this->contacto->cargo;
         $this->empresa = $this->contacto->empresa;
-        $this->lead_id = $this->contacto->lead_id;
         $this->customer_id = $this->contacto->customer_id;
         $this->notas = $this->contacto->notas;
-        $this->ultima_fecha_contacto = $this->contacto->ultima_fecha_contacto;
         $this->es_principal = $this->contacto->es_principal;
 
         $this->modal_form_contacto = true;
@@ -139,30 +173,7 @@ class ContactCrmIndex extends Component
 
     public function guardarContacto()
     {
-        $rules = [
-            'nombre' => 'required|string|max:255',
-            'apellido' => 'required|string|max:255',
-            'correo' => 'required|email|max:255',
-            'telefono' => 'nullable|string|max:20',
-            'cargo' => 'nullable|string|max:255',
-            'empresa' => 'nullable|string|max:255',
-            'lead_id' => 'nullable|exists:leads_crm,id',
-            'customer_id' => 'nullable|exists:customers,id',
-            'notas' => 'nullable|string',
-            'ultima_fecha_contacto' => 'nullable|date',
-            'es_principal' => 'boolean'
-        ];
-
-        $messages = [
-            'nombre.required' => 'El nombre es requerido',
-            'apellido.required' => 'El apellido es requerido',
-            'correo.required' => 'El correo es requerido',
-            'correo.email' => 'El correo debe ser válido',
-            'lead_id.exists' => 'El lead seleccionado no existe',
-            'customer_id.exists' => 'El cliente seleccionado no existe'
-        ];
-
-        $data = $this->validate($rules, $messages);
+        $data = $this->validate();
 
         if ($this->contacto_id) {
             $contacto = ContactCrm::find($this->contacto_id);
@@ -181,10 +192,8 @@ class ContactCrmIndex extends Component
             'telefono',
             'cargo',
             'empresa',
-            'lead_id',
             'customer_id',
             'notas',
-            'ultima_fecha_contacto',
             'es_principal'
         ]);
         $this->resetValidation();

@@ -6,21 +6,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up()
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
     {
-        Schema::create('tipos_negocio_crm', function (Blueprint $table) {
+        Schema::create('tipo_customers', function (Blueprint $table) {
             $table->id();
             $table->string('nombre');
-            $table->string('codigo')->nullable()->unique();
-            $table->text('descripcion')->nullable();
-            $table->boolean('activo')->default(true);
+            $table->string('descripcion')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
     }
 
-    public function down()
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
     {
-        Schema::dropIfExists('tipos_negocio_crm');
+        Schema::dropIfExists('tipo_customers');
     }
 };

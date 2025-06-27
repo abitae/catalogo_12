@@ -1,251 +1,312 @@
 <div class="p-6 bg-white dark:bg-zinc-900 min-h-screen">
-    <!-- Encabezado y Búsqueda -->
-    <div class="mb-6 bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 shadow-sm">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-            <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Contactos</h1>
-            <div class="w-full md:w-96">
-                <flux:input type="search" placeholder="Buscar..." wire:model.live="search" icon="magnifying-glass" />
+    <!-- Encabezado -->
+    <div class="mb-8">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">Gestión de Contactos</h1>
+                <p class="text-zinc-600 dark:text-zinc-400">Administra los contactos del CRM</p>
             </div>
-            <div class="flex items-end gap-2">
-                <flux:button wire:click="exportarContactos" icon="arrow-down-tray">
+            <div class="flex items-center gap-3">
+                <flux:button wire:click="exportarContactos" icon="arrow-down-tray" color="gray">
                     Exportar
                 </flux:button>
-            </div>
-            <div class="flex items-end">
-                <flux:button wire:click="importar" icon="arrow-up-tray">
+                <flux:button wire:click="importar" icon="arrow-up-tray" color="gray">
                     Importar
                 </flux:button>
-            </div>
-            <div class="flex items-end gap-2">
                 <flux:button variant="primary" wire:click="nuevoContacto" icon="plus">
-                    Nuevo
+                    Nuevo Contacto
                 </flux:button>
             </div>
         </div>
     </div>
 
-    <!-- Filtros -->
-    <div class="mb-6 bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 shadow-sm">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <!-- Lead -->
-            <div>
-                <flux:label>Lead</flux:label>
-                <flux:select wire:model.live="lead_filter" class="w-full">
-                    <option value="">Todos los Leads</option>
-                    @foreach($leads as $lead)
-                        <option value="{{ $lead->id }}">{{ $lead->nombre }}</option>
-                    @endforeach
-                </flux:select>
+    <!-- Barra de Búsqueda y Filtros -->
+    <div class="mb-6 bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700">
+        <div class="p-6">
+            <!-- Búsqueda -->
+            <div class="mb-6">
+                <flux:input
+                    type="search"
+                    placeholder="Buscar contactos por nombre, correo o empresa..."
+                    wire:model.live="search"
+                    icon="magnifying-glass"
+                    class="w-full"
+                />
             </div>
 
-            <!-- Empresa -->
-            <div>
-                <flux:label>Empresa</flux:label>
-                <flux:input wire:model.live="empresa_filter" placeholder="Filtrar por empresa" />
-            </div>
+            <!-- Filtros -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+                <div>
+                    <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Empresa</flux:label>
+                    <flux:input wire:model.live="empresa_filter" placeholder="Filtrar por empresa" class="w-full mt-1" />
+                </div>
 
-            <!-- Tipo de Contacto -->
-            <div>
-                <flux:label>Tipo de Contacto</flux:label>
-                <flux:select wire:model.live="es_principal_filter" class="w-full">
-                    <option value="">Todos los contactos</option>
-                    <option value="1">Contactos principales</option>
-                    <option value="0">Contactos secundarios</option>
-                </flux:select>
-            </div>
+                <div>
+                    <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Tipo de Contacto</flux:label>
+                    <flux:select wire:model.live="es_principal_filter" class="w-full mt-1">
+                        <option value="">Todos los contactos</option>
+                        <option value="1">Contactos principales</option>
+                        <option value="0">Contactos secundarios</option>
+                    </flux:select>
+                </div>
 
-            <!-- Registros por página -->
-            <div>
-                <flux:label>Registros por página</flux:label>
-                <flux:select wire:model.live="perPage" class="w-full">
-                    <option value="10">10</option>
-                    <option value="25">25</option>
-                    <option value="50">50</option>
-                    <option value="100">100</option>
-                </flux:select>
-            </div>
+                <div>
+                    <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Cargo</flux:label>
+                    <flux:input wire:model.live="cargo_filter" placeholder="Filtrar por cargo" class="w-full mt-1" />
+                </div>
 
-            <!-- Botón Limpiar Filtros -->
-            <div class="flex items-end">
-                <flux:button wire:click="clearFilters" color="red" icon="trash" class="w-full">
-                    Limpiar Filtros
-                </flux:button>
+                <div>
+                    <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Registros por página</flux:label>
+                    <flux:select wire:model.live="perPage" class="w-full mt-1">
+                        <option value="10">10 por página</option>
+                        <option value="25">25 por página</option>
+                        <option value="50">50 por página</option>
+                        <option value="100">100 por página</option>
+                    </flux:select>
+                </div>
+
+                <div class="flex items-end">
+                    <flux:button wire:click="clearFilters" color="red" icon="trash" class="w-full">
+                        Limpiar Filtros
+                    </flux:button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Tabla de Contactos -->
-    <div class="bg-white dark:bg-zinc-800 rounded-lg overflow-hidden shadow-sm">
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Contactos</h3>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ $contactos->count() }} contactos encontrados</span>
+                </div>
+            </div>
+        </div>
+
         <div class="overflow-x-auto">
             <table class="w-full">
-                <thead class="bg-zinc-50 dark:bg-zinc-700">
+                <thead class="bg-zinc-50 dark:bg-zinc-700/50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-500 transition-colors"
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors"
                             wire:click="sortBy('nombre')">
-                            <div class="flex items-center space-x-1">
+                            <div class="flex items-center space-x-2">
                                 <span>Nombre</span>
                                 @if ($sortField === 'nombre')
-                                    <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}"
-                                        class="w-4 h-4" />
+                                    <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}" class="w-4 h-4" />
                                 @endif
                             </div>
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-500 transition-colors"
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors"
                             wire:click="sortBy('correo')">
-                            <div class="flex items-center space-x-1">
+                            <div class="flex items-center space-x-2">
                                 <span>Correo</span>
                                 @if ($sortField === 'correo')
-                                    <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}"
-                                        class="w-4 h-4" />
+                                    <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}" class="w-4 h-4" />
                                 @endif
                             </div>
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-500 transition-colors"
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors"
                             wire:click="sortBy('empresa')">
-                            <div class="flex items-center space-x-1">
+                            <div class="flex items-center space-x-2">
                                 <span>Empresa</span>
                                 @if ($sortField === 'empresa')
-                                    <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}"
-                                        class="w-4 h-4" />
+                                    <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}" class="w-4 h-4" />
                                 @endif
                             </div>
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-500 transition-colors"
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors"
                             wire:click="sortBy('cargo')">
-                            <div class="flex items-center space-x-1">
+                            <div class="flex items-center space-x-2">
                                 <span>Cargo</span>
                                 @if ($sortField === 'cargo')
-                                    <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}"
-                                        class="w-4 h-4" />
+                                    <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}" class="w-4 h-4" />
                                 @endif
                             </div>
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                            Teléfono
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Principal
                         </th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Acciones
                         </th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
-                    @foreach($contactos as $contacto)
-                        <tr wire:key="contacto-{{ $contacto->id }}" class="hover:bg-zinc-100 dark:hover:bg-zinc-600 transition-colors duration-200 ease-in-out">
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-300">
-                                <div class="flex flex-col">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                                        @if($contacto->es_principal) bg-green-100 text-green-800
-                                        @else bg-gray-100 text-gray-800
-                                        @endif">
-                                        {{ $contacto->es_principal ? 'Principal' : 'Secundario' }}
-                                    </span>
-                                    <span>{{ $contacto->nombre }} {{ $contacto->apellido }}</span>
+                <tbody class="bg-white dark:bg-zinc-800 divide-y divide-zinc-200 dark:divide-zinc-700">
+                    @forelse($contactos as $contacto)
+                        <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div>
+                                    <div class="text-sm font-medium text-zinc-900 dark:text-white">{{ $contacto->nombre }} {{ $contacto->apellido }}</div>
+                                    @if ($contacto->correo)
+                                        <div class="text-sm text-zinc-500 dark:text-zinc-400">{{ $contacto->correo }}</div>
+                                    @endif
                                 </div>
                             </td>
-                            <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-white">
                                 {{ $contacto->correo }}
                             </td>
-                            <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-white">
                                 {{ $contacto->empresa }}
                             </td>
-                            <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-white">
                                 {{ $contacto->cargo }}
                             </td>
-                            <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                                    @if($contacto->es_principal) bg-green-100 text-green-800
-                                    @else bg-gray-100 text-gray-800
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-white">
+                                {{ $contacto->telefono }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    @if($contacto->es_principal) bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
+                                    @else bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200
                                     @endif">
                                     {{ $contacto->es_principal ? 'Sí' : 'No' }}
                                 </span>
                             </td>
-                            <td class="px-6 py-4 text-sm">
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center gap-2">
-                                    <flux:button wire:click="editarContacto({{ $contacto->id }})" size="xs"
-                                        variant="primary" icon="pencil" title="Editar contacto"
-                                        class="hover:bg-blue-600 transition-colors">
+                                    <flux:button wire:click="editarContacto({{ $contacto->id }})" size="sm" color="blue" icon="pencil">
+                                        Editar
                                     </flux:button>
-                                    <flux:button wire:click="eliminarContacto({{ $contacto->id }})" size="xs"
-                                        variant="danger" icon="trash" title="Eliminar contacto"
-                                        class="hover:bg-red-600 transition-colors">
+                                    <flux:button wire:click="eliminarContacto({{ $contacto->id }})" size="sm" color="red" icon="trash">
+                                        Eliminar
                                     </flux:button>
                                 </div>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center text-zinc-500 dark:text-zinc-400">
+                                <div class="flex flex-col items-center">
+                                    <flux:icon name="users" class="w-12 h-12 mb-4 text-zinc-300 dark:text-zinc-600" />
+                                    <p class="text-lg font-medium">No hay contactos</p>
+                                    <p class="text-sm">Crea tu primer contacto para comenzar</p>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
-    </div>
 
-    <!-- Paginación -->
-    <div class="mt-4">
-        {{ $contactos->links() }}
+        <!-- Paginación -->
+        <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-700">
+            {{ $contactos->links() }}
+        </div>
     </div>
 
     <!-- Modal Form Contacto -->
     <flux:modal wire:model="modal_form_contacto" variant="flyout" class="w-2/3 max-w-2xl">
-        <div class="space-y-6">
-            <div>
-                <flux:heading size="lg">{{ $contacto_id ? 'Editar Contacto' : 'Nuevo Contacto' }}</flux:heading>
-                <flux:text class="mt-2">Complete los datos del contacto.</flux:text>
+        <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-xl">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
+                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">
+                    {{ $contacto_id ? 'Editar' : 'Nuevo' }} Contacto
+                </h3>
             </div>
-            <form wire:submit.prevent="guardarContacto">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <flux:input label="Nombre" wire:model="nombre" placeholder="Ingrese el nombre" />
-                    <flux:input label="Apellido" wire:model="apellido" placeholder="Ingrese el apellido" />
-                    <flux:input label="Correo" type="email" wire:model="correo" placeholder="correo@ejemplo.com" />
 
-                    <flux:input label="Teléfono" wire:model="telefono" placeholder="Ingrese el teléfono" />
-                    <flux:input label="Cargo" wire:model="cargo" placeholder="Ingrese el cargo" />
-                    <flux:input label="Empresa" wire:model="empresa" placeholder="Ingrese la empresa" />
+            <!-- Content -->
+            <div class="px-6 py-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <flux:label for="nombre" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Nombre *</flux:label>
+                        <flux:input wire:model="nombre" id="nombre" type="text" placeholder="Ingrese el nombre" class="w-full mt-1" />
+                        @error('nombre') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    </div>
 
-                    <flux:select label="Lead" wire:model="lead_id">
-                        <option value="">Seleccione un lead</option>
-                        @foreach($leads as $lead)
-                            <option value="{{ $lead->id }}">{{ $lead->nombre }}</option>
-                        @endforeach
-                    </flux:select>
+                    <div>
+                        <flux:label for="apellido" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Apellido *</flux:label>
+                        <flux:input wire:model="apellido" id="apellido" type="text" placeholder="Ingrese el apellido" class="w-full mt-1" />
+                        @error('apellido') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    </div>
 
-                    <flux:input label="Última fecha de contacto" type="date" wire:model="ultima_fecha_contacto" />
-                    <div class="flex items-end">
-                        <flux:checkbox label="Contacto principal" wire:model="es_principal" />
+                    <div>
+                        <flux:label for="correo" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Correo *</flux:label>
+                        <flux:input wire:model="correo" id="correo" type="email" placeholder="correo@ejemplo.com" class="w-full mt-1" />
+                        @error('correo') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div>
+                        <flux:label for="telefono" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Teléfono</flux:label>
+                        <flux:input wire:model="telefono" id="telefono" type="text" placeholder="Ingrese el teléfono" class="w-full mt-1" />
+                        @error('telefono') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div>
+                        <flux:label for="cargo" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Cargo</flux:label>
+                        <flux:input wire:model="cargo" id="cargo" type="text" placeholder="Ingrese el cargo" class="w-full mt-1" />
+                        @error('cargo') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div>
+                        <flux:label for="empresa" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Empresa</flux:label>
+                        <flux:input wire:model="empresa" id="empresa" type="text" placeholder="Ingrese la empresa" class="w-full mt-1" />
+                        @error('empresa') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div>
+                        <flux:label for="ultima_fecha_contacto" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Última fecha de contacto</flux:label>
+                        <flux:input wire:model="ultima_fecha_contacto" id="ultima_fecha_contacto" type="date" class="w-full mt-1" />
+                        @error('ultima_fecha_contacto') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="flex items-center">
+                        <flux:checkbox wire:model="es_principal" id="es_principal" />
+                        <flux:label for="es_principal" class="ml-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">Contacto principal</flux:label>
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <flux:label for="notas" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Notas</flux:label>
+                        <flux:textarea wire:model="notas" id="notas" rows="3" placeholder="Ingrese notas adicionales" class="w-full mt-1" />
+                        @error('notas') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                     </div>
                 </div>
+            </div>
 
-                <div class="mt-4">
-                    <flux:textarea label="Notas" wire:model="notas" placeholder="Ingrese notas adicionales" />
-                </div>
-
-                <div class="flex justify-end mt-6">
-                    <flux:button type="button" wire:click="$set('modal_form_contacto', false)" class="mr-2">
+            <!-- Footer -->
+            <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-700/50 rounded-b-lg">
+                <div class="flex justify-end gap-3">
+                    <flux:button wire:click="$set('modal_form_contacto', false)" color="gray">
                         Cancelar
                     </flux:button>
-                    <flux:button type="submit" variant="primary">
-                        {{ $contacto_id ? 'Actualizar' : 'Guardar' }}
+                    <flux:button wire:click="guardarContacto" variant="primary">
+                        {{ $contacto_id ? 'Actualizar' : 'Crear' }} Contacto
                     </flux:button>
                 </div>
-            </form>
+            </div>
         </div>
     </flux:modal>
 
-    <!-- Modal Eliminar Contacto -->
-    @if($contacto_id)
-    <flux:modal wire:model="modal_form_eliminar_contacto" class="w-2/3 max-w-2xl">
-        <div class="space-y-6">
-            <div>
-                <flux:heading size="lg">Eliminar Contacto</flux:heading>
-                <flux:text class="mt-2">¿Está seguro de querer eliminar este contacto?</flux:text>
+    <!-- Modal Confirmar Eliminar -->
+    <flux:modal wire:model="modal_form_eliminar_contacto" max-width="md">
+        <div class="bg-white dark:bg-zinc-800 rounded-lg shadow-xl">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
+                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Confirmar Eliminación</h3>
             </div>
-            <div class="flex justify-end mt-6">
-                <flux:button type="button" wire:click="$set('modal_form_eliminar_contacto', false)" class="mr-2">
-                    Cancelar
-                </flux:button>
-                <flux:button variant="danger" wire:click="confirmarEliminarContacto">
-                    Eliminar
-                </flux:button>
+
+            <!-- Content -->
+            <div class="px-6 py-6">
+                <p class="text-zinc-600 dark:text-zinc-400">
+                    ¿Estás seguro de que quieres eliminar este contacto? Esta acción no se puede deshacer.
+                </p>
+            </div>
+
+            <!-- Footer -->
+            <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-700/50 rounded-b-lg">
+                <div class="flex justify-end gap-3">
+                    <flux:button wire:click="$set('modal_form_eliminar_contacto', false)" color="gray">
+                        Cancelar
+                    </flux:button>
+                    <flux:button wire:click="confirmarEliminarContacto" color="red">
+                        Eliminar
+                    </flux:button>
+                </div>
             </div>
         </div>
     </flux:modal>
-    @endif
 </div>

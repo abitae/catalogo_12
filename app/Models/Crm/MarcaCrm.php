@@ -14,12 +14,15 @@ class MarcaCrm extends Model
 
     protected $fillable = [
         'nombre',
+        'codigo',
+        'categoria',
         'descripcion',
         'logo',
-        'estado'
+        'activo'
     ];
 
     protected $casts = [
+        'activo' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime'
@@ -28,5 +31,20 @@ class MarcaCrm extends Model
     public function oportunidades()
     {
         return $this->hasMany(OpportunityCrm::class, 'marca_id');
+    }
+
+    public function scopeActivas($query)
+    {
+        return $query->where('activo', true);
+    }
+
+    public function scopeInactivas($query)
+    {
+        return $query->where('activo', false);
+    }
+
+    public function scopePorCategoria($query, $categoria)
+    {
+        return $query->where('categoria', $categoria);
     }
 }

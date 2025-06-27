@@ -20,21 +20,21 @@
                     <flux:navlist.item icon="bars-3" :href="route('catalogo.lines')" :current="request()->routeIs('catalogo.lines')" wire:navigate>{{ __('Líneas') }}</flux:navlist.item>
                 </flux:navlist.group>
                 <flux:navlist.group :expanded="request()->routeIs('almacen.*')" expandable heading="Almacén">
-                    <flux:navlist.item icon="folder-git-2" :href="route('almacen.warehouses')" :current="request()->routeIs('almacen.warehouses')" wire:navigate>{{ __('Almacenes') }}</flux:navlist.item>
-                    <flux:navlist.item icon="folder-git-2" :href="route('almacen.products')" :current="request()->routeIs('almacen.products')" wire:navigate>{{ __('Productos') }}</flux:navlist.item>
-                    <flux:navlist.item icon="folder-git-2" :href="route('almacen.transfers')" :current="request()->routeIs('almacen.transfers')" wire:navigate>{{ __('Transferencias') }}</flux:navlist.item>
-                    <flux:navlist.item icon="folder-git-2" :href="route('almacen.movements')" :current="request()->routeIs('almacen.movements')" wire:navigate>{{ __('Movimientos') }}</flux:navlist.item>
+                    <flux:navlist.item icon="building-storefront" :href="route('almacen.warehouses')" :current="request()->routeIs('almacen.warehouses')" wire:navigate>{{ __('Almacenes') }}</flux:navlist.item>
+                    <flux:navlist.item icon="cube-transparent" :href="route('almacen.products')" :current="request()->routeIs('almacen.products')" wire:navigate>{{ __('Productos') }}</flux:navlist.item>
+                    <flux:navlist.item icon="arrow-path" :href="route('almacen.transfers')" :current="request()->routeIs('almacen.transfers')" wire:navigate>{{ __('Transferencias') }}</flux:navlist.item>
+                    <flux:navlist.item icon="arrows-right-left" :href="route('almacen.movements')" :current="request()->routeIs('almacen.movements')" wire:navigate>{{ __('Movimientos') }}</flux:navlist.item>
                 </flux:navlist.group>
                 <flux:navlist.group :expanded="request()->routeIs('crm.*')" expandable heading="CRM">
-                    <flux:navlist.item icon="folder-git-2" :href="route('crm.leads')" :current="request()->routeIs('crm.leads')" wire:navigate>{{ __('Leads') }}</flux:navlist.item>
-                    <flux:navlist.item icon="folder-git-2" :href="route('crm.contacts')" :current="request()->routeIs('crm.contacts')" wire:navigate>{{ __('Contactos') }}</flux:navlist.item>
-                    <flux:navlist.item icon="folder-git-2" :href="route('crm.opportunities')" :current="request()->routeIs('crm.opportunities')" wire:navigate>{{ __('Oportunidades') }}</flux:navlist.item>
-                    <flux:navlist.item icon="folder-git-2" :href="route('crm.deals')" :current="request()->routeIs('crm.deals')" wire:navigate>{{ __('Negociaciones') }}</flux:navlist.item>
-                    <flux:navlist.item icon="folder-git-2" :href="route('crm.activities')" :current="request()->routeIs('crm.activities')" wire:navigate>{{ __('Actividades') }}</flux:navlist.item>
+                    <flux:navlist.item icon="chart-bar" :href="route('crm.opportunities')" :current="request()->routeIs('crm.opportunities')" wire:navigate>{{ __('Oportunidades') }}</flux:navlist.item>
+                    <flux:navlist.item icon="user-group" :href="route('crm.contacts')" :current="request()->routeIs('crm.contacts')" wire:navigate>{{ __('Contactos') }}</flux:navlist.item>
+                    <flux:navlist.item icon="calendar-days" :href="route('crm.activities')" :current="request()->routeIs('crm.activities')" wire:navigate>{{ __('Actividades') }}</flux:navlist.item>
+                    <flux:navlist.item icon="tag" :href="route('crm.marcas')" :current="request()->routeIs('crm.marcas')" wire:navigate>{{ __('Marcas') }}</flux:navlist.item>
+                    <flux:navlist.item icon="building-office" :href="route('crm.tipos-negocio')" :current="request()->routeIs('crm.tipos-negocio')" wire:navigate>{{ __('Tipos de Negocio') }}</flux:navlist.item>
                 </flux:navlist.group>
                 <flux:navlist.group :expanded="request()->routeIs('almacen.reportes.*')" expandable heading="Reportes">
-                    <flux:navlist.item icon="folder-git-2" :href="route('almacen.reportes.lotes')" :current="request()->routeIs('almacen.reportes.lotes')" wire:navigate>{{ __('Reportes') }}</flux:navlist.item>
-                    <flux:navlist.item icon="folder-git-2" :href="route('almacen.alertas.lotes')" :current="request()->routeIs('almacen.alertas.lotes')" wire:navigate>{{ __('Alertas') }}</flux:navlist.item>
+                    <flux:navlist.item icon="document-chart-bar" :href="route('almacen.reportes.lotes')" :current="request()->routeIs('almacen.reportes.lotes')" wire:navigate>{{ __('Reportes') }}</flux:navlist.item>
+                    <flux:navlist.item icon="exclamation-triangle" :href="route('almacen.alertas.lotes')" :current="request()->routeIs('almacen.alertas.lotes')" wire:navigate>{{ __('Alertas') }}</flux:navlist.item>
                 </flux:navlist.group>
             </flux:navlist>
 

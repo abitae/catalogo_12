@@ -11,9 +11,11 @@ return new class extends Migration
         Schema::create('marcas_crm', function (Blueprint $table) {
             $table->id();
             $table->string('nombre');
+            $table->string('codigo')->nullable()->unique();
+            $table->string('categoria')->nullable();
             $table->text('descripcion')->nullable();
             $table->string('logo')->nullable();
-            $table->string('estado')->default('activo');
+            $table->boolean('activo')->default(true);
             $table->timestamps();
             $table->softDeletes();
         });

@@ -2,6 +2,8 @@
 
 namespace App\Models\Crm;
 
+use App\Models\Shared\Customer;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -15,24 +17,26 @@ class OpportunityCrm extends Model
     protected $fillable = [
         'nombre',
         'estado',
-        'tipo_negocio_id',
-        'marca_id',
-        'lead_id',
         'valor',
         'etapa',
         'probabilidad',
         'fecha_cierre_esperada',
+        'fuente',
         'descripcion',
-        'asignado_a',
-        'creado_por',
-        'ultima_fecha_actividad'
+        'notas',
+        'image',
+        'archivo',
+        'tipo_negocio_id',
+        'marca_id',
+        'customer_id',
+        'contact_id',
+        'user_id',
     ];
 
     protected $casts = [
         'valor' => 'decimal:2',
         'probabilidad' => 'integer',
         'fecha_cierre_esperada' => 'datetime',
-        'ultima_fecha_actividad' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime'
@@ -40,7 +44,7 @@ class OpportunityCrm extends Model
 
     public function tipoNegocio()
     {
-        return $this->belongsTo(TipeNegocioCrm::class, 'tipo_negocio_id');
+        return $this->belongsTo(TipoNegocioCrm::class, 'tipo_negocio_id');
     }
 
     public function marca()
@@ -48,9 +52,9 @@ class OpportunityCrm extends Model
         return $this->belongsTo(MarcaCrm::class, 'marca_id');
     }
 
-    public function lead()
+    public function contacto()
     {
-        return $this->belongsTo(LeadCrm::class, 'lead_id');
+        return $this->belongsTo(ContactCrm::class, 'contact_id');
     }
 
     public function actividades()
@@ -58,8 +62,13 @@ class OpportunityCrm extends Model
         return $this->hasMany(ActivityCrm::class, 'opportunity_id');
     }
 
-    public function negociaciones()
+    public function cliente()
     {
-        return $this->hasMany(DealCrm::class, 'opportunity_id');
+        return $this->belongsTo(Customer::class, 'customer_id');
+    }
+
+    public function usuario()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

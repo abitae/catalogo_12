@@ -16,15 +16,12 @@ return new class extends Migration
             $table->string('telefono')->nullable();
             $table->string('cargo')->nullable();
             $table->string('empresa')->nullable();
-            $table->unsignedBigInteger('lead_id')->nullable();
-            $table->unsignedBigInteger('customer_id')->nullable();
+            $table->dateTime('ultima_fecha_contacto')->nullable();
             $table->text('notas')->nullable();
-            $table->timestamp('ultima_fecha_contacto')->nullable();
             $table->boolean('es_principal')->default(false);
+            $table->foreignId('customer_id')->constrained('customers');
             $table->timestamps();
             $table->softDeletes();
-
-            $table->foreign('lead_id')->references('id')->on('leads_crm');
         });
     }
 

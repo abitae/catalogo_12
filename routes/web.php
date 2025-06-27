@@ -10,11 +10,13 @@ use App\Livewire\Catalogo\BrandCatalogoIndex;
 use App\Livewire\Catalogo\CategoryCatalogoIndex;
 use App\Livewire\Catalogo\LineCatalogoIndex;
 use App\Livewire\Catalogo\ProductoCatalogoIndex;
-use App\Livewire\Crm\LeadCrmIndex;
 use App\Livewire\Crm\ContactCrmIndex;
 use App\Livewire\Crm\OpportunityCrmIndex;
-use App\Livewire\Crm\DealCrmIndex;
 use App\Livewire\Crm\ActivityCrmIndex;
+use App\Livewire\Crm\MarcaCrmIndex;
+use App\Livewire\Crm\TipoNegocioCrmIndex;
+use App\Livewire\Shared\CustomerIndex;
+use App\Livewire\Shared\TipoCustomerIndex;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
@@ -66,11 +68,15 @@ Route::middleware(['auth'])->group(function () {
     })->name('almacen.lotes.movimientos');
 
     // Rutas del CRM
-    Route::get('crm/leads', LeadCrmIndex::class)->name('crm.leads');
-    Route::get('crm/contacts', ContactCrmIndex::class)->name('crm.contacts');
     Route::get('crm/opportunities', OpportunityCrmIndex::class)->name('crm.opportunities');
-    Route::get('crm/deals', DealCrmIndex::class)->name('crm.deals');
+    Route::get('crm/contacts', ContactCrmIndex::class)->name('crm.contacts');
     Route::get('crm/activities', ActivityCrmIndex::class)->name('crm.activities');
+    Route::get('crm/marcas', MarcaCrmIndex::class)->name('crm.marcas');
+    Route::get('crm/tipos-negocio', TipoNegocioCrmIndex::class)->name('crm.tipos-negocio');
+
+    // Rutas de Shared
+    Route::get('shared/customers', CustomerIndex::class)->name('shared.customers');
+    Route::get('shared/tipos-customer', TipoCustomerIndex::class)->name('shared.tipos-customer');
 });
 
 require __DIR__.'/auth.php';
