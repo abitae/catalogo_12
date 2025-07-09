@@ -7,11 +7,11 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Storage;
+use Mary\Traits\Toast;
 
 class CategoryCatalogoIndex extends Component
 {
-    use WithPagination;
-    use WithFileUploads;
+    use WithPagination, WithFileUploads, Toast;
 
     // Propiedades para el modal
     public $modal_form_categoria = false;
@@ -185,10 +185,7 @@ class CategoryCatalogoIndex extends Component
         $categoria->delete();
 
         $this->modal_form_eliminar_categoria = false;
-        $this->dispatch('notify', [
-            'type' => 'success',
-            'message' => 'Categoría eliminada correctamente'
-        ]);
+        $this->success('Categoría eliminada correctamente');
     }
 
     public function guardarCategoria()
@@ -269,10 +266,7 @@ class CategoryCatalogoIndex extends Component
         ]);
         $this->resetValidation();
 
-        $this->dispatch('notify', [
-            'type' => 'success',
-            'message' => $this->categoria_id ? 'Categoría actualizada correctamente' : 'Categoría creada correctamente'
-        ]);
+        $this->success($this->categoria_id ? 'Categoría actualizada correctamente' : 'Categoría creada correctamente');
     }
 
     public function render()

@@ -9,10 +9,11 @@ use App\Models\User;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
+use Mary\Traits\Toast;
 
 class ActivityCrmIndex extends Component
 {
-    use WithPagination, WithFileUploads;
+    use WithPagination, WithFileUploads, Toast;
 
     public $search = '';
     public $sortField = 'created_at';
@@ -131,6 +132,7 @@ class ActivityCrmIndex extends Component
             'perPage'
         ]);
         $this->resetPage();
+        $this->info('Filtros limpiados');
     }
 
     public function render()

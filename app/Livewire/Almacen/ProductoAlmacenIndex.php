@@ -11,10 +11,11 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Validation\Rule;
+use Mary\Traits\Toast;
 
 class ProductoAlmacenIndex extends Component
 {
-    use WithPagination, WithFileUploads;
+    use WithPagination, WithFileUploads, Toast;
 
     // Propiedades de paginación y búsqueda
     public $search = '';
@@ -174,6 +175,7 @@ class ProductoAlmacenIndex extends Component
             'unidad_medida_filter'
         ]);
         $this->resetPage();
+        $this->info('Filtros limpiados');
     }
 
     public function render()
@@ -310,11 +312,11 @@ class ProductoAlmacenIndex extends Component
 
             $this->producto->delete();
 
-            session()->flash('message', 'Producto eliminado correctamente');
+            $this->success('Producto eliminado correctamente');
             $this->modal_form_eliminar_producto = false;
             $this->reset(['producto_id', 'producto']);
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al eliminar el producto: ' . $e->getMessage());
+            $this->error('Error al eliminar el producto: ' . $e->getMessage());
         }
     }
 
@@ -353,15 +355,15 @@ class ProductoAlmacenIndex extends Component
             if ($producto && $producto->agregarCodigoSalida($this->nuevo_codigo_salida)) {
                 $this->nuevo_codigo_salida = '';
                 $this->codes_exit = $producto->fresh()->codes_exit;
-                session()->flash('message', 'Código de salida agregado correctamente');
+                $this->success('Código de salida agregado correctamente');
             }
         } else {
             if (!in_array($this->nuevo_codigo_salida, $this->codes_exit)) {
                 $this->codes_exit[] = $this->nuevo_codigo_salida;
                 $this->nuevo_codigo_salida = '';
-                session()->flash('message', 'Código de salida agregado correctamente');
+                $this->success('Código de salida agregado correctamente');
             } else {
-                session()->flash('error', 'Este código de salida ya existe');
+                $this->error('Este código de salida ya existe');
             }
         }
     }
@@ -372,13 +374,13 @@ class ProductoAlmacenIndex extends Component
             $producto = ProductoAlmacen::find($this->producto_id);
             if ($producto && $producto->eliminarCodigoSalida($code)) {
                 $this->codes_exit = $producto->fresh()->codes_exit;
-                session()->flash('message', 'Código de salida eliminado correctamente');
+                $this->success('Código de salida eliminado correctamente');
             }
         } else {
             $this->codes_exit = array_values(array_filter($this->codes_exit, function ($c) use ($code) {
                 return $c !== $code;
             }));
-            session()->flash('message', 'Código de salida eliminado correctamente');
+            $this->success('Código de salida eliminado correctamente');
         }
     }
 
@@ -406,14 +408,14 @@ class ProductoAlmacenIndex extends Component
 
             DB::commit();
 
-            session()->flash('message', $mensaje);
+            $this->success($mensaje);
             $this->modal_form_producto = false;
             $this->resetearFormulario();
             $this->cargarLotesDisponibles();
 
         } catch (\Exception $e) {
             DB::rollBack();
-            session()->flash('error', 'Error al guardar el producto: ' . $e->getMessage());
+            $this->error('Error al guardar el producto: ' . $e->getMessage());
         }
     }
 
@@ -508,7 +510,7 @@ class ProductoAlmacenIndex extends Component
                 'productos_almacen_' . date('Y-m-d_H-i-s') . '.xlsx'
             );
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al exportar: ' . $e->getMessage());
+            $this->error('Error al exportar: ' . $e->getMessage());
         }
     }
 

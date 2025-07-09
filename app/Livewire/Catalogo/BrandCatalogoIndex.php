@@ -10,10 +10,11 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
+use Mary\Traits\Toast;
 
 class BrandCatalogoIndex extends Component
 {
-    use WithPagination, WithFileUploads, TableTrait, FileUploadTrait, NotificationTrait;
+    use WithPagination, WithFileUploads, TableTrait, FileUploadTrait, NotificationTrait, Toast;
 
     // Propiedades para el modal
     public $modal_form_marca = false;
@@ -49,6 +50,7 @@ class BrandCatalogoIndex extends Component
             'perPage',
         ]);
         $this->resetPage();
+        $this->info('Filtros limpiados');
     }
 
     public function updatedTempLogo()

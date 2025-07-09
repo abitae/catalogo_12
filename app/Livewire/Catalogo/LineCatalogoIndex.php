@@ -7,11 +7,11 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Storage;
+use Mary\Traits\Toast;
 
 class LineCatalogoIndex extends Component
 {
-    use WithPagination;
-    use WithFileUploads;
+    use WithPagination, WithFileUploads, Toast;
 
     // Propiedades para el modal
     public $modal_form_linea = false;
@@ -109,10 +109,7 @@ class LineCatalogoIndex extends Component
         $linea->delete();
 
         $this->modal_form_eliminar_linea = false;
-        $this->dispatch('notify', [
-            'type' => 'success',
-            'message' => 'Línea eliminada correctamente'
-        ]);
+        $this->success('Línea eliminada correctamente');
     }
 
     public function guardarLinea()
@@ -164,10 +161,7 @@ class LineCatalogoIndex extends Component
         $linea->save();
 
         $this->modal_form_linea = false;
-        $this->dispatch('notify', [
-            'type' => 'success',
-            'message' => $this->linea_id ? 'Línea actualizada correctamente' : 'Línea creada correctamente'
-        ]);
+        $this->success($this->linea_id ? 'Línea actualizada correctamente' : 'Línea creada correctamente');
     }
 
     public function render()

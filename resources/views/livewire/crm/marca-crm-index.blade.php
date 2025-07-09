@@ -227,12 +227,12 @@
 
                     <div class="md:col-span-2">
                         <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Imagen</flux:label>
-                        <flux:input wire:model="tempImage" type="file" accept="image/*" class="w-full mt-1" />
-                        @error('tempImage') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                        @if($imagePreview)
+                        <flux:input wire:model="tempLogo" type="file" accept="image/*" class="w-full mt-1" />
+                        @error('tempLogo') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        @if($logoPreview)
                             <div class="mt-2">
-                                <img src="{{ $imagePreview }}" alt="Preview" class="w-32 h-32 object-cover rounded-lg">
-                                <flux:button wire:click="removeImage" size="sm" color="red" class="mt-2">Remover</flux:button>
+                                <img src="{{ $logoPreview }}" alt="Preview" class="w-32 h-32 object-cover rounded-lg">
+                                <flux:button wire:click="removeLogo" size="sm" color="red" class="mt-2">Remover</flux:button>
                             </div>
                         @endif
                     </div>

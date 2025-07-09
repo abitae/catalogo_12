@@ -14,10 +14,11 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
+use Mary\Traits\Toast;
 
 class OpportunityCrmIndex extends Component
 {
-    use WithPagination, WithFileUploads;
+    use WithPagination, WithFileUploads, Toast;
 
     public $search = '';
     public $sortField = 'nombre';
@@ -166,8 +167,11 @@ class OpportunityCrmIndex extends Component
             'perPage'
         ]);
         $this->resetPage();
+        $this->info('Filtros limpiados');
     }
-
+    public function mount() {
+        $this->fecha_cierre_esperada = \Carbon\Carbon::now()->format('Y-m-d');
+    }
     public function render()
     {
         $query = OpportunityCrm::query()
@@ -199,7 +203,7 @@ class OpportunityCrmIndex extends Component
             ->orderBy($this->sortField, $this->sortDirection);
 
         return view('livewire.crm.opportunity-crm-index', [
-            'opportunities' => $query->paginate($this->perPage),
+            'opportunities' => $query->latest()->paginate($this->perPage),
             'tipos_negocio' => TipoNegocioCrm::all(),
             'marcas' => MarcaCrm::all(),
             'customers' => Customer::all(),
@@ -230,7 +234,7 @@ class OpportunityCrmIndex extends Component
             $this->tipo_negocio_id = $this->opportunity->tipo_negocio_id;
             $this->marca_id = $this->opportunity->marca_id;
             $this->probabilidad = $this->opportunity->probabilidad;
-            $this->fecha_cierre_esperada = $this->opportunity->fecha_cierre_esperada;
+            $this->fecha_cierre_esperada = $this->opportunity->fecha_cierre_esperada->format('Y-m-d');
             $this->fuente = $this->opportunity->fuente;
             $this->descripcion = $this->opportunity->descripcion;
             $this->notas = $this->opportunity->notas;
@@ -338,14 +342,14 @@ class OpportunityCrmIndex extends Component
             $this->selected_opportunity = OpportunityCrm::with(['cliente.contactos', 'actividades'])->find($id);
 
             if (!$this->selected_opportunity) {
-                session()->flash('error', 'No se encontró la oportunidad seleccionada.');
+                $this->error('No se encontró la oportunidad seleccionada.');
                 return;
             }
 
             $this->resetActivityForm();
             $this->modal_actividades = true;
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al cargar las actividades: ' . $e->getMessage());
+            $this->error('Error al cargar las actividades: ' . $e->getMessage());
         }
     }
 
@@ -383,7 +387,7 @@ class OpportunityCrmIndex extends Component
             if ($this->activity) {
                 // Verificar que la actividad pertenece a la oportunidad seleccionada
                 if ($this->activity->opportunity_id != $this->selected_opportunity_id) {
-                    session()->flash('error', 'La actividad no pertenece a esta oportunidad.');
+                    $this->error('La actividad no pertenece a esta oportunidad.');
                     return;
                 }
 
@@ -398,10 +402,10 @@ class OpportunityCrmIndex extends Component
                     $this->imagePreviewActivity = Storage::url($this->activity->image);
                 }
             } else {
-                session()->flash('error', 'No se encontró la actividad a editar.');
+                $this->error('No se encontró la actividad a editar.');
             }
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al cargar la actividad: ' . $e->getMessage());
+            $this->error('Error al cargar la actividad: ' . $e->getMessage());
         }
     }
 
@@ -412,7 +416,7 @@ class OpportunityCrmIndex extends Component
             if ($activity) {
                 // Verificar que la actividad pertenece a la oportunidad seleccionada
                 if ($activity->opportunity_id != $this->selected_opportunity_id) {
-                    session()->flash('error', 'La actividad no pertenece a esta oportunidad.');
+                    $this->error('La actividad no pertenece a esta oportunidad.');
                     return;
                 }
 
@@ -425,15 +429,15 @@ class OpportunityCrmIndex extends Component
                 }
 
                 $activity->delete();
-                session()->flash('success', 'Actividad eliminada correctamente.');
+                $this->success('Actividad eliminada correctamente.');
 
                 // Recargar la oportunidad con las actividades actualizadas
                 $this->selected_opportunity = OpportunityCrm::with(['cliente.contactos', 'actividades'])->find($this->selected_opportunity_id);
             } else {
-                session()->flash('error', 'No se encontró la actividad a eliminar.');
+                $this->error('No se encontró la actividad a eliminar.');
             }
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al eliminar la actividad: ' . $e->getMessage());
+            $this->error('Error al eliminar la actividad: ' . $e->getMessage());
         }
     }
 
@@ -441,7 +445,7 @@ class OpportunityCrmIndex extends Component
     {
         // Validar que existe una oportunidad seleccionada
         if (!$this->selected_opportunity_id || !$this->selected_opportunity) {
-            session()->flash('error', 'No se ha seleccionado una oportunidad válida.');
+            $this->error('No se ha seleccionado una oportunidad válida.');
             return;
         }
 
@@ -463,7 +467,7 @@ class OpportunityCrmIndex extends Component
                 ->exists();
 
             if (!$contactBelongsToCustomer) {
-                session()->flash('error', 'El contacto seleccionado no pertenece al cliente de esta oportunidad.');
+                $this->error('El contacto seleccionado no pertenece al cliente de esta oportunidad.');
                 return;
             }
         }
@@ -502,14 +506,14 @@ class OpportunityCrmIndex extends Component
                 $activity = ActivityCrm::find($this->activity_id);
                 if ($activity) {
                     $activity->update($data);
-                    session()->flash('success', 'Actividad actualizada correctamente.');
+                    $this->success('Actividad actualizada correctamente.');
                 } else {
-                    session()->flash('error', 'No se encontró la actividad a actualizar.');
+                    $this->error('No se encontró la actividad a actualizar.');
                     return;
                 }
             } else {
                 ActivityCrm::create($data);
-                session()->flash('success', 'Actividad creada correctamente.');
+                $this->success('Actividad creada correctamente.');
             }
 
             $this->resetActivityForm();
@@ -517,7 +521,7 @@ class OpportunityCrmIndex extends Component
             $this->selected_opportunity = OpportunityCrm::with(['cliente.contactos', 'actividades'])->find($this->selected_opportunity_id);
 
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al guardar la actividad: ' . $e->getMessage());
+            $this->error('Error al guardar la actividad: ' . $e->getMessage());
         }
     }
 

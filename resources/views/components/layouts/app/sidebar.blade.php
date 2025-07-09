@@ -13,6 +13,10 @@
 
             <flux:navlist variant="outline">
                 <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>{{ __('Dashboard') }}</flux:navlist.item>
+                <flux:navlist.group :expanded="request()->routeIs('shared.*')" expandable heading="Clientes">
+                    <flux:navlist.item icon="user-group" :href="route('shared.customers')" :current="request()->routeIs('shared.customers')" wire:navigate>{{ __('Clientes') }}</flux:navlist.item>
+                    <flux:navlist.item icon="tag" :href="route('shared.tipos-customer')" :current="request()->routeIs('shared.tipos-customer')" wire:navigate>{{ __('Tipos de Cliente') }}</flux:navlist.item>
+                </flux:navlist.group>
                 <flux:navlist.group :expanded="request()->routeIs('catalogo.*')" expandable heading="Catalogo">
                     <flux:navlist.item icon="cube" :href="route('catalogo.products')" :current="request()->routeIs('catalogo.products')" wire:navigate>{{ __('Productos') }}</flux:navlist.item>
                     <flux:navlist.item icon="tag" :href="route('catalogo.brands')" :current="request()->routeIs('catalogo.brands')" wire:navigate>{{ __('Marcas') }}</flux:navlist.item>
@@ -41,13 +45,11 @@
             <flux:spacer />
 
             <flux:navlist variant="outline">
-                <flux:navlist.item icon="folder-git-2" href="https://github.com/laravel/livewire-starter-kit" target="_blank">
-                {{ __('Repository') }}
-                </flux:navlist.item>
-
-                <flux:navlist.item icon="book-open-text" href="https://laravel.com/docs/starter-kits" target="_blank">
-                {{ __('Documentation') }}
-                </flux:navlist.item>
+                <flux:radio.group x-data variant="segmented" x-model="$flux.appearance">
+                    <flux:radio value="light" icon="sun"></flux:radio>
+                    <flux:radio value="dark" icon="moon"></flux:radio>
+                    <flux:radio value="system" icon="computer-desktop"></flux:radio>
+                </flux:radio.group>
             </flux:navlist>
 
             <!-- Desktop User Menu -->
@@ -149,5 +151,6 @@
         {{ $slot }}
 
         @fluxScripts
+        <x-mary-toast />
     </body>
 </html>

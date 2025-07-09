@@ -10,10 +10,11 @@ use Livewire\WithPagination;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Validation\Rule;
+use Mary\Traits\Toast;
 
 class WarehouseAlmacenIndex extends Component
 {
-    use WithPagination;
+    use WithPagination, Toast;
 
     // Propiedades de paginación y búsqueda
     public $search = '';
@@ -129,6 +130,7 @@ class WarehouseAlmacenIndex extends Component
             'responsable_filter'
         ]);
         $this->resetPage();
+        $this->info('Filtros limpiados');
     }
 
     public function render()
@@ -239,7 +241,7 @@ class WarehouseAlmacenIndex extends Component
         // Verificar si tiene productos asociados
         $productosAsociados = ProductoAlmacen::where('almacen_id', $id)->count();
         if ($productosAsociados > 0) {
-            session()->flash('error', 'No se puede eliminar el almacén porque tiene productos asociados');
+            $this->error('No se puede eliminar el almacén porque tiene productos asociados');
             return;
         }
 
@@ -251,12 +253,12 @@ class WarehouseAlmacenIndex extends Component
         try {
             $this->almacen->delete();
 
-            session()->flash('message', 'Almacén eliminado correctamente');
+            $this->success('Almacén eliminado correctamente');
             $this->modal_form_eliminar_almacen = false;
             $this->reset(['almacen_id', 'almacen']);
             $this->cargarEstadisticas();
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al eliminar el almacén: ' . $e->getMessage());
+            $this->error('Error al eliminar el almacén: ' . $e->getMessage());
         }
     }
 
@@ -280,14 +282,14 @@ class WarehouseAlmacenIndex extends Component
 
             DB::commit();
 
-            session()->flash('message', $mensaje);
+            $this->success($mensaje);
             $this->modal_form_almacen = false;
             $this->resetearFormulario();
             $this->cargarEstadisticas();
 
         } catch (\Exception $e) {
             DB::rollBack();
-            session()->flash('error', 'Error al guardar el almacén: ' . $e->getMessage());
+            $this->error('Error al guardar el almacén: ' . $e->getMessage());
         }
     }
 
@@ -356,9 +358,9 @@ class WarehouseAlmacenIndex extends Component
             //     new \App\Exports\Almacen\WarehouseAlmacenExport($this->almacenesExportar),
             //     'almacenes_' . date('Y-m-d_H-i-s') . '.xlsx'
             // );
-            session()->flash('message', 'Exportación de almacenes implementada correctamente');
+            $this->success('Exportación de almacenes implementada correctamente');
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al exportar: ' . $e->getMessage());
+            $this->error('Error al exportar: ' . $e->getMessage());
         }
     }
 
@@ -369,10 +371,10 @@ class WarehouseAlmacenIndex extends Component
             $almacen->estado = !$almacen->estado;
             $almacen->save();
 
-            session()->flash('message', 'Estado del almacén actualizado correctamente');
+            $this->success('Estado del almacén actualizado correctamente');
             $this->cargarEstadisticas();
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al cambiar el estado: ' . $e->getMessage());
+            $this->error('Error al cambiar el estado: ' . $e->getMessage());
         }
     }
 

@@ -115,10 +115,10 @@
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center gap-2">
                                     <flux:button wire:click="editarTipoCustomer({{ $tipo->id }})" size="sm" color="blue" icon="pencil">
-                                        Editar
+
                                     </flux:button>
                                     <flux:button wire:click="eliminarTipoCustomer({{ $tipo->id }})" size="sm" color="red" icon="trash">
-                                        Eliminar
+                                        
                                     </flux:button>
                                 </div>
                             </td>

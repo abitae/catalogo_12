@@ -8,10 +8,11 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
+use Mary\Traits\Toast;
 
 class CustomerIndex extends Component
 {
-    use WithPagination, WithFileUploads;
+    use WithPagination, WithFileUploads, Toast;
 
     public $search = '';
     public $sortField = 'rznSocial';
@@ -126,6 +127,7 @@ class CustomerIndex extends Component
             'perPage'
         ]);
         $this->resetPage();
+        $this->info('Filtros limpiados');
     }
 
     public function render()
@@ -206,6 +208,9 @@ class CustomerIndex extends Component
             }
 
             $this->customer->delete();
+            $this->success('Cliente eliminado correctamente');
+        } else {
+            $this->error('No se encontró el cliente a eliminar');
         }
 
         $this->modal_form_eliminar_customer = false;
@@ -276,14 +281,20 @@ class CustomerIndex extends Component
         // Remover campos temporales
         unset($data['tempImage'], $data['tempArchivo']);
 
-        if ($this->customer_id) {
-            $customer = Customer::find($this->customer_id);
-            $customer->update($data);
-        } else {
-            Customer::create($data);
-        }
+        try {
+            if ($this->customer_id) {
+                $customer = Customer::find($this->customer_id);
+                $customer->update($data);
+                $this->success('Cliente actualizado correctamente');
+            } else {
+                Customer::create($data);
+                $this->success('Cliente creado correctamente');
+            }
 
-        $this->modal_form_customer = false;
-        $this->resetForm();
+            $this->modal_form_customer = false;
+            $this->resetForm();
+        } catch (\Exception $e) {
+            $this->error('Error al guardar el cliente: ' . $e->getMessage());
+        }
     }
 }

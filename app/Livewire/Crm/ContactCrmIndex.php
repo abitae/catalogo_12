@@ -6,10 +6,11 @@ use App\Models\Crm\ContactCrm;
 use App\Models\Shared\Customer;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Mary\Traits\Toast;
 
 class ContactCrmIndex extends Component
 {
-    use WithPagination;
+    use WithPagination, Toast;
 
     public $search = '';
     public $sortField = 'nombre';
@@ -102,6 +103,7 @@ class ContactCrmIndex extends Component
             'perPage'
         ]);
         $this->resetPage();
+        $this->info('Filtros limpiados');
     }
 
     public function render()

@@ -5,12 +5,13 @@ namespace App\Livewire\Crm;
 use App\Models\Crm\MarcaCrm;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Mary\Traits\Toast;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
 
 class MarcaCrmIndex extends Component
 {
-    use WithPagination, WithFileUploads;
+    use WithPagination, WithFileUploads, Toast;
 
     public $search = '';
     public $sortField = 'nombre';
@@ -107,6 +108,7 @@ class MarcaCrmIndex extends Component
             'perPage'
         ]);
         $this->resetPage();
+        $this->info('Filtros limpiados');
     }
 
     public function render()

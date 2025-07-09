@@ -5,10 +5,11 @@ namespace App\Livewire\Shared;
 use App\Models\Shared\TipoCustomer;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Mary\Traits\Toast;
 
 class TipoCustomerIndex extends Component
 {
-    use WithPagination;
+    use WithPagination, Toast;
 
     public $search = '';
     public $sortField = 'nombre';
@@ -72,6 +73,7 @@ class TipoCustomerIndex extends Component
             'perPage'
         ]);
         $this->resetPage();
+        $this->info('Filtros limpiados');
     }
 
     public function render()
@@ -122,6 +124,9 @@ class TipoCustomerIndex extends Component
     {
         if ($this->tipo_customer) {
             $this->tipo_customer->delete();
+            $this->success('Tipo de cliente eliminado correctamente');
+        } else {
+            $this->error('No se encontró el tipo de cliente a eliminar');
         }
 
         $this->modal_form_eliminar_tipo_customer = false;
@@ -141,16 +146,22 @@ class TipoCustomerIndex extends Component
 
     public function guardarTipoCustomer()
     {
-        $data = $this->validate();
+        try {
+            $data = $this->validate();
 
-        if ($this->tipo_customer_id) {
-            $tipo_customer = TipoCustomer::find($this->tipo_customer_id);
-            $tipo_customer->update($data);
-        } else {
-            TipoCustomer::create($data);
+            if ($this->tipo_customer_id) {
+                $tipo_customer = TipoCustomer::find($this->tipo_customer_id);
+                $tipo_customer->update($data);
+                $this->success('Tipo de cliente actualizado correctamente');
+            } else {
+                TipoCustomer::create($data);
+                $this->success('Tipo de cliente creado correctamente');
+            }
+
+            $this->modal_form_tipo_customer = false;
+            $this->resetForm();
+        } catch (\Exception $e) {
+            $this->error('Error al guardar el tipo de cliente: ' . $e->getMessage());
         }
-
-        $this->modal_form_tipo_customer = false;
-        $this->resetForm();
     }
 }

@@ -9,10 +9,11 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Mary\Traits\Toast;
 
 class ReporteLotesIndex extends Component
 {
-    use WithPagination;
+    use WithPagination, Toast;
 
     // Propiedades de búsqueda y filtros
     public $search = '';
@@ -326,6 +327,7 @@ class ReporteLotesIndex extends Component
             'rango_stock_filter'
         ]);
         $this->resetPage();
+        $this->info('Filtros limpiados');
     }
 
     public function actualizarFechas()
@@ -340,7 +342,7 @@ class ReporteLotesIndex extends Component
             // TODO: Implementar exportación a Excel con filtros aplicados
             $productos = $this->construirQuery()->get();
 
-            session()->flash('message', 'Reporte exportado correctamente');
+            $this->success('Reporte exportado correctamente');
             return redirect()->route('almacen.reportes.lotes.export', [
                 'search' => $this->search,
                 'almacen_filter' => $this->almacen_filter,
@@ -351,7 +353,7 @@ class ReporteLotesIndex extends Component
                 'fecha_fin' => $this->fecha_fin,
             ]);
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al exportar: ' . $e->getMessage());
+            $this->error('Error al exportar: ' . $e->getMessage());
         }
     }
 
@@ -359,9 +361,9 @@ class ReporteLotesIndex extends Component
     {
         try {
             // TODO: Implementar generación de PDF
-            session()->flash('message', 'Reporte PDF generado correctamente');
+            $this->success('Reporte PDF generado correctamente');
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al generar PDF: ' . $e->getMessage());
+            $this->error('Error al generar PDF: ' . $e->getMessage());
         }
     }
 

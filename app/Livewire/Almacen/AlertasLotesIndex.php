@@ -9,10 +9,11 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Mary\Traits\Toast;
 
 class AlertasLotesIndex extends Component
 {
-    use WithPagination;
+    use WithPagination, Toast;
 
     // Propiedades de búsqueda y filtros
     public $search = '';
@@ -377,7 +378,7 @@ class AlertasLotesIndex extends Component
     {
         // Implementar lógica para marcar alertas como leídas
         // Esto podría guardarse en una tabla de alertas_leidas
-        session()->flash('message', 'Alerta marcada como leída');
+        $this->success('Alerta marcada como leída');
     }
 
     public function actualizarDiasVencimiento()
@@ -396,13 +397,14 @@ class AlertasLotesIndex extends Component
             'dias_vencimiento'
         ]);
         $this->resetPage();
+        $this->info('Filtros limpiados');
     }
 
     public function refreshAlertas()
     {
         $this->cargarAlertas();
         $this->calcularEstadisticas();
-        session()->flash('message', 'Alertas actualizadas correctamente');
+        $this->success('Alertas actualizadas correctamente');
     }
 
     public function getProductosPorVencer()
@@ -438,6 +440,6 @@ class AlertasLotesIndex extends Component
     public function exportarAlertas()
     {
         // TODO: Implementar exportación de alertas
-        session()->flash('message', 'Exportación de alertas implementada correctamente');
+        $this->success('Exportación de alertas implementada correctamente');
     }
 }

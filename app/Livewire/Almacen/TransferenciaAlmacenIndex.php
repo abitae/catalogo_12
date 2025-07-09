@@ -14,11 +14,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Mary\Traits\Toast;
 
 class TransferenciaAlmacenIndex extends Component
 {
     use WithPagination, WithFileUploads;
-
+    use Toast;
     protected $queryString = [
         'search' => ['except' => ''],
         'sortField' => ['except' => 'code'],
@@ -117,8 +118,8 @@ class TransferenciaAlmacenIndex extends Component
 
     public function mount()
     {
-        $this->fecha_inicio = now()->subDays(7)->format('Y-m-d');
-        $this->fecha_fin = now()->endOfDay()->format('Y-m-d');
+        $this->fecha_inicio = \Carbon\Carbon::now()->subDays(7)->format('Y-m-d');
+        $this->fecha_fin = \Carbon\Carbon::now()->endOfDay()->format('Y-m-d');
         $this->productos_disponibles = collect();
         $this->producto_seleccionado = null;
         $this->cantidad_producto = 1;
@@ -178,6 +179,7 @@ class TransferenciaAlmacenIndex extends Component
             'perPage'
         ]);
         $this->resetPage();
+        $this->info('Filtros limpiados correctamente');
     }
 
     public function render()
@@ -236,6 +238,7 @@ class TransferenciaAlmacenIndex extends Component
         $this->cantidad_producto = 1;
         $this->lote_producto = '';
         $this->modal_form_transferencia = true;
+        $this->info('Formulario de nueva transferencia listo');
     }
 
     public function editarTransferencia($id)
@@ -245,7 +248,7 @@ class TransferenciaAlmacenIndex extends Component
 
         // Verificar si la transferencia está pendiente
         if ($this->transferencia->estado !== 'pendiente') {
-            session()->flash('error', 'Solo se pueden editar transferencias en estado pendiente.');
+            $this->error('Solo se pueden editar transferencias en estado pendiente.');
             return;
         }
 
@@ -285,6 +288,7 @@ class TransferenciaAlmacenIndex extends Component
         $this->cantidad_producto = 1;
 
         $this->modal_form_transferencia = true;
+        $this->info("Editando transferencia '{$this->transferencia->code}'");
     }
 
     public function guardarTransferencia()
@@ -295,7 +299,7 @@ class TransferenciaAlmacenIndex extends Component
         if ($this->transferencia_id) {
             $transferencia = TransferenciaAlmacen::findOrFail($this->transferencia_id);
             if ($transferencia->estado !== 'pendiente') {
-                session()->flash('error', 'Solo se pueden editar transferencias en estado pendiente.');
+                $this->error('Solo se pueden editar transferencias en estado pendiente.');
                 return;
             }
         }
@@ -375,7 +379,7 @@ class TransferenciaAlmacenIndex extends Component
 
             $this->modal_form_transferencia = false;
             $this->resetForm();
-            session()->flash('message', $mensaje);
+            $this->success($mensaje);
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -387,12 +391,13 @@ class TransferenciaAlmacenIndex extends Component
                 'trace' => $e->getTraceAsString()
             ]);
 
-            session()->flash('error', 'Error al guardar la transferencia: ' . $e->getMessage());
+            $this->error('Error al guardar la transferencia: ' . $e->getMessage());
         }
     }
 
     public function exportarTransferencias()
     {
+        $this->info('Preparando exportación de transferencias...');
         return Excel::download(new TransferenciaAlmacenExport($this->transferenciasExportar), 'transferencias_' . date('Y-m-d_H-i-s') . '.xlsx');
         $this->reset(['transferenciasExportar']);
     }
@@ -480,9 +485,13 @@ class TransferenciaAlmacenIndex extends Component
             if ($this->productos_disponibles->count() === 1) {
                 $this->producto_seleccionado = $this->productos_disponibles->first()->id;
                 $this->updatedProductoSeleccionado();
+                $this->info("Producto seleccionado automáticamente del lote: {$this->lote_producto}");
+            } else {
+                $this->info("Filtrado por lote: {$this->lote_producto}");
             }
         } else {
             $this->actualizarProductosDisponibles();
+            $this->info('Mostrando todos los productos disponibles');
         }
     }
 
@@ -493,13 +502,13 @@ class TransferenciaAlmacenIndex extends Component
 
         // Verificar que productos_disponibles sea una colección válida
         if (!$this->productos_disponibles || !$this->productos_disponibles->count()) {
-            session()->flash('error', 'No hay productos disponibles en el almacén origen.');
+            $this->error('No hay productos disponibles en el almacén origen.');
             return;
         }
 
         // Verificar que producto_seleccionado esté definido
         if (!$this->producto_seleccionado) {
-            session()->flash('error', 'Debe seleccionar un producto.');
+            $this->error('Debe seleccionar un producto.');
             return;
         }
 
@@ -553,6 +562,15 @@ class TransferenciaAlmacenIndex extends Component
             $this->productos_seleccionados[] = $this->producto_seleccionado;
             $this->cantidades[$this->producto_seleccionado] = $this->cantidad_producto;
             $this->lotes[$this->producto_seleccionado] = $this->lote_producto;
+
+            // Obtener información del producto para el mensaje
+            $producto = $this->productos_disponibles->first(function($p) {
+                return $p->id == $this->producto_seleccionado;
+            });
+
+            $this->success("Producto '{$producto->nombre}' agregado correctamente.");
+        } else {
+            $this->warning('Este producto ya está en la lista de transferencia.');
         }
 
         $this->reset(['producto_seleccionado', 'cantidad_producto', 'lote_producto']);
@@ -562,8 +580,15 @@ class TransferenciaAlmacenIndex extends Component
     {
         $key = array_search($productoId, $this->productos_seleccionados);
         if ($key !== false) {
+            // Obtener información del producto antes de eliminarlo
+            $producto = $this->productos_disponibles->first(function($p) use ($productoId) {
+                return $p->id == $productoId;
+            });
+
             unset($this->productos_seleccionados[$key], $this->cantidades[$productoId], $this->lotes[$productoId]);
             $this->productos_seleccionados = array_values($this->productos_seleccionados);
+
+            $this->info("Producto '{$producto->nombre}' removido de la transferencia.");
         }
     }
 
@@ -574,6 +599,11 @@ class TransferenciaAlmacenIndex extends Component
         $this->producto_seleccionado = null;
         $this->cantidad_producto = 1;
         $this->lote_producto = '';
+
+        if ($this->almacen_origen_id) {
+            $almacen = WarehouseAlmacen::find($this->almacen_origen_id);
+            $this->info("Productos actualizados para almacén: {$almacen->nombre}");
+        }
     }
 
     public function updatedProductoSeleccionado()
@@ -629,7 +659,7 @@ class TransferenciaAlmacenIndex extends Component
             $transferencia = TransferenciaAlmacen::findOrFail($id);
 
             if ($transferencia->estado !== 'pendiente') {
-                session()->flash('error', 'Solo se pueden completar transferencias pendientes.');
+                $this->error('Solo se pueden completar transferencias pendientes.');
                 return;
             }
 
@@ -732,7 +762,7 @@ class TransferenciaAlmacenIndex extends Component
                 'productos_count' => count($transferencia->productos)
             ]);
 
-            session()->flash('message', 'Transferencia completada correctamente.');
+            $this->success('Transferencia completada correctamente.');
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -743,7 +773,7 @@ class TransferenciaAlmacenIndex extends Component
                 'trace' => $e->getTraceAsString()
             ]);
 
-            session()->flash('error', 'Error al completar la transferencia: ' . $e->getMessage());
+            $this->error('Error al completar la transferencia: ' . $e->getMessage());
         }
     }
 
@@ -755,7 +785,7 @@ class TransferenciaAlmacenIndex extends Component
             $transferencia = TransferenciaAlmacen::findOrFail($id);
 
             if ($transferencia->estado !== 'pendiente') {
-                session()->flash('error', 'Solo se pueden cancelar transferencias pendientes.');
+                $this->error('Solo se pueden cancelar transferencias pendientes.');
                 return;
             }
 
@@ -773,7 +803,7 @@ class TransferenciaAlmacenIndex extends Component
                 'productos_count' => count($transferencia->productos)
             ]);
 
-            session()->flash('message', 'Transferencia cancelada correctamente.');
+            $this->success('Transferencia cancelada correctamente.');
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -784,7 +814,7 @@ class TransferenciaAlmacenIndex extends Component
                 'trace' => $e->getTraceAsString()
             ]);
 
-            session()->flash('error', 'Error al cancelar la transferencia: ' . $e->getMessage());
+            $this->error('Error al cancelar la transferencia: ' . $e->getMessage());
         }
     }
 
@@ -794,8 +824,9 @@ class TransferenciaAlmacenIndex extends Component
             $this->transferencia_detalle = TransferenciaAlmacen::with(['almacenOrigen', 'almacenDestino', 'usuario'])
                 ->findOrFail($id);
             $this->modal_detalle_transferencia = true;
+            $this->info("Detalles de transferencia '{$this->transferencia_detalle->code}' cargados");
         } catch (\Exception $e) {
-            session()->flash('error', 'Error al cargar los detalles de la transferencia: ' . $e->getMessage());
+            $this->error('Error al cargar los detalles de la transferencia: ' . $e->getMessage());
         }
     }
 }

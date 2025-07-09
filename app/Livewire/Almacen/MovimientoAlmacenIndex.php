@@ -14,10 +14,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Mary\Traits\Toast;
 
 class MovimientoAlmacenIndex extends Component
 {
-    use WithPagination, WithFileUploads;
+    use WithPagination, WithFileUploads, Toast;
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -245,6 +246,7 @@ class MovimientoAlmacenIndex extends Component
             'perPage'
         ]);
         $this->resetPage();
+        $this->info('Filtros limpiados');
     }
 
     public function render()
@@ -315,7 +317,7 @@ class MovimientoAlmacenIndex extends Component
 
         // Verificar si el movimiento está pendiente
         if ($this->movimiento->estado !== 'pendiente') {
-            session()->flash('error', 'Solo se pueden editar movimientos en estado pendiente.');
+            $this->error('Solo se pueden editar movimientos en estado pendiente.');
             return;
         }
 
@@ -391,7 +393,7 @@ class MovimientoAlmacenIndex extends Component
         if ($this->movimiento_id) {
             $movimiento = MovimientoAlmacen::findOrFail($this->movimiento_id);
             if ($movimiento->estado !== 'pendiente') {
-                session()->flash('error', 'Solo se pueden editar movimientos en estado pendiente.');
+                $this->error('Solo se pueden editar movimientos en estado pendiente.');
                 return;
             }
         }
@@ -488,7 +490,7 @@ class MovimientoAlmacenIndex extends Component
 
             $this->modal_form_movimiento = false;
             $this->resetForm();
-            session()->flash('message', $mensaje);
+            $this->success($mensaje);
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -500,7 +502,7 @@ class MovimientoAlmacenIndex extends Component
                 'trace' => $e->getTraceAsString()
             ]);
 
-            session()->flash('error', 'Error al guardar el movimiento: ' . $e->getMessage());
+            $this->error('Error al guardar el movimiento: ' . $e->getMessage());
         }
     }
 
@@ -615,13 +617,13 @@ class MovimientoAlmacenIndex extends Component
 
         // Verificar que productos_disponibles sea una colección válida
         if (!$this->productos_disponibles || !$this->productos_disponibles->count()) {
-            session()->flash('error', 'No hay productos disponibles en el almacén.');
+            $this->error('No hay productos disponibles en el almacén.');
             return;
         }
 
         // Verificar que producto_seleccionado esté definido
         if (!$this->producto_seleccionado) {
-            session()->flash('error', 'Debe seleccionar un producto.');
+            $this->error('Debe seleccionar un producto.');
             return;
         }
 
@@ -827,7 +829,7 @@ class MovimientoAlmacenIndex extends Component
             $movimiento = MovimientoAlmacen::findOrFail($id);
 
             if ($movimiento->estado !== 'pendiente') {
-                session()->flash('error', 'Solo se pueden completar movimientos pendientes.');
+                $this->error('Solo se pueden completar movimientos pendientes.');
                 return;
             }
 
@@ -878,7 +880,7 @@ class MovimientoAlmacenIndex extends Component
                 'total' => $movimiento->total
             ]);
 
-            session()->flash('message', 'Movimiento completado correctamente. El stock ha sido actualizado.');
+            $this->success('Movimiento completado correctamente. El stock ha sido actualizado.');
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -889,7 +891,7 @@ class MovimientoAlmacenIndex extends Component
                 'trace' => $e->getTraceAsString()
             ]);
 
-            session()->flash('error', 'Error al completar el movimiento: ' . $e->getMessage());
+            $this->error('Error al completar el movimiento: ' . $e->getMessage());
         }
     }
 
@@ -901,7 +903,7 @@ class MovimientoAlmacenIndex extends Component
             $movimiento = MovimientoAlmacen::findOrFail($id);
 
             if ($movimiento->estado !== 'pendiente') {
-                session()->flash('error', 'Solo se pueden cancelar movimientos pendientes.');
+                $this->error('Solo se pueden cancelar movimientos pendientes.');
                 return;
             }
 
@@ -919,7 +921,7 @@ class MovimientoAlmacenIndex extends Component
                 'total' => $movimiento->total
             ]);
 
-            session()->flash('message', 'Movimiento cancelado correctamente.');
+            $this->success('Movimiento cancelado correctamente.');
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -930,7 +932,7 @@ class MovimientoAlmacenIndex extends Component
                 'trace' => $e->getTraceAsString()
             ]);
 
-            session()->flash('error', 'Error al cancelar el movimiento: ' . $e->getMessage());
+            $this->error('Error al cancelar el movimiento: ' . $e->getMessage());
         }
     }
 

@@ -12,10 +12,11 @@ use App\Traits\NotificationTrait;
 use App\Traits\TableTrait;
 use Livewire\Component;
 use Maatwebsite\Excel\Facades\Excel;
+use Mary\Traits\Toast;
 
 class ProductoCatalogoIndex extends Component
 {
-    use TableTrait, FileUploadTrait, NotificationTrait;
+    use TableTrait, FileUploadTrait, NotificationTrait, Toast;
 
     // Filtros específicos de productos
     public $brand_filter = '';
@@ -91,6 +92,7 @@ class ProductoCatalogoIndex extends Component
         ]);
         $this->sortField = 'code';
         $this->resetPage();
+        $this->info('Filtros limpiados');
     }
 
     public function render()

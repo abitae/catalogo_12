@@ -6,10 +6,11 @@ use App\Models\Crm\TipeNegocioCrm;
 use App\Models\Crm\TipoNegocioCrm;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Mary\Traits\Toast;
 
 class TipoNegocioCrmIndex extends Component
 {
-    use WithPagination;
+    use WithPagination, Toast;
 
     public $search = '';
     public $sortField = 'nombre';
@@ -82,6 +83,7 @@ class TipoNegocioCrmIndex extends Component
             'perPage'
         ]);
         $this->resetPage();
+        $this->info('Filtros limpiados');
     }
 
     public function render()
