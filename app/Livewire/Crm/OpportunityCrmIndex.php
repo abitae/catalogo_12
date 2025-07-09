@@ -284,6 +284,7 @@ class OpportunityCrmIndex extends Component
             'tempArchivo',
             'imagePreview'
         ]);
+        $this->fecha_cierre_esperada = \Carbon\Carbon::now()->format('Y-m-d');
         $this->resetValidation();
         $this->modal_form_opportunity = true;
     }
@@ -303,7 +304,7 @@ class OpportunityCrmIndex extends Component
             $this->marca_id = $this->opportunity->marca_id;
             $this->user_id = $this->opportunity->user_id;
             $this->probabilidad = $this->opportunity->probabilidad;
-            $this->fecha_cierre_esperada = $this->opportunity->fecha_cierre_esperada->format('Y-m-d');
+            $this->fecha_cierre_esperada = $this->opportunity->fecha_cierre_esperada ? $this->opportunity->fecha_cierre_esperada->format('Y-m-d') : '';
             $this->fuente = $this->opportunity->fuente;
             $this->descripcion = $this->opportunity->descripcion;
             $this->notas = $this->opportunity->notas;
@@ -350,6 +351,11 @@ class OpportunityCrmIndex extends Component
     {
         // Validar primero - esto permitirá que Livewire muestre los errores
         $data = $this->validate();
+
+        // Manejar fecha vacía
+        if (empty($data['fecha_cierre_esperada'])) {
+            $data['fecha_cierre_esperada'] = null;
+        }
 
         // Validar que el contacto pertenece al cliente seleccionado
         if ($this->contact_id && $this->customer_id) {
@@ -686,6 +692,7 @@ class OpportunityCrmIndex extends Component
             'tempArchivo',
             'imagePreview'
         ]);
+        $this->fecha_cierre_esperada = \Carbon\Carbon::now()->format('Y-m-d');
         $this->resetValidation();
     }
 

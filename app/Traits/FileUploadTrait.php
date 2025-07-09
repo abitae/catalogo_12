@@ -86,9 +86,12 @@ trait FileUploadTrait
             'tempImage.image' => 'El archivo debe ser una imagen válida',
             'tempImage.mimes' => 'La imagen debe ser en formato: jpeg, png, jpg, gif o svg',
             'tempImage.max' => 'La imagen no debe superar los 20MB',
-            'tempFile.file' => 'El archivo adjunto no es válido',
-            'tempFile.mimes' => 'El archivo debe ser en formato: pdf, doc, docx, xls, xlsx, ppt o pptx',
-            'tempFile.max' => 'El archivo no debe superar los 20MB',
+            'tempArchivo.file' => 'El archivo adjunto no es válido',
+            'tempArchivo.mimes' => 'El archivo debe ser en formato: pdf, doc, docx, xls, xlsx, ppt o pptx',
+            'tempArchivo.max' => 'El archivo no debe superar los 20MB',
+            'tempArchivo2.file' => 'El archivo adjunto no es válido',
+            'tempArchivo2.mimes' => 'El archivo debe ser en formato: pdf, doc, docx, xls, xlsx, ppt o pptx',
+            'tempArchivo2.max' => 'El archivo no debe superar los 20MB',
         ];
     }
 }

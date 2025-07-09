@@ -32,7 +32,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                     <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Estado</flux:label>
-                    <flux:select wire:model.live="activo_filter" class="w-full mt-1">
+                    <flux:select wire:model.live="estado_filter" class="w-full mt-1">
                         <option value="">Todos los estados</option>
                         <option value="activo">Activo</option>
                         <option value="inactivo">Inactivo</option>
@@ -118,10 +118,10 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                    @if($tipo->estado == 'activo') bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
+                                    @if($tipo->activo) bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
                                     @else bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
                                     @endif">
-                                    {{ $tipo->estado == 'activo' ? 'Activo' : 'Inactivo' }}
+                                    {{ $tipo->activo ? 'Activo' : 'Inactivo' }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">
@@ -179,15 +179,9 @@
                     </div>
 
                     <div>
-                        <flux:label for="codigo" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Código *</flux:label>
+                        <flux:label for="codigo" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Código</flux:label>
                         <flux:input wire:model="codigo" id="codigo" type="text" placeholder="Ingrese el código" class="w-full mt-1" />
                         @error('codigo') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                    </div>
-
-                    <div>
-                        <flux:label for="categoria" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Categoría</flux:label>
-                        <flux:input wire:model="categoria" id="categoria" type="text" placeholder="Ingrese la categoría" class="w-full mt-1" />
-                        @error('categoria') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                     </div>
 
                     <div>

@@ -342,91 +342,91 @@ class ProductoCatalogoIndex extends Component
 
     public function guardarProducto()
     {
-        // Refuerzo: asegurar que caracteristicas sea array antes de cualquier foreach
-        if (!is_array($this->caracteristicas)) {
-            $this->caracteristicas = [];
-        }
-        $ruleUniqueCode = $this->producto_id ? 'unique:producto_catalogos,code,' . $this->producto_id : 'unique:producto_catalogos,code';
-
-        // Validaciones
-        $rules = [
-            'brand_id' => 'required|exists:brand_catalogos,id',
-            'category_id' => 'required|exists:category_catalogos,id',
-            'line_id' => 'required|exists:line_catalogos,id',
-            'code' => 'required|string|max:255|' . $ruleUniqueCode,
-            'code_fabrica' => 'required|string|max:255',
-            'code_peru' => 'required|string|max:255',
-            'price_compra' => 'required|numeric|min:0',
-            'price_venta' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
-            'dias_entrega' => 'nullable|integer|min:0',
-            'description' => 'required|string|max:500',
-            'garantia' => 'nullable|string|max:255',
-            'observaciones' => 'nullable|string|max:1000',
-            'isActive' => 'boolean',
-        ];
-
-        // Validar características como array de pares clave-valor
-        if (is_array($this->caracteristicas)) {
-            foreach ($this->caracteristicas as $i => $car) {
-                $rules["caracteristicas.$i.key"] = 'required|string|max:255';
-                $rules["caracteristicas.$i.value"] = 'required|string|max:1000';
+        try {
+            // Refuerzo: asegurar que caracteristicas sea array antes de cualquier foreach
+            if (!is_array($this->caracteristicas)) {
+                $this->caracteristicas = [];
             }
-        }
+            $ruleUniqueCode = $this->producto_id ? 'unique:producto_catalogos,code,' . $this->producto_id : 'unique:producto_catalogos,code';
 
-        // Agregar validaciones de archivos
-        $rules = array_merge($rules, $this->validateImage('tempImage'));
-        $rules = array_merge($rules, $this->validateFile('tempArchivo'));
-        $rules = array_merge($rules, $this->validateFile('tempArchivo2'));
+            // Validaciones
+            $rules = [
+                'brand_id' => 'required|exists:brand_catalogos,id',
+                'category_id' => 'required|exists:category_catalogos,id',
+                'line_id' => 'required|exists:line_catalogos,id',
+                'code' => 'required|string|max:255|' . $ruleUniqueCode,
+                'code_fabrica' => 'required|string|max:255',
+                'code_peru' => 'required|string|max:255',
+                'price_compra' => 'required|numeric|min:0',
+                'price_venta' => 'required|numeric|min:0',
+                'stock' => 'required|integer|min:0',
+                'dias_entrega' => 'nullable|integer|min:0',
+                'description' => 'required|string|max:500',
+                'garantia' => 'nullable|string|max:255',
+                'observaciones' => 'nullable|string|max:1000',
+                'isActive' => 'boolean',
+            ];
 
-        $messages = [
-            'brand_id.required' => 'Por favor, seleccione una marca',
-            'brand_id.exists' => 'La marca seleccionada no es válida',
-            'category_id.required' => 'Por favor, seleccione una categoría',
-            'category_id.exists' => 'La categoría seleccionada no es válida',
-            'line_id.required' => 'Por favor, seleccione una línea',
-            'line_id.exists' => 'La línea seleccionada no es válida',
-            'code.required' => 'Por favor, ingrese el código del producto',
-            'code.unique' => 'Este código ya está registrado en el sistema',
-            'code_fabrica.required' => 'Por favor, ingrese el código de fábrica',
-            'code_peru.required' => 'Por favor, ingrese el código Perú',
-            'price_compra.required' => 'Por favor, ingrese el precio de compra',
-            'price_compra.min' => 'El precio de compra debe ser mayor o igual a 0',
-            'price_venta.required' => 'Por favor, ingrese el precio de venta',
-            'price_venta.min' => 'El precio de venta debe ser mayor o igual a 0',
-            'stock.required' => 'Por favor, ingrese la cantidad en stock',
-            'stock.min' => 'El stock debe ser mayor o igual a 0',
-            'description.required' => 'Por favor, ingrese la descripción del producto',
-            'description.max' => 'La descripción no debe exceder los 500 caracteres',
-            'dias_entrega.min' => 'Los días de entrega deben ser mayor o igual a 0',
-            'garantia.max' => 'La garantía no debe exceder los 255 caracteres',
-            'observaciones.max' => 'Las observaciones no deben exceder los 1000 caracteres',
-        ];
-
-        // Mensajes para características
-        if (is_array($this->caracteristicas)) {
-            foreach ($this->caracteristicas as $i => $car) {
-                $messages["caracteristicas.$i.key.required"] = 'Ingrese la clave de la característica';
-                $messages["caracteristicas.$i.value.required"] = 'Ingrese el valor de la característica';
-            }
-        }
-
-        // Agregar mensajes de validación de archivos
-        $messages = array_merge($messages, $this->getFileValidationMessages());
-
-        $data = $this->validate($rules, $messages);
-
-        // Procesar características como array asociativo
-        $data['caracteristicas'] = [];
-        if (is_array($this->caracteristicas)) {
-            foreach ($this->caracteristicas as $car) {
-                if (!empty($car['key']) && !empty($car['value'])) {
-                    $data['caracteristicas'][$car['key']] = $car['value'];
+            // Validar características como array de pares clave-valor
+            if (is_array($this->caracteristicas)) {
+                foreach ($this->caracteristicas as $i => $car) {
+                    $rules["caracteristicas.$i.key"] = 'required|string|max:255';
+                    $rules["caracteristicas.$i.value"] = 'required|string|max:1000';
                 }
             }
-        }
 
-        try {
+            // Agregar validaciones de archivos
+            $rules = array_merge($rules, $this->validateImage('tempImage'));
+            $rules = array_merge($rules, $this->validateFile('tempArchivo'));
+            $rules = array_merge($rules, $this->validateFile('tempArchivo2'));
+
+            $messages = [
+                'brand_id.required' => 'Por favor, seleccione una marca',
+                'brand_id.exists' => 'La marca seleccionada no es válida',
+                'category_id.required' => 'Por favor, seleccione una categoría',
+                'category_id.exists' => 'La categoría seleccionada no es válida',
+                'line_id.required' => 'Por favor, seleccione una línea',
+                'line_id.exists' => 'La línea seleccionada no es válida',
+                'code.required' => 'Por favor, ingrese el código del producto',
+                'code.unique' => 'Este código ya está registrado en el sistema',
+                'code_fabrica.required' => 'Por favor, ingrese el código de fábrica',
+                'code_peru.required' => 'Por favor, ingrese el código Perú',
+                'price_compra.required' => 'Por favor, ingrese el precio de compra',
+                'price_compra.min' => 'El precio de compra debe ser mayor o igual a 0',
+                'price_venta.required' => 'Por favor, ingrese el precio de venta',
+                'price_venta.min' => 'El precio de venta debe ser mayor o igual a 0',
+                'stock.required' => 'Por favor, ingrese la cantidad en stock',
+                'stock.min' => 'El stock debe ser mayor o igual a 0',
+                'description.required' => 'Por favor, ingrese la descripción del producto',
+                'description.max' => 'La descripción no debe exceder los 500 caracteres',
+                'dias_entrega.min' => 'Los días de entrega deben ser mayor o igual a 0',
+                'garantia.max' => 'La garantía no debe exceder los 255 caracteres',
+                'observaciones.max' => 'Las observaciones no deben exceder los 1000 caracteres',
+            ];
+
+            // Mensajes para características
+            if (is_array($this->caracteristicas)) {
+                foreach ($this->caracteristicas as $i => $car) {
+                    $messages["caracteristicas.$i.key.required"] = 'Ingrese la clave de la característica';
+                    $messages["caracteristicas.$i.value.required"] = 'Ingrese el valor de la característica';
+                }
+            }
+
+            // Agregar mensajes de validación de archivos
+            $messages = array_merge($messages, $this->getFileValidationMessages());
+
+            $data = $this->validate($rules, $messages);
+
+            // Procesar características como array asociativo
+            $data['caracteristicas'] = [];
+            if (is_array($this->caracteristicas)) {
+                foreach ($this->caracteristicas as $car) {
+                    if (!empty($car['key']) && !empty($car['value'])) {
+                        $data['caracteristicas'][$car['key']] = $car['value'];
+                    }
+                }
+            }
+
             // Procesar archivos usando el trait
             $data['image'] = $this->processImage($this->tempImage, $this->image, 'productos/images');
             $data['archivo'] = $this->processFile($this->tempArchivo, $this->archivo, 'productos/archivos');
@@ -475,6 +475,9 @@ class ProductoCatalogoIndex extends Component
             $this->resetValidation();
 
             $this->handleSuccess($message, $context);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Los errores de validación se manejan automáticamente por Livewire
+            throw $e;
         } catch (\Exception $e) {
             $this->handleError($e, 'guardado de producto');
         }

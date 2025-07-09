@@ -29,7 +29,10 @@ class TipoNegocioCrmIndex extends Component
     // Variables para el formulario
     public $nombre = '';
     public $descripcion = '';
-    public $estado = 'activo';
+    public $activo = true;
+    public $codigo = '';
+    public $tempImage = null;
+    public $imagePreview = null;
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -44,7 +47,9 @@ class TipoNegocioCrmIndex extends Component
         return [
             'nombre' => 'required|string|max:255|unique:tipos_negocio_crm,nombre,' . $this->tipo_negocio_id,
             'descripcion' => 'nullable|string|max:1000',
-            'estado' => 'required|string|in:activo,inactivo',
+            'activo' => 'required|boolean',
+            'codigo' => 'nullable|string|max:50|unique:tipos_negocio_crm,codigo,' . $this->tipo_negocio_id,
+            'tempImage' => 'nullable|image|max:2048',
         ];
     }
 
@@ -53,8 +58,10 @@ class TipoNegocioCrmIndex extends Component
         return [
             'nombre.required' => 'El nombre es requerido',
             'nombre.unique' => 'Este nombre ya está registrado',
-            'estado.required' => 'El estado es requerido',
-            'estado.in' => 'El estado seleccionado no es válido',
+            'activo.required' => 'El estado es requerido',
+            'codigo.unique' => 'Este código ya está registrado',
+            'tempImage.image' => 'El archivo debe ser una imagen',
+            'tempImage.max' => 'La imagen no debe superar los 2MB',
         ];
     }
 
@@ -96,7 +103,11 @@ class TipoNegocioCrmIndex extends Component
                 });
             })
             ->when($this->estado_filter, function ($query) {
-                $query->where('estado', $this->estado_filter);
+                if ($this->estado_filter === 'activo') {
+                    $query->where('activo', true);
+                } elseif ($this->estado_filter === 'inactivo') {
+                    $query->where('activo', false);
+                }
             })
             ->orderBy($this->sortField, $this->sortDirection);
         return view('livewire.crm.tipo-negocio-crm-index', [
@@ -116,7 +127,8 @@ class TipoNegocioCrmIndex extends Component
         $this->tipo_negocio = TipoNegocioCrm::find($id);
         $this->nombre = $this->tipo_negocio->nombre;
         $this->descripcion = $this->tipo_negocio->descripcion;
-        $this->estado = $this->tipo_negocio->estado;
+        $this->activo = $this->tipo_negocio->activo;
+        $this->codigo = $this->tipo_negocio->codigo ?? '';
 
         $this->modal_form_tipo_negocio = true;
     }
@@ -142,6 +154,12 @@ class TipoNegocioCrmIndex extends Component
         }
     }
 
+    public function removeImage()
+    {
+        $this->tempImage = null;
+        $this->imagePreview = null;
+    }
+
     public function guardarTipoNegocio()
     {
         try {
@@ -162,7 +180,10 @@ class TipoNegocioCrmIndex extends Component
                 'tipo_negocio',
                 'nombre',
                 'descripcion',
-                'estado'
+                'activo',
+                'codigo',
+                'tempImage',
+                'imagePreview'
             ]);
             $this->resetValidation();
         } catch (\Exception $e) {
