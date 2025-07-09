@@ -15,6 +15,7 @@ use App\Livewire\Crm\OpportunityCrmIndex;
 use App\Livewire\Crm\ActivityCrmIndex;
 use App\Livewire\Crm\MarcaCrmIndex;
 use App\Livewire\Crm\TipoNegocioCrmIndex;
+use App\Livewire\Shared\DashboardLive;
 use App\Livewire\Shared\CustomerIndex;
 use App\Livewire\Shared\TipoCustomerIndex;
 use Illuminate\Support\Facades\Route;
@@ -24,11 +25,9 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
 
 Route::middleware(['auth'])->group(function () {
+    Route::get('dashboard', DashboardLive::class)->name('dashboard');
     Route::redirect('settings', 'settings/profile');
 
     Volt::route('settings/profile', 'settings.profile')->name('settings.profile');

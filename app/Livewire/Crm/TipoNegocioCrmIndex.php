@@ -83,7 +83,7 @@ class TipoNegocioCrmIndex extends Component
             'perPage'
         ]);
         $this->resetPage();
-        $this->info('Filtros limpiados');
+        $this->info('Filtros limpiados correctamente');
     }
 
     public function render()
@@ -132,30 +132,41 @@ class TipoNegocioCrmIndex extends Component
 
     public function confirmarEliminarTipoNegocio()
     {
-        $this->tipo_negocio->delete();
-        $this->modal_form_eliminar_tipo_negocio = false;
-        $this->reset(['tipo_negocio_id', 'tipo_negocio']);
+        try {
+            $this->tipo_negocio->delete();
+            $this->modal_form_eliminar_tipo_negocio = false;
+            $this->reset(['tipo_negocio_id', 'tipo_negocio']);
+            $this->success('Tipo de negocio eliminado correctamente');
+        } catch (\Exception $e) {
+            $this->error('Error al eliminar el tipo de negocio: ' . $e->getMessage());
+        }
     }
 
     public function guardarTipoNegocio()
     {
-        $data = $this->validate();
+        try {
+            $data = $this->validate();
 
-        if ($this->tipo_negocio_id) {
-            $tipo_negocio = TipoNegocioCrm::find($this->tipo_negocio_id);
-            $tipo_negocio->update($data);
-        } else {
-            TipoNegocioCrm::create($data);
+            if ($this->tipo_negocio_id) {
+                $tipo_negocio = TipoNegocioCrm::find($this->tipo_negocio_id);
+                $tipo_negocio->update($data);
+                $this->success('Tipo de negocio actualizado correctamente');
+            } else {
+                TipoNegocioCrm::create($data);
+                $this->success('Tipo de negocio creado correctamente');
+            }
+
+            $this->modal_form_tipo_negocio = false;
+            $this->reset([
+                'tipo_negocio_id',
+                'tipo_negocio',
+                'nombre',
+                'descripcion',
+                'estado'
+            ]);
+            $this->resetValidation();
+        } catch (\Exception $e) {
+            $this->error('Error al guardar el tipo de negocio: ' . $e->getMessage());
         }
-
-        $this->modal_form_tipo_negocio = false;
-        $this->reset([
-            'tipo_negocio_id',
-            'tipo_negocio',
-            'nombre',
-            'descripcion',
-            'estado'
-        ]);
-        $this->resetValidation();
     }
 }

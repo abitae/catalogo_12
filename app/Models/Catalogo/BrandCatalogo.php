@@ -17,6 +17,6 @@ class BrandCatalogo extends Model
 
     public function products()
     {
-        return $this->hasMany(ProductoCatalogo::class);
+        return $this->hasMany(ProductoCatalogo::class, 'brand_id');
     }
 }

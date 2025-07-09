@@ -19,7 +19,7 @@ class OpportunityCrmFactory extends Factory
             'nombre' => $this->faker->sentence(3),
             'estado' => $this->faker->randomElement(['nueva', 'en_proceso', 'ganada', 'perdida']),
             'valor' => $this->faker->randomFloat(2, 1000, 100000),
-            'etapa' => $this->faker->randomElement(['inicial', 'negociacion', 'propuesta', 'cierre']),
+            'etapa' => $this->faker->randomElement(['aceptada', 'entregada', 'pagada']),
             'probabilidad' => $this->faker->numberBetween(0, 100),
             'fecha_cierre_esperada' => $this->faker->dateTimeBetween('now', '+3 months'),
             'descripcion' => $this->faker->paragraph(),
@@ -35,7 +35,7 @@ class OpportunityCrmFactory extends Factory
         return $this->state(function (array $attributes) {
             return [
                 'estado' => 'nueva',
-                'etapa' => 'inicial',
+                'etapa' => 'aceptada',
                 'probabilidad' => $this->faker->numberBetween(10, 30),
             ];
         });
@@ -46,7 +46,7 @@ class OpportunityCrmFactory extends Factory
         return $this->state(function (array $attributes) {
             return [
                 'estado' => 'en_proceso',
-                'etapa' => 'negociacion',
+                'etapa' => 'entregada',
                 'probabilidad' => $this->faker->numberBetween(40, 70),
             ];
         });
@@ -57,7 +57,7 @@ class OpportunityCrmFactory extends Factory
         return $this->state(function (array $attributes) {
             return [
                 'estado' => 'ganada',
-                'etapa' => 'cierre',
+                'etapa' => 'pagada',
                 'probabilidad' => 100,
             ];
         });
@@ -68,7 +68,7 @@ class OpportunityCrmFactory extends Factory
         return $this->state(function (array $attributes) {
             return [
                 'estado' => 'perdida',
-                'etapa' => 'cierre',
+                'etapa' => 'pagada',
                 'probabilidad' => 0,
             ];
         });

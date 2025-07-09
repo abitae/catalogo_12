@@ -24,16 +24,16 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm opacity-90">Total Marcas</p>
-                    <p class="text-2xl font-bold">{{ $brands->total() }}</p>
+                    <p class="text-2xl font-bold">{{ $marcas->total() }}</p>
                 </div>
-                <flux:icon name="cube" class="w-8 h-8 opacity-80" />
+                <flux:icon name="tag" class="w-8 h-8 opacity-80" />
             </div>
         </div>
         <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-4 text-white">
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm opacity-90">Activas</p>
-                    <p class="text-2xl font-bold">{{ $brands->where('isActive', 1)->count() }}</p>
+                    <p class="text-2xl font-bold">{{ $marcas->where('isActive', 1)->count() }}</p>
                 </div>
                 <flux:icon name="check-circle" class="w-8 h-8 opacity-80" />
             </div>
@@ -42,7 +42,7 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm opacity-90">Inactivas</p>
-                    <p class="text-2xl font-bold">{{ $brands->where('isActive', 0)->count() }}</p>
+                    <p class="text-2xl font-bold">{{ $marcas->where('isActive', 0)->count() }}</p>
                 </div>
                 <flux:icon name="x-circle" class="w-8 h-8 opacity-80" />
             </div>
@@ -53,14 +53,14 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
                 <flux:label>Estado</flux:label>
-                <flux:select wire:model.live="isActive" class="w-full">
+                <flux:select wire:model.live="isActiveFilter" class="w-full">
                     <option value="">Todos</option>
                     <option value="1">Activa</option>
                     <option value="0">Inactiva</option>
                 </flux:select>
             </div>
             <div class="flex items-end">
-                <flux:button wire:click="$set('isActive', '')" color="red" icon="trash" class="w-full">Limpiar
+                <flux:button wire:click="$set('isActiveFilter', '')" color="red" icon="trash" class="w-full">Limpiar
                     Filtros</flux:button>
             </div>
         </div>
@@ -83,6 +83,9 @@
                             Logo</th>
                         <th
                             class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                            Archivo</th>
+                        <th
+                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                             Estado</th>
                         <th
                             class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
@@ -90,31 +93,52 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
-                    @forelse ($brands as $brand)
-                        <tr wire:key="brand-{{ $brand->id }}"
+                    @forelse ($marcas as $marca)
+                        <tr wire:key="marca-{{ $marca->id }}"
                             class="hover:bg-zinc-100 dark:hover:bg-zinc-600 transition-colors duration-200 ease-in-out">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-300">
-                                {{ $brand->name }}</td>
-                            <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
-                                @if ($brand->logo)
-                                    <img src="{{ asset('storage/' . $brand->logo) }}" alt="Logo"
-                                        class="w-12 h-12 rounded-full object-cover border" />
+                                {{ $marca->name }}</td>
+                            <td class="px-6 py-4 text-sm">
+                                @if($marca->logo)
+                                    <div class="flex items-center gap-2">
+                                        <img src="{{ asset('storage/' . $marca->logo) }}"
+                                             alt="{{ $marca->name }}"
+                                             class="w-12 h-12 rounded-lg object-cover border shadow-sm" />
+                                    </div>
                                 @else
-                                    <span class="text-zinc-400 text-xs">Sin logo</span>
+                                    <div class="flex items-center justify-center w-12 h-12 bg-zinc-100 dark:bg-zinc-700 rounded-lg">
+                                        <flux:icon name="photo" class="w-6 h-6 text-zinc-400" />
+                                    </div>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 text-sm">
+                                @if($marca->archivo)
+                                    <div class="flex items-center justify-center">
+                                        <a href="{{ asset('storage/' . $marca->archivo) }}"
+                                           download="{{ $marca->name }}_archivo.{{ pathinfo($marca->archivo, PATHINFO_EXTENSION) }}"
+                                           class="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-green-600 bg-green-100 border border-transparent rounded-md hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                                            <flux:icon name="document-arrow-down" class="w-4 h-4 mr-2" />
+                                            Descargar Archivo
+                                        </a>
+                                    </div>
+                                @else
+                                    <div class="flex items-center justify-center w-full h-12 bg-zinc-100 dark:bg-zinc-700 rounded-lg">
+                                        <flux:icon name="document" class="w-6 h-6 text-zinc-400" />
+                                    </div>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-sm">
                                 <span
-                                    class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $brand->isActive ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }}">
-                                    {{ $brand->isActive ? 'Activa' : 'Inactiva' }}
+                                    class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $marca->isActive ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }}">
+                                    {{ $marca->isActive ? 'Activa' : 'Inactiva' }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-sm">
                                 <div class="flex items-center gap-2">
-                                    <flux:button wire:click="editarMarca({{ $brand->id }})" size="xs"
+                                    <flux:button wire:click="editarMarca({{ $marca->id }})" size="xs"
                                         variant="primary" icon="pencil" title="Editar marca"
                                         class="hover:bg-blue-600 transition-colors"></flux:button>
-                                    <flux:button wire:click="eliminarMarca({{ $brand->id }})" size="xs"
+                                    <flux:button wire:click="eliminarMarca({{ $marca->id }})" size="xs"
                                         variant="danger" icon="trash" title="Eliminar marca"
                                         class="hover:bg-red-600 transition-colors"></flux:button>
                                 </div>
@@ -122,7 +146,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-8 text-center text-zinc-500 dark:text-zinc-400">
+                            <td colspan="5" class="px-6 py-8 text-center text-zinc-500 dark:text-zinc-400">
                                 <div class="flex flex-col items-center gap-2">
                                     <flux:icon name="inbox" class="w-12 h-12 text-zinc-300" />
                                     <span class="text-lg font-medium">No se encontraron marcas</span>
@@ -135,9 +159,9 @@
             </table>
         </div>
         <!-- Paginación -->
-        @if ($brands->hasPages())
+        @if ($marcas->hasPages())
             <div class="px-6 py-3 bg-zinc-50 dark:bg-zinc-700 border-t border-zinc-200 dark:border-zinc-600">
-                {{ $brands->links() }}
+                {{ $marcas->links() }}
             </div>
         @endif
     </div>
@@ -157,59 +181,122 @@
                         <flux:icon name="information-circle" class="w-5 h-5 text-blue-400" />
                         <flux:heading size="md">Información Básica</flux:heading>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 gap-4">
                         <div>
                             <flux:label>Nombre</flux:label>
                             <flux:input type="text" wire:model.live="name" placeholder="Ej: Marca X" />
-                        </div>
-                        <div class="flex items-center mt-6">
-                            <flux:checkbox wire:model.live="isActive" label="Marca activa" />
+                            @error('name')
+                                <flux:text class="text-xs text-red-500 mt-1">{{ $message }}</flux:text>
+                            @enderror
                         </div>
                     </div>
                 </div>
+                <!-- Logo -->
                 <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 shadow-sm border">
                     <div class="flex items-center gap-2 mb-4">
                         <flux:icon name="photo" class="w-5 h-5 text-blue-400" />
                         <flux:heading size="md">Logo</flux:heading>
-                        <span class="text-xs text-zinc-400 ml-2">Solo formatos JPG, PNG. Tamaño recomendado:
-                            200x200px.</span>
+                        <span class="text-xs text-zinc-400 ml-2">Solo formatos JPG, PNG. Tamaño recomendado: 200x200px.</span>
                     </div>
                     <div>
                         <flux:label>Logo de la marca</flux:label>
-                        <div class="mt-1">
+                        <div class="mt-1 space-y-3">
+                            <!-- Vista previa de logo -->
                             @if ($logoPreview)
                                 <div class="relative inline-block group">
-                                    <img src="{{ $logoPreview }}" alt="Vista previa"
-                                        class="w-24 h-24 rounded-lg object-cover border shadow" />
-                                    <flux:button wire:click="removeLogo" size="xs" variant="danger"
-                                        icon="x-mark" class="absolute -top-2 -right-2" />
+                                    <div class="relative">
+                                        <img src="{{ $logoPreview }}" alt="Vista previa del logo"
+                                            class="w-24 h-24 rounded-lg object-cover border-2 border-blue-200 shadow-lg" />
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
+                                        <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                            <flux:button wire:click="removeLogo" size="xs" variant="danger"
+                                                icon="x-mark" class="hover:bg-red-600 transition-colors shadow-lg" />
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 text-center">
+                                        <flux:text class="text-xs text-blue-600 font-medium">Vista previa del logo</flux:text>
+                                    </div>
                                 </div>
                             @endif
-                            <flux:input wire:model="tempLogo" type="file" accept="image/*" />
+
+                            <!-- Información del logo actual (solo en edición) -->
+                            @if($marca_id && !$logoPreview)
+                                <div class="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                                    <div class="flex-shrink-0">
+                                        <flux:icon name="information-circle" class="w-6 h-6 text-blue-500" />
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-blue-900 dark:text-blue-100">Logo actual</p>
+                                        <p class="text-sm text-blue-700 dark:text-blue-300">El logo actual se mantendrá si no subes uno nuevo</p>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <flux:icon name="check-circle" class="w-5 h-5 text-blue-500" />
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- Input de archivo -->
+                            <div class="flex items-center gap-3">
+                                <flux:input wire:model="tempLogo" type="file" accept="image/*" class="flex-1" />
+                                @if($logoPreview)
+                                    <flux:button wire:click="removeLogo" size="sm" icon="trash">
+                                        Eliminar
+                                    </flux:button>
+                                @endif
+                            </div>
+
+                            <!-- Información de ayuda -->
+                            <div class="text-xs text-zinc-500 dark:text-zinc-400">
+                                <p>• Formatos soportados: JPG, PNG, GIF</p>
+                                <p>• Tamaño máximo: 2MB</p>
+                                <p>• Tamaño recomendado: 200x200px para mejor calidad</p>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+                <!-- Archivo -->
                 <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 shadow-sm border">
                     <div class="flex items-center gap-2 mb-4">
-                        <flux:icon name="paper-clip" class="w-5 h-5 text-pink-400" />
-                        <flux:heading size="md">Documento</flux:heading>
-                        <span class="text-xs text-zinc-400 ml-2">Formatos permitidos: PDF, DOC, XLS, PPT.</span>
+                        <flux:icon name="document" class="w-5 h-5 text-purple-400" />
+                        <flux:heading size="md">Archivo</flux:heading>
+                        <span class="text-xs text-zinc-400 ml-2">Cualquier tipo de archivo. Tamaño máximo: 10MB.</span>
                     </div>
                     <div>
-                        <flux:label>Archivo adjunto</flux:label>
-                        <div class="mt-1">
-                            @if ($archivoPreview)
-                                <div class="flex items-center gap-2 mb-2">
-                                    <flux:icon name="document" class="w-4 h-4 text-blue-500" />
-                                    <span class="text-sm">{{ $archivoPreview }}</span>
-                                    <flux:button wire:click="removeArchivo" size="xs" variant="danger"
-                                        icon="x-mark" />
+                        <flux:label>Archivo de la marca</flux:label>
+                        <div class="mt-1 space-y-3">
+                            <!-- Información del archivo actual (solo en edición) -->
+                            @if($marca_id)
+                                <div class="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl border border-purple-200 dark:border-purple-800">
+                                    <div class="flex-shrink-0">
+                                        <flux:icon name="information-circle" class="w-6 h-6 text-purple-500" />
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-purple-900 dark:text-purple-100">Archivo actual</p>
+                                        <p class="text-sm text-purple-700 dark:text-purple-300">El archivo actual se mantendrá si no subes uno nuevo</p>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <flux:icon name="check-circle" class="w-5 h-5 text-purple-500" />
+                                    </div>
                                 </div>
                             @endif
-                            <flux:input wire:model="tempArchivo" type="file"
-                                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" />
+
+                            <!-- Input de archivo -->
+                            <div class="flex items-center gap-3">
+                                <flux:input wire:model="tempArchivo" type="file" class="flex-1" />
+                            </div>
+
+                            <!-- Información de ayuda -->
+                            <div class="text-xs text-zinc-500 dark:text-zinc-400">
+                                <p>• Cualquier tipo de archivo</p>
+                                <p>• Tamaño máximo: 10MB</p>
+                                <p>• Se reemplazará el archivo actual si existe</p>
+                            </div>
                         </div>
                     </div>
+                </div>
+                <div class="flex items-center mt-2">
+                    <flux:checkbox wire:model.live="isActive" label="Marca activa" />
                 </div>
             </div>
             <div class="flex justify-end gap-2 mt-8 border-t pt-4 bg-white dark:bg-zinc-900 sticky bottom-0 z-10">
@@ -220,15 +307,18 @@
         </form>
     </flux:modal>
     <!-- Modal Confirmar Eliminación -->
-    <flux:modal wire:model="modal_form_eliminar_marca" variant="flyout" class="w-2/3 max-w-2xl">
+    <flux:modal wire:model="modal_form_eliminar_marca">
         <div class="space-y-6">
             <div>
-                <flux:heading size="lg">Eliminar Marca</flux:heading>
-                <flux:text class="mt-2">¿Está seguro de querer eliminar esta marca?</flux:text>
+                <flux:icon name="exclamation-triangle" class="w-12 h-12 text-red-500 mx-auto mb-4" />
+                <flux:heading size="lg" class="text-center">¿Eliminar marca?</flux:heading>
+                <flux:text class="text-center text-zinc-600 dark:text-zinc-400">
+                    Esta acción no se puede deshacer. Se eliminarán todos los datos asociados a esta marca.
+                </flux:text>
             </div>
-            <div class="flex justify-end gap-2 mt-6">
+            <div class="flex justify-end gap-2">
                 <flux:button wire:click="$set('modal_form_eliminar_marca', false)">Cancelar</flux:button>
-                <flux:button variant="danger" wire:click="confirmarEliminarMarca">Eliminar</flux:button>
+                <flux:button wire:click="confirmarEliminarMarca" variant="danger">Eliminar Marca</flux:button>
             </div>
         </div>
     </flux:modal>

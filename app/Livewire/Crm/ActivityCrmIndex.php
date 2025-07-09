@@ -10,6 +10,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use Mary\Traits\Toast;
+use Illuminate\Support\Facades\Storage;
 
 class ActivityCrmIndex extends Component
 {
@@ -132,7 +133,7 @@ class ActivityCrmIndex extends Component
             'perPage'
         ]);
         $this->resetPage();
-        $this->info('Filtros limpiados');
+        $this->info('Filtros limpiados correctamente');
     }
 
     public function render()
@@ -210,9 +211,22 @@ class ActivityCrmIndex extends Component
 
     public function confirmarEliminarActivity()
     {
-        $this->activity->delete();
-        $this->modal_form_eliminar_activity = false;
-        $this->reset(['activity_id', 'activity']);
+        try {
+            // Eliminar archivos si existen
+            if ($this->activity->image && Storage::disk('public')->exists($this->activity->image)) {
+                Storage::disk('public')->delete($this->activity->image);
+            }
+            if ($this->activity->archivo && Storage::disk('public')->exists($this->activity->archivo)) {
+                Storage::disk('public')->delete($this->activity->archivo);
+            }
+
+            $this->activity->delete();
+            $this->modal_form_eliminar_activity = false;
+            $this->reset(['activity_id', 'activity']);
+            $this->success('Actividad eliminada correctamente');
+        } catch (\Exception $e) {
+            $this->error('Error al eliminar la actividad: ' . $e->getMessage());
+        }
     }
 
     public function updatedTempImage()
@@ -231,48 +245,62 @@ class ActivityCrmIndex extends Component
 
     public function guardarActivity()
     {
-        $data = $this->validate();
+        try {
+            $data = $this->validate();
 
-        // Manejar imagen
-        if ($this->tempImage) {
-            $imagePath = $this->tempImage->store('activities/images', 'public');
-            $data['image'] = $imagePath;
+            // Manejar imagen
+            if ($this->tempImage) {
+                // Eliminar imagen anterior si existe
+                if ($this->activity_id && $this->activity && $this->activity->image) {
+                    Storage::disk('public')->delete($this->activity->image);
+                }
+                $imagePath = $this->tempImage->store('activities/images', 'public');
+                $data['image'] = $imagePath;
+            }
+
+            // Manejar archivo
+            if ($this->tempArchivo) {
+                // Eliminar archivo anterior si existe
+                if ($this->activity_id && $this->activity && $this->activity->archivo) {
+                    Storage::disk('public')->delete($this->activity->archivo);
+                }
+                $archivoPath = $this->tempArchivo->store('activities/files', 'public');
+                $data['archivo'] = $archivoPath;
+            }
+
+            // Remover campos temporales
+            unset($data['tempImage'], $data['tempArchivo']);
+
+            if ($this->activity_id) {
+                $activity = ActivityCrm::find($this->activity_id);
+                $activity->update($data);
+                $this->success('Actividad actualizada correctamente');
+            } else {
+                ActivityCrm::create($data);
+                $this->success('Actividad creada correctamente');
+            }
+
+            $this->modal_form_activity = false;
+            $this->reset([
+                'activity_id',
+                'activity',
+                'tipo',
+                'asunto',
+                'descripcion',
+                'estado',
+                'prioridad',
+                'opportunity_id',
+                'contact_id',
+                'user_id',
+                'image',
+                'archivo',
+                'tempImage',
+                'tempArchivo',
+                'imagePreview'
+            ]);
+            $this->resetValidation();
+        } catch (\Exception $e) {
+            $this->error('Error al guardar la actividad: ' . $e->getMessage());
         }
-
-        // Manejar archivo
-        if ($this->tempArchivo) {
-            $archivoPath = $this->tempArchivo->store('activities/files', 'public');
-            $data['archivo'] = $archivoPath;
-        }
-
-        // Remover campos temporales
-        unset($data['tempImage'], $data['tempArchivo']);
-
-        if ($this->activity_id) {
-            $activity = ActivityCrm::find($this->activity_id);
-            $activity->update($data);
-        } else {
-            ActivityCrm::create($data);
-        }
-
-        $this->modal_form_activity = false;
-        $this->reset([
-            'activity_id',
-            'activity',
-            'tipo',
-            'asunto',
-            'descripcion',
-            'estado',
-            'prioridad',
-            'opportunity_id',
-            'contact_id',
-            'user_id',
-            'image',
-            'archivo',
-            'tempImage',
-            'tempArchivo',
-            'imagePreview'
-        ]);
-        $this->resetValidation();
     }
 }

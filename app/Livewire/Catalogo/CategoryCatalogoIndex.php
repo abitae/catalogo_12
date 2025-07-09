@@ -20,9 +20,6 @@ class CategoryCatalogoIndex extends Component
 
     // Propiedades para el formulario
     public $name;
-    public $logo;
-    public $fondo;
-    public $archivo;
     public $isActive = true;
 
     // Propiedades para archivos temporales
@@ -31,22 +28,17 @@ class CategoryCatalogoIndex extends Component
     public $tempArchivo;
     public $logoPreview;
     public $fondoPreview;
-    public $archivoPreview;
 
     // Propiedades para búsqueda y ordenamiento
     public $search = '';
     public $sortField = 'name';
     public $sortDirection = 'asc';
+    public $isActiveFilter = '';
 
     protected $rules = [
-        'tempLogo' => 'nullable|image|max:20480', // 20MB max
-        'tempFondo' => 'nullable|image|max:20480', // 20MB max
-        'tempArchivo' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx|max:20480', // Solo PDF, 20MB max
-    ];
-
-    protected $messages = [
-        'tempArchivo.mimes' => 'El archivo debe ser un PDF, DOC, DOCX, XLS, XLSX, PPT o PPTX',
-        'tempArchivo.max' => 'El archivo no debe pesar más de 20MB',
+        'tempLogo' => 'nullable|image|max:20480', // 2MB max
+        'tempFondo' => 'nullable|image|max:20480', // 2MB max
+        'tempArchivo' => 'nullable|file|max:10240', // 10MB max
     ];
 
     public function updatedSearch()
@@ -66,9 +58,7 @@ class CategoryCatalogoIndex extends Component
 
     public function updatedTempLogo()
     {
-        $this->validate([
-            'tempLogo' => 'image|mimes:jpeg,png,jpg,gif,svg|max:20480'
-        ]);
+        $this->validateOnly('tempLogo');
 
         if ($this->tempLogo) {
             $this->logoPreview = $this->tempLogo->temporaryUrl();
@@ -77,64 +67,29 @@ class CategoryCatalogoIndex extends Component
 
     public function updatedTempFondo()
     {
-        $this->validate([
-            'tempFondo' => 'image|mimes:jpeg,png,jpg,gif,svg|max:20480'
-        ]);
+        $this->validateOnly('tempFondo');
 
         if ($this->tempFondo) {
             $this->fondoPreview = $this->tempFondo->temporaryUrl();
         }
     }
 
-    public function updatedTempArchivo()
-    {
-        $this->validate([
-            'tempArchivo' => 'file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx|max:20480'
-        ]);
-
-        if ($this->tempArchivo) {
-            $this->archivoPreview = $this->tempArchivo->getClientOriginalName();
-        }
-    }
-
     public function removeLogo()
     {
-        if ($this->logo && Storage::exists($this->logo)) {
-            Storage::delete($this->logo);
-        }
-        $this->logo = null;
         $this->tempLogo = null;
         $this->logoPreview = null;
     }
 
     public function removeFondo()
     {
-        if ($this->fondo && Storage::exists($this->fondo)) {
-            Storage::delete($this->fondo);
-        }
-        $this->fondo = null;
         $this->tempFondo = null;
         $this->fondoPreview = null;
     }
 
-    public function removeArchivo()
-    {
-        if ($this->archivo && Storage::exists($this->archivo)) {
-            Storage::delete($this->archivo);
-        }
-        $this->archivo = null;
-        $this->tempArchivo = null;
-        $this->archivoPreview = null;
-    }
-
     public function nuevoCategoria()
     {
-        $this->reset([
-            'name', 'logo', 'fondo', 'archivo', 'isActive',
-            'tempLogo', 'tempFondo', 'tempArchivo',
-            'logoPreview', 'fondoPreview', 'archivoPreview',
-            'categoria_id'
-        ]);
+        $this->reset(['name', 'isActive', 'tempLogo', 'tempFondo', 'tempArchivo', 'logoPreview', 'fondoPreview', 'categoria_id']);
+        $this->isActive = true; // Asegurar que esté activo por defecto
         $this->modal_form_categoria = true;
     }
 
@@ -143,19 +98,14 @@ class CategoryCatalogoIndex extends Component
         $categoria = CategoryCatalogo::findOrFail($id);
         $this->categoria_id = $categoria->id;
         $this->name = $categoria->name;
-        $this->logo = $categoria->logo;
-        $this->fondo = $categoria->fondo;
-        $this->archivo = $categoria->archivo;
         $this->isActive = $categoria->isActive;
 
         if ($categoria->logo) {
             $this->logoPreview = asset('storage/' . $categoria->logo);
         }
+
         if ($categoria->fondo) {
             $this->fondoPreview = asset('storage/' . $categoria->fondo);
-        }
-        if ($categoria->archivo) {
-            $this->archivoPreview = basename($categoria->archivo);
         }
 
         $this->modal_form_categoria = true;
@@ -190,96 +140,84 @@ class CategoryCatalogoIndex extends Component
 
     public function guardarCategoria()
     {
-        // Validaciones
         $rules = [
-            'name' => 'required|min:3|max:255',
-            'tempLogo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:20480',
-            'tempFondo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:20480',
-            'tempArchivo' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx|max:20480',
-            'isActive' => 'boolean',
+            'name' => 'required|min:3|max:255|unique:category_catalogos,name,' . ($this->categoria_id ?? ''),
+            'tempLogo' => 'nullable|image|max:20480', // 2MB max
+            'tempFondo' => 'nullable|image|max:20480', // 2MB max
+            'tempArchivo' => 'nullable|file|max:10240', // 10MB max
         ];
 
         $messages = [
-            'name.required' => 'Por favor, ingrese el nombre de la categoría',
+            'name.required' => 'El nombre es requerido',
             'name.min' => 'El nombre debe tener al menos 3 caracteres',
-            'name.max' => 'El nombre no debe exceder los 255 caracteres',
-            'tempLogo.image' => 'El archivo debe ser una imagen válida',
-            'tempLogo.mimes' => 'La imagen debe ser en formato: jpeg, png, jpg, gif o svg',
-            'tempLogo.max' => 'La imagen no debe superar los 20MB',
-            'tempFondo.image' => 'El archivo debe ser una imagen válida',
-            'tempFondo.mimes' => 'La imagen debe ser en formato: jpeg, png, jpg, gif o svg',
-            'tempFondo.max' => 'La imagen no debe superar los 20MB',
-            'tempArchivo.file' => 'El archivo adjunto no es válido',
-            'tempArchivo.mimes' => 'El archivo debe ser en formato: pdf, doc, docx, xls, xlsx, ppt o pptx',
-            'tempArchivo.max' => 'El archivo no debe superar los 20MB',
-            'isActive.boolean' => 'El estado seleccionado no es válido',
+            'name.max' => 'El nombre debe tener menos de 255 caracteres',
+            'name.unique' => 'Ya existe una categoría con este nombre',
+            'tempLogo.image' => 'El logo debe ser una imagen',
+            'tempFondo.image' => 'El fondo debe ser una imagen',
+            'tempArchivo.file' => 'El archivo debe ser válido',
         ];
 
-        $data = $this->validate($rules, $messages);
-
-        // Procesar logo
-        if ($this->tempLogo) {
-            // Eliminar logo anterior si existe
-            if ($this->logo && Storage::exists($this->logo)) {
-                Storage::delete($this->logo);
-            }
-            $logoPath = $this->tempLogo->store('categorias/logos', 'public');
-            $data['logo'] = $logoPath;
-        }
-
-        // Procesar fondo
-        if ($this->tempFondo) {
-            // Eliminar fondo anterior si existe
-            if ($this->fondo && Storage::exists($this->fondo)) {
-                Storage::delete($this->fondo);
-            }
-            $fondoPath = $this->tempFondo->store('categorias/fondos', 'public');
-            $data['fondo'] = $fondoPath;
-        }
-
-        // Procesar archivo
-        if ($this->tempArchivo) {
-            // Eliminar archivo anterior si existe
-            if ($this->archivo && Storage::exists($this->archivo)) {
-                Storage::delete($this->archivo);
-            }
-            $archivoPath = $this->tempArchivo->store('categorias/archivos', 'public');
-            $data['archivo'] = $archivoPath;
-        }
+        $this->validate($rules, $messages);
 
         if ($this->categoria_id) {
-            $categoria = CategoryCatalogo::find($this->categoria_id);
-            $categoria->update($data);
+            $categoria = CategoryCatalogo::findOrFail($this->categoria_id);
+
+            // Eliminar archivos anteriores si existen y se suben nuevos
+            if ($this->tempLogo && $categoria->logo) {
+                Storage::disk('public')->delete($categoria->logo);
+            }
+            if ($this->tempFondo && $categoria->fondo) {
+                Storage::disk('public')->delete($categoria->fondo);
+            }
+            if ($this->tempArchivo && $categoria->archivo) {
+                Storage::disk('public')->delete($categoria->archivo);
+            }
         } else {
-            CategoryCatalogo::create($data);
+            $categoria = new CategoryCatalogo();
         }
 
-        $this->modal_form_categoria = false;
-        $this->reset([
-            'categoria_id',
-            'tempLogo',
-            'tempFondo',
-            'tempArchivo',
-            'logoPreview',
-            'fondoPreview',
-            'archivoPreview'
-        ]);
-        $this->resetValidation();
+        $categoria->name = $this->name;
+        $categoria->isActive = $this->isActive;
 
+        // Procesar logo si se subió uno nuevo
+        if ($this->tempLogo) {
+            $path = $this->tempLogo->store('categorias/logos', 'public');
+            $categoria->logo = $path;
+        }
+
+        // Procesar fondo si se subió uno nuevo
+        if ($this->tempFondo) {
+            $path = $this->tempFondo->store('categorias/fondos', 'public');
+            $categoria->fondo = $path;
+        }
+
+        // Procesar archivo si se subió uno nuevo
+        if ($this->tempArchivo) {
+            $path = $this->tempArchivo->store('categorias/archivos', 'public');
+            $categoria->archivo = $path;
+        }
+
+        $categoria->save();
+
+        $this->modal_form_categoria = false;
         $this->success($this->categoria_id ? 'Categoría actualizada correctamente' : 'Categoría creada correctamente');
     }
 
     public function render()
     {
-        $categories = CategoryCatalogo::query()
+        $categorias = CategoryCatalogo::query()
             ->when($this->search, function ($query) {
                 $query->where('name', 'like', '%' . $this->search . '%');
             })
+            ->when($this->isActiveFilter !== '', function ($query) {
+                $query->where('isActive', $this->isActiveFilter);
+            })
+            ->latest()
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate(10);
 
         return view('livewire.catalogo.category-catalogo-index', [
-            'categories' => $categories
+            'categorias' => $categorias
         ]);
     }
 }

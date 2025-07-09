@@ -23,7 +23,7 @@ return new class extends Migration
             $table->string('archivo')->nullable();
             $table->timestamp('ultima_fecha_actividad')->nullable();
             $table->foreignId('tipo_negocio_id')->nullable()->constrained('tipos_negocio_crm');
-            $table->foreignId('marca_id')->nullable()->constrained('marcas_crm');
+            $table->foreignId('marca_id')->constrained('marcas_crm');
             $table->foreignId('customer_id')->constrained('customers');
             $table->foreignId('contact_id')->nullable()->constrained('contacts_crm');
             $table->foreignId('user_id')->nullable()->constrained('users');

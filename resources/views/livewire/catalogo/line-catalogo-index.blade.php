@@ -53,14 +53,14 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
                 <flux:label>Estado</flux:label>
-                <flux:select wire:model.live="isActive" class="w-full">
+                <flux:select wire:model.live="isActiveFilter" class="w-full">
                     <option value="">Todos</option>
                     <option value="1">Activa</option>
                     <option value="0">Inactiva</option>
                 </flux:select>
             </div>
             <div class="flex items-end">
-                <flux:button wire:click="$set('isActive', '')" color="red" icon="trash" class="w-full">Limpiar
+                <flux:button wire:click="$set('isActiveFilter', '')" color="red" icon="trash" class="w-full">Limpiar
                     Filtros</flux:button>
             </div>
         </div>
@@ -80,6 +80,12 @@
                         </th>
                         <th
                             class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                            Logo</th>
+                        <th
+                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                            Archivo</th>
+                        <th
+                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                             Nombre</th>
                         <th
                             class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
@@ -95,6 +101,35 @@
                             class="hover:bg-zinc-100 dark:hover:bg-zinc-600 transition-colors duration-200 ease-in-out">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-300">
                                 {{ $line->code }}</td>
+                                                        <td class="px-6 py-4 text-sm">
+                                @if($line->logo)
+                                    <div class="flex items-center gap-2">
+                                        <img src="{{ asset('storage/' . $line->logo) }}"
+                                             alt="{{ $line->name }}"
+                                             class="w-12 h-12 rounded-lg object-cover border shadow-sm" />
+                                    </div>
+                                @else
+                                    <div class="flex items-center justify-center w-12 h-12 bg-zinc-100 dark:bg-zinc-700 rounded-lg">
+                                        <flux:icon name="photo" class="w-6 h-6 text-zinc-400" />
+                                    </div>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 text-sm">
+                                @if($line->archivo)
+                                    <div class="flex items-center justify-center">
+                                        <a href="{{ asset('storage/' . $line->archivo) }}"
+                                           download="{{ $line->name }}_archivo.{{ pathinfo($line->archivo, PATHINFO_EXTENSION) }}"
+                                           class="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-green-600 bg-green-100 border border-transparent rounded-md hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
+                                            <flux:icon name="document-arrow-down" class="w-4 h-4 mr-2" />
+                                            Descargar Archivo
+                                        </a>
+                                    </div>
+                                @else
+                                    <div class="flex items-center justify-center w-full h-12 bg-zinc-100 dark:bg-zinc-700 rounded-lg">
+                                        <flux:icon name="document" class="w-6 h-6 text-zinc-400" />
+                                    </div>
+                                @endif
+                            </td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">{{ $line->name }}</td>
                             <td class="px-6 py-4 text-sm">
                                 <span
@@ -115,7 +150,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-8 text-center text-zinc-500 dark:text-zinc-400">
+                            <td colspan="6" class="px-6 py-8 text-center text-zinc-500 dark:text-zinc-400">
                                 <div class="flex flex-col items-center gap-2">
                                     <flux:icon name="inbox" class="w-12 h-12 text-zinc-300" />
                                     <span class="text-lg font-medium">No se encontraron líneas</span>
@@ -154,32 +189,185 @@
                         <div>
                             <flux:label>Nombre</flux:label>
                             <flux:input type="text" wire:model.live="name" placeholder="Ej: Línea A" />
+                            @error('name')
+                                <flux:text class="text-xs text-red-500 mt-1">{{ $message }}</flux:text>
+                            @enderror
+                            @if(!$linea_id)
+                                <flux:text class="text-xs text-zinc-500 mt-1">El código se generará automáticamente basado en este nombre</flux:text>
+                            @endif
                         </div>
                         <div>
-                            <flux:label>Código</flux:label>
-                            <flux:input type="text" wire:model.live="code" placeholder="Ej: LIN-001" />
+                            <flux:label>Código (Generado automáticamente)</flux:label>
+                            <flux:input type="text" wire:model="code" placeholder="Se generará automáticamente" readonly />
+                            <flux:text class="text-xs text-zinc-500 mt-1">El código se genera automáticamente basado en el nombre</flux:text>
                         </div>
                     </div>
                 </div>
+                                <!-- Logo -->
                 <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 shadow-sm border">
                     <div class="flex items-center gap-2 mb-4">
                         <flux:icon name="photo" class="w-5 h-5 text-blue-400" />
-                        <flux:heading size="md">Imagen</flux:heading>
-                        <span class="text-xs text-zinc-400 ml-2">Solo formatos JPG, PNG. Tamaño recomendado:
-                            200x200px.</span>
+                        <flux:heading size="md">Logo</flux:heading>
+                        <span class="text-xs text-zinc-400 ml-2">Solo formatos JPG, PNG. Tamaño recomendado: 200x200px.</span>
                     </div>
                     <div>
-                        <flux:label>Imagen de la línea</flux:label>
-                        <div class="mt-1">
-                            @if ($imagePreview)
+                        <flux:label>Logo de la línea</flux:label>
+                        <div class="mt-1 space-y-3">
+                            <!-- Vista previa de logo -->
+                            @if ($logoPreview)
                                 <div class="relative inline-block group">
-                                    <img src="{{ $imagePreview }}" alt="Vista previa"
-                                        class="w-24 h-24 rounded-lg object-cover border shadow" />
-                                    <flux:button wire:click="removeImage" size="xs" variant="danger"
-                                        icon="x-mark" class="absolute -top-2 -right-2" />
+                                    <div class="relative">
+                                        <img src="{{ $logoPreview }}" alt="Vista previa del logo"
+                                            class="w-24 h-24 rounded-lg object-cover border-2 border-blue-200 shadow-lg" />
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
+                                        <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                            <flux:button wire:click="removeLogo" size="xs" variant="danger"
+                                                icon="x-mark" class="hover:bg-red-600 transition-colors shadow-lg" />
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 text-center">
+                                        <flux:text class="text-xs text-blue-600 font-medium">Vista previa del logo</flux:text>
+                                    </div>
                                 </div>
                             @endif
-                            <flux:input wire:model="tempImage" type="file" accept="image/*" />
+
+                            <!-- Información del logo actual (solo en edición) -->
+                            @if($linea_id && !$logoPreview)
+                                <div class="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl border border-blue-200 dark:border-blue-800">
+                                    <div class="flex-shrink-0">
+                                        <flux:icon name="information-circle" class="w-6 h-6 text-blue-500" />
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-blue-900 dark:text-blue-100">Logo actual</p>
+                                        <p class="text-sm text-blue-700 dark:text-blue-300">El logo actual se mantendrá si no subes uno nuevo</p>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <flux:icon name="check-circle" class="w-5 h-5 text-blue-500" />
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- Input de archivo -->
+                            <div class="flex items-center gap-3">
+                                <flux:input wire:model="tempLogo" type="file" accept="image/*" class="flex-1" />
+                                @if($logoPreview)
+                                    <flux:button wire:click="removeLogo" size="sm" icon="trash">
+                                        Eliminar
+                                    </flux:button>
+                                @endif
+                            </div>
+
+                            <!-- Información de ayuda -->
+                            <div class="text-xs text-zinc-500 dark:text-zinc-400">
+                                <p>• Formatos soportados: JPG, PNG, GIF</p>
+                                <p>• Tamaño máximo: 2MB</p>
+                                <p>• Tamaño recomendado: 200x200px para mejor calidad</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fondo -->
+                <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 shadow-sm border">
+                    <div class="flex items-center gap-2 mb-4">
+                        <flux:icon name="photo" class="w-5 h-5 text-green-400" />
+                        <flux:heading size="md">Fondo</flux:heading>
+                        <span class="text-xs text-zinc-400 ml-2">Solo formatos JPG, PNG. Tamaño recomendado: 800x600px.</span>
+                    </div>
+                    <div>
+                        <flux:label>Imagen de fondo</flux:label>
+                        <div class="mt-1 space-y-3">
+                            <!-- Vista previa de fondo -->
+                            @if ($fondoPreview)
+                                <div class="relative inline-block group">
+                                    <div class="relative">
+                                        <img src="{{ $fondoPreview }}" alt="Vista previa del fondo"
+                                            class="w-24 h-24 rounded-lg object-cover border-2 border-green-200 shadow-lg" />
+                                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300"></div>
+                                        <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                                            <flux:button wire:click="removeFondo" size="xs" variant="danger"
+                                                icon="x-mark" class="hover:bg-red-600 transition-colors shadow-lg" />
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 text-center">
+                                        <flux:text class="text-xs text-green-600 font-medium">Vista previa del fondo</flux:text>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- Información del fondo actual (solo en edición) -->
+                            @if($linea_id && !$fondoPreview)
+                                <div class="flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 rounded-xl border border-green-200 dark:border-green-800">
+                                    <div class="flex-shrink-0">
+                                        <flux:icon name="information-circle" class="w-6 h-6 text-green-500" />
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-green-900 dark:text-green-100">Fondo actual</p>
+                                        <p class="text-sm text-green-700 dark:text-green-300">El fondo actual se mantendrá si no subes uno nuevo</p>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <flux:icon name="check-circle" class="w-5 h-5 text-green-500" />
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- Input de archivo -->
+                            <div class="flex items-center gap-3">
+                                <flux:input wire:model="tempFondo" type="file" accept="image/*" class="flex-1" />
+                                @if($fondoPreview)
+                                    <flux:button wire:click="removeFondo" size="sm" icon="trash">
+                                        Eliminar
+                                    </flux:button>
+                                @endif
+                            </div>
+
+                            <!-- Información de ayuda -->
+                            <div class="text-xs text-zinc-500 dark:text-zinc-400">
+                                <p>• Formatos soportados: JPG, PNG, GIF</p>
+                                <p>• Tamaño máximo: 2MB</p>
+                                <p>• Tamaño recomendado: 800x600px para mejor calidad</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Archivo -->
+                <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 shadow-sm border">
+                    <div class="flex items-center gap-2 mb-4">
+                        <flux:icon name="document" class="w-5 h-5 text-purple-400" />
+                        <flux:heading size="md">Archivo</flux:heading>
+                        <span class="text-xs text-zinc-400 ml-2">Cualquier tipo de archivo. Tamaño máximo: 10MB.</span>
+                    </div>
+                    <div>
+                        <flux:label>Archivo de la línea</flux:label>
+                        <div class="mt-1 space-y-3">
+                            <!-- Información del archivo actual (solo en edición) -->
+                            @if($linea_id)
+                                <div class="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 rounded-xl border border-purple-200 dark:border-purple-800">
+                                    <div class="flex-shrink-0">
+                                        <flux:icon name="information-circle" class="w-6 h-6 text-purple-500" />
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-purple-900 dark:text-purple-100">Archivo actual</p>
+                                        <p class="text-sm text-purple-700 dark:text-purple-300">El archivo actual se mantendrá si no subes uno nuevo</p>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <flux:icon name="check-circle" class="w-5 h-5 text-purple-500" />
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- Input de archivo -->
+                            <div class="flex items-center gap-3">
+                                <flux:input wire:model="tempArchivo" type="file" class="flex-1" />
+                            </div>
+
+                            <!-- Información de ayuda -->
+                            <div class="text-xs text-zinc-500 dark:text-zinc-400">
+                                <p>• Cualquier tipo de archivo</p>
+                                <p>• Tamaño máximo: 10MB</p>
+                                <p>• Se reemplazará el archivo actual si existe</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -195,7 +383,7 @@
         </form>
     </flux:modal>
     <!-- Modal Confirmar Eliminación -->
-    <flux:modal wire:model="modal_form_eliminar_linea" variant="flyout" class="w-2/3 max-w-2xl">
+    <flux:modal wire:model="modal_form_eliminar_linea">
         <div class="space-y-6">
             <div>
                 <flux:heading size="lg">Eliminar Línea</flux:heading>

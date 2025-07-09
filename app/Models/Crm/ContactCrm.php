@@ -23,10 +23,12 @@ class ContactCrm extends Model
         'notas',
         'es_principal',
         'customer_id',
+        'ultima_fecha_contacto',
     ];
 
     protected $casts = [
         'es_principal' => 'boolean',
+        'ultima_fecha_contacto' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime'

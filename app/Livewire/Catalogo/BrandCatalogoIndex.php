@@ -3,18 +3,15 @@
 namespace App\Livewire\Catalogo;
 
 use App\Models\Catalogo\BrandCatalogo;
-use App\Traits\FileUploadTrait;
-use App\Traits\NotificationTrait;
-use App\Traits\TableTrait;
 use Livewire\Component;
-use Livewire\WithPagination;
 use Livewire\WithFileUploads;
+use Livewire\WithPagination;
 use Illuminate\Support\Facades\Storage;
 use Mary\Traits\Toast;
 
 class BrandCatalogoIndex extends Component
 {
-    use WithPagination, WithFileUploads, TableTrait, FileUploadTrait, NotificationTrait, Toast;
+    use WithPagination, WithFileUploads, Toast;
 
     // Propiedades para el modal
     public $modal_form_marca = false;
@@ -23,97 +20,70 @@ class BrandCatalogoIndex extends Component
 
     // Propiedades para el formulario
     public $name;
-    public $logo;
-    public $archivo;
     public $isActive = true;
 
     // Propiedades para archivos temporales
     public $tempLogo;
     public $tempArchivo;
     public $logoPreview;
-    public $archivoPreview;
 
-    // Configuración de búsqueda
-    protected $searchFields = ['name'];
+    // Propiedades para búsqueda y ordenamiento
+    public $search = '';
+    public $sortField = 'name';
+    public $sortDirection = 'asc';
+    public $isActiveFilter = '';
 
-    public function mount()
+    protected $rules = [
+        'tempLogo' => 'nullable|image|max:20480', // 2MB max
+        'tempArchivo' => 'nullable|file|max:10240', // 10MB max
+    ];
+
+    public function updatedSearch()
     {
-        $this->sortField = 'name';
+        $this->resetPage();
     }
 
-    public function clearFilters()
+    public function sortBy($field)
     {
-        $this->reset([
-            'search',
-            'sortField',
-            'sortDirection',
-            'perPage',
-        ]);
-        $this->resetPage();
-        $this->info('Filtros limpiados');
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
     }
 
     public function updatedTempLogo()
     {
-        $this->validate($this->validateImage('tempLogo'));
+        $this->validateOnly('tempLogo');
 
         if ($this->tempLogo) {
             $this->logoPreview = $this->tempLogo->temporaryUrl();
         }
     }
 
-    public function updatedTempArchivo()
-    {
-        $this->validate($this->validateFile('tempArchivo'));
-
-        if ($this->tempArchivo) {
-            $this->archivoPreview = $this->tempArchivo->getClientOriginalName();
-        }
-    }
-
     public function removeLogo()
     {
-        $this->deleteFile($this->logo);
-        $this->logo = null;
         $this->tempLogo = null;
         $this->logoPreview = null;
     }
 
-    public function removeArchivo()
-    {
-        $this->deleteFile($this->archivo);
-        $this->archivo = null;
-        $this->tempArchivo = null;
-        $this->archivoPreview = null;
-    }
-
     public function nuevoMarca()
     {
-        $this->resetValidation();
-        $this->reset([
-            'name', 'logo', 'archivo', 'isActive',
-            'tempLogo', 'tempArchivo',
-            'logoPreview', 'archivoPreview',
-            'marca_id'
-        ]);
+        $this->reset(['name', 'isActive', 'tempLogo', 'tempArchivo', 'logoPreview', 'marca_id']);
+        $this->isActive = true; // Asegurar que esté activo por defecto
         $this->modal_form_marca = true;
     }
 
     public function editarMarca($id)
     {
-        $this->resetValidation();
         $marca = BrandCatalogo::findOrFail($id);
         $this->marca_id = $marca->id;
         $this->name = $marca->name;
-        $this->logo = $marca->logo;
-        $this->archivo = $marca->archivo;
         $this->isActive = $marca->isActive;
 
         if ($marca->logo) {
             $this->logoPreview = asset('storage/' . $marca->logo);
-        }
-        if ($marca->archivo) {
-            $this->archivoPreview = basename($marca->archivo);
         }
 
         $this->modal_form_marca = true;
@@ -127,100 +97,91 @@ class BrandCatalogoIndex extends Component
 
     public function confirmarEliminarMarca()
     {
-        try {
-            $marca = BrandCatalogo::findOrFail($this->marca_id);
+        $marca = BrandCatalogo::findOrFail($this->marca_id);
 
-            // Eliminar archivos asociados
-            $this->deleteFile($marca->logo);
-            $this->deleteFile($marca->archivo);
-
-            $marca->delete();
-
-            $this->modal_form_eliminar_marca = false;
-            $this->reset(['marca_id']);
-
-            $this->handleSuccess('Marca eliminada correctamente', 'eliminación de marca');
-        } catch (\Exception $e) {
-            $this->handleError($e, 'eliminación de marca');
+        // Eliminar archivos si existen
+        if ($marca->logo) {
+            Storage::disk('public')->delete($marca->logo);
         }
+        if ($marca->archivo) {
+            Storage::disk('public')->delete($marca->archivo);
+        }
+
+        $marca->delete();
+
+        $this->modal_form_eliminar_marca = false;
+        $this->success('Marca eliminada correctamente');
     }
 
     public function guardarMarca()
     {
-        // Validaciones
         $rules = [
             'name' => 'required|min:3|max:255|unique:brand_catalogos,name,' . ($this->marca_id ?? ''),
-            'isActive' => 'boolean',
+            'tempLogo' => 'nullable|image|max:20480', // 2MB max
+            'tempArchivo' => 'nullable|file|max:10240', // 10MB max
         ];
-
-        // Agregar validaciones de archivos
-        $rules = array_merge($rules, $this->validateImage('tempLogo'));
-        $rules = array_merge($rules, $this->validateFile('tempArchivo'));
 
         $messages = [
-            'name.required' => 'Por favor, ingrese el nombre de la marca',
+            'name.required' => 'El nombre es requerido',
             'name.min' => 'El nombre debe tener al menos 3 caracteres',
-            'name.max' => 'El nombre no debe exceder los 255 caracteres',
-            'name.unique' => 'Esta marca ya existe en el sistema',
+            'name.max' => 'El nombre debe tener menos de 255 caracteres',
+            'name.unique' => 'Ya existe una marca con este nombre',
+            'tempLogo.image' => 'El logo debe ser una imagen',
+            'tempArchivo.file' => 'El archivo debe ser válido',
         ];
 
-        // Agregar mensajes de validación de archivos
-        $messages = array_merge($messages, $this->getFileValidationMessages());
+        $this->validate($rules, $messages);
 
-        $data = $this->validate($rules, $messages);
+        if ($this->marca_id) {
+            $marca = BrandCatalogo::findOrFail($this->marca_id);
 
-        try {
-            // Procesar archivos usando el trait
-            $data['logo'] = $this->processImage($this->tempLogo, $this->logo, 'marcas/logos');
-            $data['archivo'] = $this->processFile($this->tempArchivo, $this->archivo, 'marcas/archivos');
-
-            if ($this->marca_id) {
-                $marca = BrandCatalogo::findOrFail($this->marca_id);
-                $marca->update($data);
-                $message = 'Marca actualizada correctamente';
-                $context = 'actualización de marca';
-            } else {
-                BrandCatalogo::create($data);
-                $message = 'Marca creada correctamente';
-                $context = 'creación de marca';
+            // Eliminar archivos anteriores si existen y se suben nuevos
+            if ($this->tempLogo && $marca->logo) {
+                Storage::disk('public')->delete($marca->logo);
             }
-
-            $this->modal_form_marca = false;
-            $this->reset([
-                'marca_id',
-                'tempLogo',
-                'tempArchivo',
-                'logoPreview',
-                'archivoPreview'
-            ]);
-            $this->resetValidation();
-
-            $this->handleSuccess($message, $context);
-        } catch (\Exception $e) {
-            $this->handleError($e, 'guardado de marca');
+            if ($this->tempArchivo && $marca->archivo) {
+                Storage::disk('public')->delete($marca->archivo);
+            }
+        } else {
+            $marca = new BrandCatalogo();
         }
-    }
 
-    public function toggleMarcaStatus($id)
-    {
-        try {
-            $marca = BrandCatalogo::findOrFail($id);
-            $marca->update(['isActive' => !$marca->isActive]);
+        $marca->name = $this->name;
+        $marca->isActive = $this->isActive;
 
-            $this->handleSuccess('Estado de la marca actualizado correctamente', 'cambio de estado');
-        } catch (\Exception $e) {
-            $this->handleError($e, 'cambio de estado');
+        // Procesar logo si se subió uno nuevo
+        if ($this->tempLogo) {
+            $path = $this->tempLogo->store('marcas/logos', 'public');
+            $marca->logo = $path;
         }
+
+        // Procesar archivo si se subió uno nuevo
+        if ($this->tempArchivo) {
+            $path = $this->tempArchivo->store('marcas/archivos', 'public');
+            $marca->archivo = $path;
+        }
+
+        $marca->save();
+
+        $this->modal_form_marca = false;
+        $this->success($this->marca_id ? 'Marca actualizada correctamente' : 'Marca creada correctamente');
     }
 
     public function render()
     {
-        $brands = $this->applySearch(BrandCatalogo::query(), $this->searchFields);
-        $brands = $this->applySorting($brands);
-        $brands = $this->applyPagination($brands);
+        $marcas = BrandCatalogo::query()
+            ->when($this->search, function ($query) {
+                $query->where('name', 'like', '%' . $this->search . '%');
+            })
+            ->when($this->isActiveFilter !== '', function ($query) {
+                $query->where('isActive', $this->isActiveFilter);
+            })
+            ->latest()
+            ->orderBy($this->sortField, $this->sortDirection)
+            ->paginate(10);
 
         return view('livewire.catalogo.brand-catalogo-index', [
-            'brands' => $brands
+            'marcas' => $marcas
         ]);
     }
 }

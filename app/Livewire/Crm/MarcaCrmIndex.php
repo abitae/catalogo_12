@@ -108,7 +108,7 @@ class MarcaCrmIndex extends Component
             'perPage'
         ]);
         $this->resetPage();
-        $this->info('Filtros limpiados');
+        $this->info('Filtros limpiados correctamente');
     }
 
     public function render()
@@ -173,13 +173,18 @@ class MarcaCrmIndex extends Component
 
     public function confirmarEliminarMarca()
     {
-        if ($this->marca) {
-            // Eliminar logo si existe
-            if ($this->marca->logo && Storage::disk('public')->exists($this->marca->logo)) {
-                Storage::disk('public')->delete($this->marca->logo);
-            }
+        try {
+            if ($this->marca) {
+                // Eliminar logo si existe
+                if ($this->marca->logo && Storage::disk('public')->exists($this->marca->logo)) {
+                    Storage::disk('public')->delete($this->marca->logo);
+                }
 
-            $this->marca->delete();
+                $this->marca->delete();
+                $this->success('Marca eliminada correctamente');
+            }
+        } catch (\Exception $e) {
+            $this->error('Error al eliminar la marca: ' . $e->getMessage());
         }
 
         $this->modal_form_eliminar_marca = false;
@@ -217,30 +222,36 @@ class MarcaCrmIndex extends Component
 
     public function guardarMarca()
     {
-        $data = $this->validate();
+        try {
+            $data = $this->validate();
 
-        // Manejar logo
-        if ($this->tempLogo) {
-            // Eliminar logo anterior si existe
-            if ($this->marca_id && $this->marca && $this->marca->logo) {
-                Storage::disk('public')->delete($this->marca->logo);
+            // Manejar logo
+            if ($this->tempLogo) {
+                // Eliminar logo anterior si existe
+                if ($this->marca_id && $this->marca && $this->marca->logo) {
+                    Storage::disk('public')->delete($this->marca->logo);
+                }
+
+                $logoPath = $this->tempLogo->store('marcas/logos', 'public');
+                $data['logo'] = $logoPath;
             }
 
-            $logoPath = $this->tempLogo->store('marcas/logos', 'public');
-            $data['logo'] = $logoPath;
+            // Remover campo temporal
+            unset($data['tempLogo']);
+
+            if ($this->marca_id) {
+                $marca = MarcaCrm::find($this->marca_id);
+                $marca->update($data);
+                $this->success('Marca actualizada correctamente');
+            } else {
+                MarcaCrm::create($data);
+                $this->success('Marca creada correctamente');
+            }
+
+            $this->modal_form_marca = false;
+            $this->resetForm();
+        } catch (\Exception $e) {
+            $this->error('Error al guardar la marca: ' . $e->getMessage());
         }
-
-        // Remover campo temporal
-        unset($data['tempLogo']);
-
-        if ($this->marca_id) {
-            $marca = MarcaCrm::find($this->marca_id);
-            $marca->update($data);
-        } else {
-            MarcaCrm::create($data);
-        }
-
-        $this->modal_form_marca = false;
-        $this->resetForm();
     }
 }

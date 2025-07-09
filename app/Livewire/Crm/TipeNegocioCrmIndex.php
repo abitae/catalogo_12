@@ -5,10 +5,11 @@ namespace App\Livewire\Crm;
 use App\Models\Crm\TipoNegocioCrm;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Mary\Traits\Toast;
 
 class TipeNegocioCrmIndex extends Component
 {
-    use WithPagination;
+    use WithPagination, Toast;
 
     public $search = '';
     public $sortField = 'nombre';
@@ -87,6 +88,7 @@ class TipeNegocioCrmIndex extends Component
             'perPage'
         ]);
         $this->resetPage();
+        $this->info('Filtros limpiados correctamente');
     }
 
     public function render()
@@ -141,8 +143,13 @@ class TipeNegocioCrmIndex extends Component
 
     public function confirmarEliminarTipoNegocio()
     {
-        if ($this->tipo_negocio) {
-            $this->tipo_negocio->delete();
+        try {
+            if ($this->tipo_negocio) {
+                $this->tipo_negocio->delete();
+                $this->success('Tipo de negocio eliminado correctamente');
+            }
+        } catch (\Exception $e) {
+            $this->error('Error al eliminar el tipo de negocio: ' . $e->getMessage());
         }
 
         $this->modal_form_eliminar_tipo_negocio = false;
@@ -164,16 +171,22 @@ class TipeNegocioCrmIndex extends Component
 
     public function guardarTipoNegocio()
     {
-        $data = $this->validate();
+        try {
+            $data = $this->validate();
 
-        if ($this->tipo_negocio_id) {
-            $tipo_negocio = TipoNegocioCrm::find($this->tipo_negocio_id);
-            $tipo_negocio->update($data);
-        } else {
-            TipoNegocioCrm::create($data);
+            if ($this->tipo_negocio_id) {
+                $tipo_negocio = TipoNegocioCrm::find($this->tipo_negocio_id);
+                $tipo_negocio->update($data);
+                $this->success('Tipo de negocio actualizado correctamente');
+            } else {
+                TipoNegocioCrm::create($data);
+                $this->success('Tipo de negocio creado correctamente');
+            }
+
+            $this->modal_form_tipo_negocio = false;
+            $this->resetForm();
+        } catch (\Exception $e) {
+            $this->error('Error al guardar el tipo de negocio: ' . $e->getMessage());
         }
-
-        $this->modal_form_tipo_negocio = false;
-        $this->resetForm();
     }
 }

@@ -37,6 +37,16 @@
             <!-- Filtros -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                 <div>
+                    <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Cliente</flux:label>
+                    <flux:select wire:model.live="customer_filter" class="w-full mt-1">
+                        <option value="">Todos los clientes</option>
+                        @foreach($customers as $customer)
+                            <option value="{{ $customer->id }}">{{ $customer->nombre }}</option>
+                        @endforeach
+                    </flux:select>
+                </div>
+
+                <div>
                     <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Empresa</flux:label>
                     <flux:input wire:model.live="empresa_filter" placeholder="Filtrar por empresa" class="w-full mt-1" />
                 </div>
@@ -249,9 +259,14 @@
                     </div>
 
                     <div>
-                        <flux:label for="ultima_fecha_contacto" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Última fecha de contacto</flux:label>
-                        <flux:input wire:model="ultima_fecha_contacto" id="ultima_fecha_contacto" type="date" class="w-full mt-1" />
-                        @error('ultima_fecha_contacto') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <flux:label for="customer_id" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Cliente *</flux:label>
+                        <flux:select wire:model="customer_id" id="customer_id" class="w-full mt-1">
+                            <option value="">Seleccione un cliente</option>
+                            @foreach($customers as $customer)
+                                <option value="{{ $customer->id }}">{{ $customer->nombre }}</option>
+                            @endforeach
+                        </flux:select>
+                        @error('customer_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
                     </div>
 
                     <div class="flex items-center">

@@ -21,6 +21,7 @@ class ContactCrmIndex extends Component
     public $customer_filter = '';
     public $empresa_filter = '';
     public $es_principal_filter = '';
+    public $cargo_filter = '';
 
     // Modal Form Contacto
     public $modal_form_contacto = false;
@@ -44,6 +45,7 @@ class ContactCrmIndex extends Component
         'customer_filter' => ['except' => ''],
         'empresa_filter' => ['except' => ''],
         'es_principal_filter' => ['except' => ''],
+        'cargo_filter' => ['except' => ''],
         'sortField' => ['except' => 'nombre'],
         'sortDirection' => ['except' => 'asc'],
         'perPage' => ['except' => 10],
@@ -60,7 +62,7 @@ class ContactCrmIndex extends Component
             'empresa' => 'nullable|string|max:255',
             'customer_id' => 'required|exists:customers,id',
             'notas' => 'nullable|string',
-            'es_principal' => 'boolean'
+            'es_principal' => 'boolean',
         ];
     }
 
@@ -100,10 +102,11 @@ class ContactCrmIndex extends Component
             'customer_filter',
             'empresa_filter',
             'es_principal_filter',
+            'cargo_filter',
             'perPage'
         ]);
         $this->resetPage();
-        $this->info('Filtros limpiados');
+        $this->info('Filtros limpiados correctamente');
     }
 
     public function render()
@@ -127,6 +130,9 @@ class ContactCrmIndex extends Component
             ->when($this->es_principal_filter !== '', function ($query) {
                 $query->where('es_principal', $this->es_principal_filter);
             })
+            ->when($this->cargo_filter, function ($query) {
+                $query->where('cargo', 'like', '%' . $this->cargo_filter . '%');
+            })
             ->orderBy($this->sortField, $this->sortDirection);
 
         return view('livewire.crm.contact-crm-index', [
@@ -137,6 +143,21 @@ class ContactCrmIndex extends Component
 
     public function nuevoContacto()
     {
+        $this->reset([
+            'contacto_id',
+            'contacto',
+            'nombre',
+            'apellido',
+            'correo',
+            'telefono',
+            'cargo',
+            'empresa',
+            'customer_id',
+            'notas',
+            'es_principal'
+        ]);
+        $this->es_principal = false;
+        $this->resetValidation();
         $this->modal_form_contacto = true;
     }
 
@@ -152,7 +173,7 @@ class ContactCrmIndex extends Component
         $this->empresa = $this->contacto->empresa;
         $this->customer_id = $this->contacto->customer_id;
         $this->notas = $this->contacto->notas;
-        $this->es_principal = $this->contacto->es_principal;
+        $this->es_principal = (bool) $this->contacto->es_principal;
 
         $this->modal_form_contacto = true;
     }
@@ -168,36 +189,57 @@ class ContactCrmIndex extends Component
 
     public function confirmarEliminarContacto()
     {
-        $this->contacto->delete();
-        $this->modal_form_eliminar_contacto = false;
-        $this->reset(['contacto_id', 'contacto']);
+        try {
+            $this->contacto->delete();
+            $this->modal_form_eliminar_contacto = false;
+            $this->reset(['contacto_id', 'contacto']);
+            $this->success('Contacto eliminado correctamente');
+        } catch (\Exception $e) {
+            $this->error('Error al eliminar el contacto: ' . $e->getMessage());
+        }
     }
 
     public function guardarContacto()
     {
         $data = $this->validate();
 
-        if ($this->contacto_id) {
-            $contacto = ContactCrm::find($this->contacto_id);
-            $contacto->update($data);
-        } else {
-            ContactCrm::create($data);
-        }
+        // Asignar automáticamente la fecha actual
+        $data['ultima_fecha_contacto'] = now();
 
-        $this->modal_form_contacto = false;
-        $this->reset([
-            'contacto_id',
-            'contacto',
-            'nombre',
-            'apellido',
-            'correo',
-            'telefono',
-            'cargo',
-            'empresa',
-            'customer_id',
-            'notas',
-            'es_principal'
-        ]);
-        $this->resetValidation();
+        // Asegurar que es_principal sea boolean
+        $data['es_principal'] = (bool) $data['es_principal'];
+
+        // Asegurar que customer_id sea integer
+        $data['customer_id'] = (int) $data['customer_id'];
+
+        try {
+            if ($this->contacto_id) {
+                $contacto = ContactCrm::find($this->contacto_id);
+                $contacto->update($data);
+                $this->success('Contacto actualizado correctamente');
+            } else {
+                ContactCrm::create($data);
+                $this->success('Contacto creado correctamente');
+            }
+
+            $this->modal_form_contacto = false;
+            $this->reset([
+                'contacto_id',
+                'contacto',
+                'nombre',
+                'apellido',
+                'correo',
+                'telefono',
+                'cargo',
+                'empresa',
+                'customer_id',
+                'notas',
+                'es_principal'
+            ]);
+            $this->es_principal = false;
+            $this->resetValidation();
+        } catch (\Exception $e) {
+            $this->error('Error al guardar el contacto: ' . $e->getMessage());
+        }
     }
 }

@@ -33,14 +33,14 @@ class ProductoCatalogo extends Model
     ];
     public function category()
     {
-        return $this->belongsTo(CategoryCatalogo::class);
+        return $this->belongsTo(CategoryCatalogo::class, 'category_id');
     }
     public function brand()
     {
-        return $this->belongsTo(BrandCatalogo::class);
+        return $this->belongsTo(BrandCatalogo::class, 'brand_id');
     }
     public function line()
     {
-        return $this->belongsTo(LineCatalogo::class);
+        return $this->belongsTo(LineCatalogo::class, 'line_id');
     }
 }
