@@ -258,21 +258,26 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4">
-                                <div class="flex flex-col">
+                                <div class="flex flex-col gap-1">
                                     <div class="flex items-center gap-2">
-                                        <span class="text-sm font-medium text-zinc-900 dark:text-white">{{ number_format($producto->stock_actual) }}</span>
+                                        <flux:icon.cube class="w-4 h-4 text-blue-500" />
+                                        <span class="text-xs text-zinc-500 dark:text-zinc-400">En almacén:</span>
+                                        <span class="text-sm font-semibold text-zinc-900 dark:text-white">{{ number_format($producto->stock_actual) }}</span>
                                         <span class="text-xs text-zinc-500 dark:text-zinc-400">{{ $producto->unidad_medida }}</span>
                                     </div>
-                                    <div class="text-xs text-zinc-500 dark:text-zinc-400">Mín: {{ number_format($producto->stock_minimo) }}</div>
-
-                                    <!-- Barra de progreso del stock -->
-                                    @php
-                                        $stockPercentage = $producto->stock_minimo > 0 ? ($producto->stock_actual / $producto->stock_minimo) * 100 : 0;
-                                        $stockColor = $producto->stock_actual <= 0 ? 'bg-red-500' :
-                                                   ($producto->stock_actual <= $producto->stock_minimo ? 'bg-orange-500' : 'bg-green-500');
-                                    @endphp
-                                    <div class="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-1.5 mt-1">
-                                        <div class="{{ $stockColor }} h-1.5 rounded-full" style="width: {{ min($stockPercentage, 100) }}%"></div>
+                                    <div class="flex items-center gap-2">
+                                        <flux:icon name="archive-box" class="w-4 h-4 text-green-500" />
+                                        <span class="text-xs text-zinc-500 dark:text-zinc-400">Total:</span>
+                                        @php
+                                            $stock_total = App\Models\Almacen\ProductoAlmacen::where('code', $producto->code)->sum('stock_actual') ?? 0;
+                                        @endphp
+                                        <span class="text-sm font-semibold text-zinc-900 dark:text-white">{{ number_format($stock_total) }}</span>
+                                        <span class="text-xs text-zinc-500 dark:text-zinc-400">{{ $producto->unidad_medida }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <flux:icon.arrow-trending-down class="w-4 h-4 text-orange-500" />
+                                        <span class="text-xs text-zinc-500 dark:text-zinc-400">Mín:</span>
+                                        <span class="text-xs font-medium text-orange-600 dark:text-orange-400">{{ number_format($producto->stock_minimo) }}</span>
                                     </div>
                                 </div>
                             </td>

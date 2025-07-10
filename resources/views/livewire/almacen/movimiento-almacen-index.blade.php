@@ -1,18 +1,19 @@
 <div class="p-6 bg-white dark:bg-zinc-900 min-h-screen">
     <!-- Encabezado y Búsqueda -->
-    <div class="mb-6 bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 shadow-sm">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-            <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Movimientos de Almacén</h1>
-            <div class="flex items-center justify-end gap-4 w-full">
-                <div class="w-full md:w-96">
+    <div class="mb-6 bg-zinc-50 dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-700">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+            <div>
+                <flux:heading size="lg" class="text-zinc-900 dark:text-white">Movimientos de Almacén</flux:heading>
+                <flux:text class="mt-2 text-zinc-600 dark:text-zinc-400">Administra y consulta los movimientos de inventario.</flux:text>
+            </div>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full lg:w-auto">
+                <div class="w-full sm:w-80">
                     <flux:input type="search" placeholder="Buscar..." wire:model.live="search" icon="magnifying-glass" />
                 </div>
-                <div class="flex items-end gap-2">
+                <div class="flex items-center gap-3">
                     <flux:button wire:click="exportarMovimientos" icon="arrow-down-tray">
                         Exportar
                     </flux:button>
-                </div>
-                <div class="flex items-end gap-2">
                     <flux:button variant="primary" wire:click="nuevoMovimiento" icon="plus">
                         Nuevo
                     </flux:button>
@@ -23,54 +24,58 @@
 
     <!-- Estadísticas Rápidas -->
     <div class="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-4 text-white">
+        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm opacity-90">Entradas del Periodo</p>
-                    <p class="text-2xl font-bold">{{ $movimientos->where('tipo_movimiento', 'entrada')->where('estado', 'completado')->sum('total') ? 'S/ ' . number_format($movimientos->where('tipo_movimiento', 'entrada')->where('estado', 'completado')->sum('total'), 2) : 'S/ 0.00' }}</p>
+                    <p class="text-sm opacity-90 font-medium">Entradas del Periodo</p>
+                    <p class="text-3xl font-bold">{{ $movimientos->where('tipo_movimiento', 'entrada')->where('estado', 'completado')->sum('total') ? 'S/ ' . number_format($movimientos->where('tipo_movimiento', 'entrada')->where('estado', 'completado')->sum('total'), 2) : 'S/ 0.00' }}</p>
                 </div>
-                <flux:icon name="arrow-down" class="w-8 h-8 opacity-80" />
+                <flux:icon.arrow-down class="w-10 h-10 opacity-80" />
             </div>
         </div>
 
-        <div class="bg-gradient-to-r from-red-500 to-red-600 rounded-lg p-4 text-white">
+        <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm opacity-90">Salidas del Periodo</p>
-                    <p class="text-2xl font-bold">{{ $movimientos->where('tipo_movimiento', 'salida')->where('estado', 'completado')->sum('total') ? 'S/ ' . number_format($movimientos->where('tipo_movimiento', 'salida')->where('estado', 'completado')->sum('total'), 2) : 'S/ 0.00' }}</p>
+                    <p class="text-sm opacity-90 font-medium">Salidas del Periodo</p>
+                    <p class="text-3xl font-bold">{{ $movimientos->where('tipo_movimiento', 'salida')->where('estado', 'completado')->sum('total') ? 'S/ ' . number_format($movimientos->where('tipo_movimiento', 'salida')->where('estado', 'completado')->sum('total'), 2) : 'S/ 0.00' }}</p>
                 </div>
-                <flux:icon name="arrow-up" class="w-8 h-8 opacity-80" />
+                <flux:icon.arrow-up class="w-10 h-10 opacity-80" />
             </div>
         </div>
 
-        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm opacity-90">Pendientes</p>
-                    <p class="text-2xl font-bold">{{ $movimientos->where('estado', 'pendiente')->count() }}</p>
+                    <p class="text-sm opacity-90 font-medium">Pendientes</p>
+                    <p class="text-3xl font-bold">{{ $movimientos->where('estado', 'pendiente')->count() }}</p>
                 </div>
-                <flux:icon name="clock" class="w-8 h-8 opacity-80" />
+                <flux:icon.clock class="w-10 h-10 opacity-80" />
             </div>
         </div>
 
-        <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg p-4 text-white">
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm opacity-90">Total Movimientos</p>
-                    <p class="text-2xl font-bold">{{ $movimientos->count() }}</p>
+                    <p class="text-sm opacity-90 font-medium">Total Movimientos</p>
+                    <p class="text-3xl font-bold">{{ $movimientos->count() }}</p>
                 </div>
-                <flux:icon name="document-text" class="w-8 h-8 opacity-80" />
+                <flux:icon.document-text class="w-10 h-10 opacity-80" />
             </div>
         </div>
     </div>
 
     <!-- Filtros -->
-    <div class="mb-6 bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 shadow-sm">
+    <div class="mb-6 bg-zinc-50 dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-700">
+        <div class="flex items-center gap-3 mb-4">
+            <flux:icon.funnel class="w-5 h-5 text-zinc-500" />
+            <flux:heading size="md" class="text-zinc-700 dark:text-zinc-300">Filtros Avanzados</flux:heading>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <!-- Almacén -->
             <div>
-                <flux:label>Almacén</flux:label>
-                <flux:select wire:model.live="almacen_filter" class="w-full">
+                <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Almacén</flux:label>
+                <flux:select wire:model.live="almacen_filter" class="w-full mt-1">
                     <option value="">Todos los almacenes</option>
                     @foreach ($almacenes as $almacen)
                         <option value="{{ $almacen->id }}">{{ $almacen->nombre }}</option>
@@ -80,8 +85,8 @@
 
             <!-- Tipo de Movimiento -->
             <div>
-                <flux:label>Tipo de Movimiento</flux:label>
-                <flux:select wire:model.live="tipo_movimiento_filter" class="w-full">
+                <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Tipo de Movimiento</flux:label>
+                <flux:select wire:model.live="tipo_movimiento_filter" class="w-full mt-1">
                     <option value="">Todos</option>
                     <option value="entrada">Entrada</option>
                     <option value="salida">Salida</option>
@@ -90,8 +95,8 @@
 
             <!-- Estado -->
             <div>
-                <flux:label>Estado</flux:label>
-                <flux:select wire:model.live="estado_filter" class="w-full">
+                <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Estado</flux:label>
+                <flux:select wire:model.live="estado_filter" class="w-full mt-1">
                     <option value="">Todos</option>
                     <option value="pendiente">Pendiente</option>
                     <option value="completado">Completado</option>
@@ -101,8 +106,8 @@
 
             <!-- Registros por página -->
             <div>
-                <flux:label>Registros por página</flux:label>
-                <flux:select wire:model.live="perPage" class="w-full">
+                <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Registros por página</flux:label>
+                <flux:select wire:model.live="perPage" class="w-full mt-1">
                     <option value="10">10</option>
                     <option value="25">25</option>
                     <option value="50">50</option>
@@ -114,14 +119,14 @@
 
             <!-- Fecha de inicio -->
             <div>
-                <flux:label>Fecha de inicio</flux:label>
-                <flux:input type="date" wire:model.live="fecha_inicio" class="w-full" />
+                <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Fecha de inicio</flux:label>
+                <flux:input type="date" wire:model.live="fecha_inicio" class="w-full mt-1" />
             </div>
 
             <!-- Fecha de fin -->
             <div>
-                <flux:label>Fecha de fin</flux:label>
-                <flux:input type="date" wire:model.live="fecha_fin" class="w-full" />
+                <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Fecha de fin</flux:label>
+                <flux:input type="date" wire:model.live="fecha_fin" class="w-full mt-1" />
             </div>
 
             <!-- Botón Limpiar Filtros -->
@@ -134,44 +139,49 @@
     </div>
 
     <!-- Tabla de Movimientos -->
-    <div class="bg-white dark:bg-zinc-800 rounded-lg overflow-hidden shadow-sm">
+    <div class="bg-white dark:bg-zinc-800 rounded-xl overflow-hidden shadow-sm border border-zinc-200 dark:border-zinc-700">
+        <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-700/50">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Movimientos</h3>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ $movimientos->count() }} movimientos encontrados</span>
+                </div>
+            </div>
+        </div>
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead class="bg-zinc-50 dark:bg-zinc-700">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-500 transition-colors"
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors"
                             wire:click="sortBy('code')">
-                            <div class="flex items-center space-x-1">
+                            <div class="flex items-center space-x-2">
                                 <span>Código</span>
-                                @if ($sortField === 'code')
-                                    <flux:icon name="{{ $sortDirection === 'asc' ? 'arrow-up' : 'arrow-down' }}"
-                                        class="w-4 h-4" />
-                                @endif
+                                <flux:icon name="{{ $sortField === 'code' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}" class="w-4 h-4" />
                             </div>
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Tipo/Documento
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Almacén
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Productos/Lotes
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Total
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Fecha/Estado
                         </th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Acciones
                         </th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
                     @forelse ($movimientos as $movimiento)
-                        <tr wire:key="movimiento-{{ $movimiento->id }}" class="hover:bg-zinc-100 dark:hover:bg-zinc-600 transition-colors duration-200 ease-in-out">
+                        <tr wire:key="movimiento-{{ $movimiento->id }}" class="hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-300">
                                 <div class="flex flex-col">
                                     <span class="font-medium">{{ $movimiento->code }}</span>
@@ -180,7 +190,7 @@
                             </td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
                                 <div class="flex flex-col">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
                                         @if($movimiento->tipo_movimiento === 'entrada') bg-green-100 text-green-800
                                         @else bg-red-100 text-red-800 @endif">
                                         {{ ucfirst($movimiento->tipo_movimiento) }}
@@ -683,7 +693,7 @@
                                                     </div>
                                                 </td>
                                                 <td class="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-300">
-                                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
                                                         {{ $producto->unidad_medida }}
                                                     </span>
                                                 </td>

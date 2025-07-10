@@ -11,7 +11,7 @@
                     <flux:input type="search" placeholder="Buscar productos..." wire:model.live="search" icon="magnifying-glass" />
                 </div>
                 <div class="flex items-center gap-3">
-                    <flux:button wire:click="exportarProductos" icon="arrow-down-tray" variant="secondary">
+                    <flux:button wire:click="exportarProductos" icon="arrow-down-tray">
                         Exportar
                     </flux:button>
                     <flux:button variant="primary" wire:click="nuevoProducto" icon="plus">

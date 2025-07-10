@@ -1,10 +1,10 @@
 <div class="p-6 bg-white dark:bg-zinc-900 min-h-screen">
     <!-- Encabezado -->
-    <div class="mb-8">
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 mb-6">
+    <div class="mb-6 bg-zinc-50 dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-700">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
             <div>
-                <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-2">Gestión de Oportunidades</h1>
-                <p class="text-zinc-600 dark:text-zinc-400">Administra las oportunidades de venta del CRM</p>
+                <flux:heading size="lg" class="text-zinc-900 dark:text-white">Gestión de Oportunidades</flux:heading>
+                <flux:text class="mt-2 text-zinc-600 dark:text-zinc-400">Administra las oportunidades de venta del CRM</flux:text>
             </div>
             <div class="flex items-center gap-3">
                 <flux:button variant="primary" wire:click="nuevaOpportunity" icon="plus">
@@ -15,12 +15,11 @@
     </div>
 
     <!-- Barra de Búsqueda y Filtros -->
-    <div class="mb-6 bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700">
+    <div class="mb-6 bg-zinc-50 dark:bg-zinc-800 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700">
         <div class="p-6">
             <!-- Búsqueda -->
             <div class="mb-6">
-                <flux:input type="search" placeholder="Buscar oportunidades por nombre o descripción..."
-                    wire:model.live="search" icon="magnifying-glass" class="w-full" />
+                <flux:input type="search" placeholder="Buscar oportunidades por nombre o descripción..." wire:model.live="search" icon="magnifying-glass" class="w-full" />
             </div>
 
             <!-- Filtros -->
@@ -36,8 +35,7 @@
                 </div>
 
                 <div>
-                    <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Tipo de Negocio
-                    </flux:label>
+                    <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Tipo de Negocio</flux:label>
                     <flux:select wire:model.live="tipo_negocio_filter" class="w-full mt-1">
                         <option value="">Todos los tipos</option>
                         @foreach ($tipos_negocio as $tipo)
@@ -58,10 +56,7 @@
 
                 <div>
                     <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Cliente</flux:label>
-                    <x-mary-choices-offline wire:model.live="customer_filter" id="customer_filter" class="w-full mt-1"
-                        :options="$customers" single clearable
-                        option-label="rznSocial"
-                        searchable placeholder="Todos los clientes" />
+                    <x-mary-choices-offline wire:model.live="customer_filter" id="customer_filter" class="w-full mt-1" :options="$customers" single clearable option-label="rznSocial" searchable placeholder="Todos los clientes" />
                 </div>
 
                 <div>
@@ -84,14 +79,12 @@
     </div>
 
     <!-- Tabla de Oportunidades -->
-    <div
-        class="bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 overflow-hidden">
-        <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700">
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-700/50">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Oportunidades</h3>
                 <div class="flex items-center gap-4">
-                    <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ $opportunities->count() }} oportunidades
-                        encontradas</span>
+                    <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ $opportunities->count() }} oportunidades encontradas</span>
                     <flux:select wire:model.live="perPage" class="w-32">
                         <option value="10">10 por página</option>
                         <option value="25">25 por página</option>
@@ -110,62 +103,32 @@
                             wire:click="sortBy('nombre')">
                             <div class="flex items-center space-x-2">
                                 <span>Oportunidad</span>
-                                @if ($sortField === 'nombre')
-                                    @if ($sortDirection === 'asc')
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M5 15l7-7 7 7"></path>
-                                        </svg>
-                                    @else
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M19 9l-7 7-7-7"></path>
-                                        </svg>
-                                    @endif
-                                @endif
+                                <flux:icon name="{{ $sortField === 'nombre' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}" class="w-4 h-4" />
                             </div>
                         </th>
-                        <th
-                            class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Cliente
                         </th>
-                        <th
-                            class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Estado
                         </th>
-                        <th
-                            class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Etapa
                         </th>
-                        <th
-                            class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Valor
                         </th>
-                        <th
-                            class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Probabilidad
                         </th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors"
                             wire:click="sortBy('fecha_cierre_esperada')">
                             <div class="flex items-center space-x-2">
                                 <span>Cierre Esperado</span>
-                                @if ($sortField === 'fecha_cierre_esperada')
-                                    @if ($sortDirection === 'asc')
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M5 15l7-7 7 7"></path>
-                                        </svg>
-                                    @else
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M19 9l-7 7-7-7"></path>
-                                        </svg>
-                                    @endif
-                                @endif
+                                <flux:icon name="{{ $sortField === 'fecha_cierre_esperada' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}" class="w-4 h-4" />
                             </div>
                         </th>
-                        <th
-                            class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Acciones
                         </th>
                     </tr>
@@ -193,12 +156,12 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span
-                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
                                     @if ($opportunity->estado === 'nueva') bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
                                     @elseif($opportunity->estado === 'en_proceso') bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
                                     @elseif($opportunity->estado === 'ganada') bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
-                                    @else bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 @endif">
+                                    @elseif($opportunity->estado === 'perdida') bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
+                                    @else bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 @endif">
                                     {{ ucfirst(str_replace('_', ' ', $opportunity->estado)) }}
                                 </span>
                             </td>
