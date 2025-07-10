@@ -21,7 +21,9 @@ class CotizacionCatalogoIndex extends Component
     public $fecha_desde = '';
     public $fecha_hasta = '';
     public $modal_cotizacion = false;
+    public $modal_visualizacion = false;
     public $editingCotizacion = null;
+    public $cotizacionVisualizar = null;
     public $selectedProductos = [];
     public $cantidades = [];
     public $precios = [];
@@ -272,44 +274,22 @@ class CotizacionCatalogoIndex extends Component
 
     public function visualizarCotizacion($id)
     {
-        $cotizacion = CotizacionCatalogo::with(['detalles.producto'])->find($id);
-        if (!$cotizacion) {
-            $this->toast('Cotización no encontrada', 'error');
-            return;
+        try {
+            $cotizacion = CotizacionCatalogo::with(['detalles.producto', 'customer', 'user'])->find($id);
+
+            if (!$cotizacion) {
+                $this->toast('Cotización no encontrada', 'error');
+                return;
+            }
+
+            // Cargar la cotización para visualización
+            $this->cotizacionVisualizar = $cotizacion;
+            $this->modal_visualizacion = true;
+
+        } catch (\Exception $e) {
+            $this->toast('Error al cargar la cotización', 'error');
+            $this->cotizacionVisualizar = null;
         }
-
-        // Solo permitir visualizar cotizaciones aprobadas
-        if ($cotizacion->estado !== 'aprobada') {
-            $this->toast('Solo se pueden visualizar cotizaciones aprobadas', 'error');
-            return;
-        }
-
-        $this->editingCotizacion = $cotizacion;
-        $this->codigo_cotizacion = $cotizacion->codigo_cotizacion;
-        $this->customer_id = $cotizacion->customer_id;
-        $this->cliente_nombre = $cotizacion->cliente_nombre;
-        $this->cliente_email = $cotizacion->cliente_email;
-        $this->cliente_telefono = $cotizacion->cliente_telefono;
-        $this->observaciones_general = $cotizacion->observaciones;
-        $this->fecha_cotizacion = $cotizacion->fecha_cotizacion->format('Y-m-d');
-        $this->fecha_vencimiento = $cotizacion->fecha_vencimiento?->format('Y-m-d');
-        $this->validez_dias = $cotizacion->validez_dias;
-        $this->condiciones_pago = $cotizacion->condiciones_pago;
-        $this->condiciones_entrega = $cotizacion->condiciones_entrega;
-        $this->user_id = $cotizacion->user_id;
-        $this->estado_cotizacion = $cotizacion->estado;
-
-        // Cargar detalles
-        foreach ($cotizacion->detalles as $detalle) {
-            $this->selectedProductos[] = $detalle->producto_id;
-            $this->cantidades[$detalle->producto_id] = $detalle->cantidad;
-            $this->precios[$detalle->producto_id] = $detalle->precio_unitario;
-            $this->observaciones[$detalle->producto_id] = $detalle->observaciones;
-        }
-
-        $this->modoVisualizacion = true;
-        $this->modoVisualizacion = false;
-        $this->modal_cotizacion = true;
     }
 
     public function guardarCotizacion()
@@ -466,12 +446,22 @@ class CotizacionCatalogoIndex extends Component
     public function cerrarModal()
     {
         $this->modal_cotizacion = false;
+        $this->modal_visualizacion = false;
+        $this->editingCotizacion = null;
+        $this->cotizacionVisualizar = null;
         $this->resetForm();
+    }
+
+    public function cerrarModalVisualizacion()
+    {
+        $this->modal_visualizacion = false;
+        $this->cotizacionVisualizar = null;
     }
 
     private function resetForm()
     {
         $this->editingCotizacion = null;
+        $this->cotizacionVisualizar = null;
         $this->selectedProductos = [];
         $this->cantidades = [];
         $this->precios = [];

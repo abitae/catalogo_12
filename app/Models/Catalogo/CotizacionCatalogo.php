@@ -86,4 +86,18 @@ class CotizacionCatalogo extends Model
         $numero = $ultimaCotizacion ? $ultimaCotizacion->id + 1 : 1;
         return 'COT-' . str_pad($numero, 6, '0', STR_PAD_LEFT);
     }
+
+    public function getSubtotalSinIgvAttribute()
+    {
+        return $this->subtotal;
+    }
+
+    public function getIgvAttribute()
+    {
+        // Si el campo igv no existe en la base de datos, calcularlo
+        if (!$this->attributes['igv'] && $this->total) {
+            return $this->total * 0.18;
+        }
+        return $this->attributes['igv'] ?? 0;
+    }
 }
