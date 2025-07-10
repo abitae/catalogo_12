@@ -386,6 +386,10 @@ class OpportunityCrmIndex extends Component
         // Normalizar fecha de cierre
         $data['fecha_cierre_esperada'] = $this->normalizeDate($data['fecha_cierre_esperada']);
 
+        // Normalizar campos numéricos (convertir string vacío a null)
+        $data['probabilidad'] = $this->normalizeInteger($data['probabilidad']);
+        $data['tipo_negocio_id'] = $this->normalizeInteger($data['tipo_negocio_id']);
+
         return $data;
     }
 
@@ -502,6 +506,18 @@ class OpportunityCrmIndex extends Component
     private function normalizeDate(?string $date): ?string
     {
         return empty($date) ? null : $date;
+    }
+
+    /**
+     * Normaliza un entero (convierte string vacío a null)
+     */
+    private function normalizeInteger($value): ?int
+    {
+        if (empty($value) || $value === '') {
+            return null;
+        }
+
+        return (int) $value;
     }
 
 
