@@ -52,6 +52,9 @@ class DatabaseSeeder extends Seeder
         TransferenciaAlmacen::factory(100)->create();
         MovimientoAlmacen::factory(200)->create();
 
+        // Agregar el seeder de cotización
+        $this->call(\Database\Seeders\CotizacionSeeder::class);
+
         // Crear datos de prueba para el CRM
         TipoNegocioCrm::factory(10)->create();
         MarcaCrm::factory(10)->create();

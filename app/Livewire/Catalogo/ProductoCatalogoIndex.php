@@ -12,6 +12,8 @@ use App\Traits\NotificationTrait;
 use App\Traits\TableTrait;
 use Livewire\Component;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Mary\Traits\Toast;
 
 class ProductoCatalogoIndex extends Component
@@ -435,10 +437,48 @@ class ProductoCatalogoIndex extends Component
             if ($this->producto_id) {
                 $producto = ProductoCatalogo::findOrFail($this->producto_id);
                 $producto->update($data);
+
+                // Log de auditoría para actualización de producto
+                Log::info('Auditoría: Producto actualizado', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'update_producto',
+                    'producto_id' => $this->producto_id,
+                    'producto_code' => $data['code'],
+                    'producto_name' => $data['description'],
+                    'brand_id' => $data['brand_id'],
+                    'category_id' => $data['category_id'],
+                    'line_id' => $data['line_id'],
+                    'price_compra' => $data['price_compra'],
+                    'price_venta' => $data['price_venta'],
+                    'stock' => $data['stock'],
+                    'isActive' => $data['isActive'],
+                    'timestamp' => now()
+                ]);
+
                 $message = 'Producto actualizado correctamente';
                 $context = 'actualización de producto';
             } else {
-                ProductoCatalogo::create($data);
+                $producto = ProductoCatalogo::create($data);
+
+                // Log de auditoría para creación de producto
+                Log::info('Auditoría: Producto creado', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'create_producto',
+                    'producto_id' => $producto->id,
+                    'producto_code' => $data['code'],
+                    'producto_name' => $data['description'],
+                    'brand_id' => $data['brand_id'],
+                    'category_id' => $data['category_id'],
+                    'line_id' => $data['line_id'],
+                    'price_compra' => $data['price_compra'],
+                    'price_venta' => $data['price_venta'],
+                    'stock' => $data['stock'],
+                    'isActive' => $data['isActive'],
+                    'timestamp' => now()
+                ]);
+
                 $message = 'Producto creado correctamente';
                 $context = 'creación de producto';
             }

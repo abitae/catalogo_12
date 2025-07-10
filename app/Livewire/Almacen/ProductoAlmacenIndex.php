@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Mary\Traits\Toast;
 
 class ProductoAlmacenIndex extends Component
@@ -400,9 +402,47 @@ class ProductoAlmacenIndex extends Component
             if ($this->producto_id) {
                 $producto = ProductoAlmacen::findOrFail($this->producto_id);
                 $producto->update($data);
+
+                // Log de auditoría para actualización de producto de almacén
+                Log::info('Auditoría: Producto de almacén actualizado', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'update_producto_almacen',
+                    'producto_id' => $this->producto_id,
+                    'producto_code' => $data['code'],
+                    'producto_name' => $data['nombre'],
+                    'almacen_id' => $data['almacen_id'],
+                    'categoria' => $data['categoria'],
+                    'stock_actual' => $data['stock_actual'],
+                    'stock_minimo' => $data['stock_minimo'],
+                    'precio_unitario' => $data['precio_unitario'],
+                    'lote' => $data['lote'],
+                    'estado' => $data['estado'],
+                    'timestamp' => now()
+                ]);
+
                 $mensaje = 'Producto actualizado correctamente';
             } else {
-                ProductoAlmacen::create($data);
+                $producto = ProductoAlmacen::create($data);
+
+                // Log de auditoría para creación de producto de almacén
+                Log::info('Auditoría: Producto de almacén creado', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'create_producto_almacen',
+                    'producto_id' => $producto->id,
+                    'producto_code' => $data['code'],
+                    'producto_name' => $data['nombre'],
+                    'almacen_id' => $data['almacen_id'],
+                    'categoria' => $data['categoria'],
+                    'stock_actual' => $data['stock_actual'],
+                    'stock_minimo' => $data['stock_minimo'],
+                    'precio_unitario' => $data['precio_unitario'],
+                    'lote' => $data['lote'],
+                    'estado' => $data['estado'],
+                    'timestamp' => now()
+                ]);
+
                 $mensaje = 'Producto creado correctamente';
             }
 

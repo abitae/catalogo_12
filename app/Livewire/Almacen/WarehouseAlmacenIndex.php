@@ -10,6 +10,8 @@ use Livewire\WithPagination;
 use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Mary\Traits\Toast;
 
 class WarehouseAlmacenIndex extends Component
@@ -274,9 +276,41 @@ class WarehouseAlmacenIndex extends Component
             if ($this->almacen_id) {
                 $almacen = WarehouseAlmacen::findOrFail($this->almacen_id);
                 $almacen->update($data);
+
+                // Log de auditoría para actualización de almacén
+                Log::info('Auditoría: Almacén actualizado', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'update_warehouse',
+                    'almacen_id' => $this->almacen_id,
+                    'almacen_code' => $data['code'],
+                    'almacen_name' => $data['nombre'],
+                    'almacen_direccion' => $data['direccion'],
+                    'almacen_estado' => $data['estado'],
+                    'almacen_capacidad' => $data['capacidad'],
+                    'almacen_responsable' => $data['responsable'],
+                    'timestamp' => now()
+                ]);
+
                 $mensaje = 'Almacén actualizado correctamente';
             } else {
-                WarehouseAlmacen::create($data);
+                $almacen = WarehouseAlmacen::create($data);
+
+                // Log de auditoría para creación de almacén
+                Log::info('Auditoría: Almacén creado', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'create_warehouse',
+                    'almacen_id' => $almacen->id,
+                    'almacen_code' => $data['code'],
+                    'almacen_name' => $data['nombre'],
+                    'almacen_direccion' => $data['direccion'],
+                    'almacen_estado' => $data['estado'],
+                    'almacen_capacidad' => $data['capacidad'],
+                    'almacen_responsable' => $data['responsable'],
+                    'timestamp' => now()
+                ]);
+
                 $mensaje = 'Almacén creado correctamente';
             }
 

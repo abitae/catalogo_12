@@ -6,6 +6,8 @@ use App\Models\Crm\ContactCrm;
 use App\Models\Shared\Customer;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Mary\Traits\Toast;
 
 class ContactCrmIndex extends Component
@@ -216,9 +218,37 @@ class ContactCrmIndex extends Component
             if ($this->contacto_id) {
                 $contacto = ContactCrm::find($this->contacto_id);
                 $contacto->update($data);
+
+                // Log de auditoría para actualización de contacto
+                Log::info('Auditoría: Contacto actualizado', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'update_contact',
+                    'contact_id' => $this->contacto_id,
+                    'contact_name' => $data['nombre'] . ' ' . $data['apellido'],
+                    'contact_email' => $data['correo'],
+                    'customer_id' => $data['customer_id'],
+                    'is_principal' => $data['es_principal'],
+                    'timestamp' => now()
+                ]);
+
                 $this->success('Contacto actualizado correctamente');
             } else {
-                ContactCrm::create($data);
+                $contacto = ContactCrm::create($data);
+
+                // Log de auditoría para creación de contacto
+                Log::info('Auditoría: Contacto creado', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'create_contact',
+                    'contact_id' => $contacto->id,
+                    'contact_name' => $data['nombre'] . ' ' . $data['apellido'],
+                    'contact_email' => $data['correo'],
+                    'customer_id' => $data['customer_id'],
+                    'is_principal' => $data['es_principal'],
+                    'timestamp' => now()
+                ]);
+
                 $this->success('Contacto creado correctamente');
             }
 

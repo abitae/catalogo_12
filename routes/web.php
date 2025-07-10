@@ -8,6 +8,7 @@ use App\Livewire\Almacen\ReporteLotesIndex;
 use App\Livewire\Almacen\AlertasLotesIndex;
 use App\Livewire\Catalogo\BrandCatalogoIndex;
 use App\Livewire\Catalogo\CategoryCatalogoIndex;
+use App\Livewire\Catalogo\CotizacionCatalogoIndex;
 use App\Livewire\Catalogo\LineCatalogoIndex;
 use App\Livewire\Catalogo\ProductoCatalogoIndex;
 use App\Livewire\Crm\ContactCrmIndex;
@@ -39,6 +40,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('catalogo/categorias', CategoryCatalogoIndex::class)->name('catalogo.categories');
     Route::get('catalogo/lineas', LineCatalogoIndex::class)->name('catalogo.lines');
     Route::get('catalogo/productos', ProductoCatalogoIndex::class)->name('catalogo.products');
+    Route::get('catalogo/cotizaciones', CotizacionCatalogoIndex::class)->name('catalogo.cotizaciones');
 
     // Rutas del Almacén
     Route::get('almacen/almacenes', WarehouseAlmacenIndex::class)->name('almacen.warehouses');

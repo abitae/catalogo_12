@@ -11,6 +11,7 @@ use App\Models\Crm\ContactCrm;
 use App\Models\Crm\ActivityCrm;
 use App\Models\Shared\TipoCustomer;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
@@ -398,9 +399,39 @@ class OpportunityCrmIndex extends Component
             if ($this->opportunity_id) {
                 $opportunity = OpportunityCrm::find($this->opportunity_id);
                 $opportunity->update($data);
+
+                // Log de auditoría para actualización
+                Log::info('Auditoría: Oportunidad actualizada', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'update_opportunity',
+                    'opportunity_id' => $this->opportunity_id,
+                    'opportunity_name' => $data['nombre'],
+                    'customer_id' => $data['customer_id'],
+                    'valor' => $data['valor'],
+                    'etapa' => $data['etapa'],
+                    'probabilidad' => $data['probabilidad'] ?? null,
+                    'timestamp' => now()
+                ]);
+
                 $this->success('Oportunidad actualizada correctamente');
             } else {
-                OpportunityCrm::create($data);
+                $opportunity = OpportunityCrm::create($data);
+
+                // Log de auditoría para creación
+                Log::info('Auditoría: Oportunidad creada', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'create_opportunity',
+                    'opportunity_id' => $opportunity->id,
+                    'opportunity_name' => $data['nombre'],
+                    'customer_id' => $data['customer_id'],
+                    'valor' => $data['valor'],
+                    'etapa' => $data['etapa'],
+                    'probabilidad' => $data['probabilidad'] ?? null,
+                    'timestamp' => now()
+                ]);
+
                 $this->success('Oportunidad creada correctamente');
             }
 
@@ -615,13 +646,43 @@ class OpportunityCrmIndex extends Component
                 $activity = ActivityCrm::find($this->activity_id);
                 if ($activity) {
                     $activity->update($data);
+
+                    // Log de auditoría para actualización de actividad
+                    Log::info('Auditoría: Actividad actualizada', [
+                        'user_id' => Auth::id(),
+                        'user_name' => Auth::user()->name ?? 'N/A',
+                        'action' => 'update_activity',
+                        'activity_id' => $this->activity_id,
+                        'opportunity_id' => $this->selected_opportunity_id,
+                        'activity_type' => $data['tipo'],
+                        'activity_subject' => $data['asunto'],
+                        'activity_status' => $data['estado'],
+                        'activity_priority' => $data['prioridad'],
+                        'timestamp' => now()
+                    ]);
+
                     $this->success('Actividad actualizada correctamente.');
                 } else {
                     $this->error('No se encontró la actividad a actualizar.');
                     return;
                 }
             } else {
-                ActivityCrm::create($data);
+                $activity = ActivityCrm::create($data);
+
+                // Log de auditoría para creación de actividad
+                Log::info('Auditoría: Actividad creada', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'create_activity',
+                    'activity_id' => $activity->id,
+                    'opportunity_id' => $this->selected_opportunity_id,
+                    'activity_type' => $data['tipo'],
+                    'activity_subject' => $data['asunto'],
+                    'activity_status' => $data['estado'],
+                    'activity_priority' => $data['prioridad'],
+                    'timestamp' => now()
+                ]);
+
                 $this->success('Actividad creada correctamente.');
             }
 
@@ -764,9 +825,35 @@ class OpportunityCrmIndex extends Component
             if ($this->customer_id_form) {
                 $customer = Customer::find($this->customer_id_form);
                 $customer->update($data);
+
+                // Log de auditoría para actualización de cliente
+                Log::info('Auditoría: Cliente actualizado', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'update_customer',
+                    'customer_id' => $this->customer_id_form,
+                    'customer_name' => $data['rznSocial'],
+                    'customer_doc' => $data['numDoc'],
+                    'customer_type' => $data['tipo_customer_id'] ?? null,
+                    'timestamp' => now()
+                ]);
+
                 $this->success('Cliente actualizado correctamente');
             } else {
                 $customer = Customer::create($data);
+
+                // Log de auditoría para creación de cliente
+                Log::info('Auditoría: Cliente creado', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'create_customer',
+                    'customer_id' => $customer->id,
+                    'customer_name' => $data['rznSocial'],
+                    'customer_doc' => $data['numDoc'],
+                    'customer_type' => $data['tipo_customer_id'] ?? null,
+                    'timestamp' => now()
+                ]);
+
                 $this->success('Cliente creado correctamente');
 
                 // Seleccionar automáticamente el cliente creado
@@ -819,9 +906,37 @@ class OpportunityCrmIndex extends Component
             if ($this->contact_id_form) {
                 $contacto = ContactCrm::find($this->contact_id_form);
                 $contacto->update($contactData);
+
+                // Log de auditoría para actualización de contacto
+                Log::info('Auditoría: Contacto actualizado', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'update_contact',
+                    'contact_id' => $this->contact_id_form,
+                    'contact_name' => $contactData['nombre'] . ' ' . $contactData['apellido'],
+                    'contact_email' => $contactData['correo'],
+                    'customer_id' => $contactData['customer_id'],
+                    'is_principal' => $contactData['es_principal'],
+                    'timestamp' => now()
+                ]);
+
                 $this->success('Contacto actualizado correctamente');
             } else {
                 $contacto = ContactCrm::create($contactData);
+
+                // Log de auditoría para creación de contacto
+                Log::info('Auditoría: Contacto creado', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'create_contact',
+                    'contact_id' => $contacto->id,
+                    'contact_name' => $contactData['nombre'] . ' ' . $contactData['apellido'],
+                    'contact_email' => $contactData['correo'],
+                    'customer_id' => $contactData['customer_id'],
+                    'is_principal' => $contactData['es_principal'],
+                    'timestamp' => now()
+                ]);
+
                 $this->success('Contacto creado correctamente');
 
                 // Seleccionar automáticamente el contacto creado

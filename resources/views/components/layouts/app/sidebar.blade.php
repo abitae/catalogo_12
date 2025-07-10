@@ -19,6 +19,7 @@
                 </flux:navlist.group>
                 <flux:navlist.group :expanded="request()->routeIs('catalogo.*')" expandable heading="Catalogo">
                     <flux:navlist.item icon="cube" :href="route('catalogo.products')" :current="request()->routeIs('catalogo.products')" wire:navigate>{{ __('Productos') }}</flux:navlist.item>
+                    <flux:navlist.item icon="document-text" :href="route('catalogo.cotizaciones')" :current="request()->routeIs('catalogo.cotizaciones')" wire:navigate>{{ __('Cotizaciones') }}</flux:navlist.item>
                     <flux:navlist.item icon="tag" :href="route('catalogo.brands')" :current="request()->routeIs('catalogo.brands')" wire:navigate>{{ __('Marcas') }}</flux:navlist.item>
                     <flux:navlist.item icon="squares-2x2" :href="route('catalogo.categories')" :current="request()->routeIs('catalogo.categories')" wire:navigate>{{ __('Categorías') }}</flux:navlist.item>
                     <flux:navlist.item icon="bars-3" :href="route('catalogo.lines')" :current="request()->routeIs('catalogo.lines')" wire:navigate>{{ __('Líneas') }}</flux:navlist.item>

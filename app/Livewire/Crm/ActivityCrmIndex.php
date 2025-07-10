@@ -9,6 +9,8 @@ use App\Models\User;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Mary\Traits\Toast;
 use Illuminate\Support\Facades\Storage;
 
@@ -274,9 +276,41 @@ class ActivityCrmIndex extends Component
             if ($this->activity_id) {
                 $activity = ActivityCrm::find($this->activity_id);
                 $activity->update($data);
+
+                // Log de auditoría para actualización de actividad
+                Log::info('Auditoría: Actividad actualizada', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'update_activity',
+                    'activity_id' => $this->activity_id,
+                    'activity_type' => $data['tipo'],
+                    'activity_subject' => $data['asunto'],
+                    'activity_status' => $data['estado'],
+                    'activity_priority' => $data['prioridad'],
+                    'opportunity_id' => $data['opportunity_id'] ?? null,
+                    'contact_id' => $data['contact_id'] ?? null,
+                    'timestamp' => now()
+                ]);
+
                 $this->success('Actividad actualizada correctamente');
             } else {
-                ActivityCrm::create($data);
+                $activity = ActivityCrm::create($data);
+
+                // Log de auditoría para creación de actividad
+                Log::info('Auditoría: Actividad creada', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'create_activity',
+                    'activity_id' => $activity->id,
+                    'activity_type' => $data['tipo'],
+                    'activity_subject' => $data['asunto'],
+                    'activity_status' => $data['estado'],
+                    'activity_priority' => $data['prioridad'],
+                    'opportunity_id' => $data['opportunity_id'] ?? null,
+                    'contact_id' => $data['contact_id'] ?? null,
+                    'timestamp' => now()
+                ]);
+
                 $this->success('Actividad creada correctamente');
             }
 

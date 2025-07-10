@@ -8,6 +8,8 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Mary\Traits\Toast;
 
 class CustomerIndex extends Component
@@ -282,14 +284,40 @@ class CustomerIndex extends Component
         unset($data['tempImage'], $data['tempArchivo']);
 
         try {
-            if ($this->customer_id) {
-                $customer = Customer::find($this->customer_id);
-                $customer->update($data);
-                $this->success('Cliente actualizado correctamente');
-            } else {
-                Customer::create($data);
-                $this->success('Cliente creado correctamente');
-            }
+                    if ($this->customer_id) {
+            $customer = Customer::find($this->customer_id);
+            $customer->update($data);
+
+            // Log de auditoría para actualización de cliente
+            Log::info('Auditoría: Cliente actualizado', [
+                'user_id' => Auth::id(),
+                'user_name' => Auth::user()->name ?? 'N/A',
+                'action' => 'update_customer',
+                'customer_id' => $this->customer_id,
+                'customer_name' => $data['rznSocial'],
+                'customer_doc' => $data['numDoc'],
+                'customer_type' => $data['tipo_customer_id'] ?? null,
+                'timestamp' => now()
+            ]);
+
+            $this->success('Cliente actualizado correctamente');
+        } else {
+            $customer = Customer::create($data);
+
+            // Log de auditoría para creación de cliente
+            Log::info('Auditoría: Cliente creado', [
+                'user_id' => Auth::id(),
+                'user_name' => Auth::user()->name ?? 'N/A',
+                'action' => 'create_customer',
+                'customer_id' => $customer->id,
+                'customer_name' => $data['rznSocial'],
+                'customer_doc' => $data['numDoc'],
+                'customer_type' => $data['tipo_customer_id'] ?? null,
+                'timestamp' => now()
+            ]);
+
+            $this->success('Cliente creado correctamente');
+        }
 
             $this->modal_form_customer = false;
             $this->resetForm();
