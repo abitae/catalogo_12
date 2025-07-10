@@ -21,8 +21,8 @@
             <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-blue-100 text-sm font-medium">Total Productos</p>
-                        <p class="text-3xl font-bold">{{ $productos->count() }}</p>
+                        <p class="text-blue-100 text-sm font-medium">Total productosExportar</p>
+                        <p class="text-3xl font-bold">{{ $productosExportar->count() }}</p>
                     </div>
                     <div class="p-3 bg-blue-400/20 rounded-full">
                         <flux:icon name="cube" class="w-8 h-8" />
@@ -34,7 +34,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-green-100 text-sm font-medium">En Stock</p>
-                        <p class="text-3xl font-bold">{{ $productos->where('stock_actual', '>', 0)->count() }}</p>
+                        <p class="text-3xl font-bold">{{ $productosExportar->where('stock_actual', '>', 0)->count() }}</p>
                     </div>
                     <div class="p-3 bg-green-400/20 rounded-full">
                         <flux:icon name="check-circle" class="w-8 h-8" />
@@ -46,7 +46,7 @@
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-orange-100 text-sm font-medium">Stock Bajo</p>
-                        <p class="text-3xl font-bold">{{ $productos->filter(fn($p) => $p->stock_actual <= $p->stock_minimo)->count() }}</p>
+                        <p class="text-3xl font-bold">{{ $productosExportar->filter(fn($p) => $p->stock_actual <= $p->stock_minimo)->count() }}</p>
                     </div>
                     <div class="p-3 bg-orange-400/20 rounded-full">
                         <flux:icon name="exclamation-triangle" class="w-8 h-8" />

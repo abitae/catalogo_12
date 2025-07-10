@@ -492,7 +492,7 @@ class OpportunityCrmIndex extends Component
             'trace' => $e->getTraceAsString(),
             'timestamp' => now()
         ]);
-
+        dd($errorMessage);
         $this->error($errorMessage);
     }
 
