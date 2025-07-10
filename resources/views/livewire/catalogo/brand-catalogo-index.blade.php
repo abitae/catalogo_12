@@ -1,103 +1,117 @@
 <div class="p-6 bg-white dark:bg-zinc-900 min-h-screen">
     <!-- Encabezado y Búsqueda -->
-    <div class="mb-6 bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 shadow-sm">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+    <div class="mb-6 bg-zinc-50 dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-700">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
             <div>
-                <flux:heading size="lg">Catálogo de Marcas</flux:heading>
-                <flux:text class="mt-1 text-zinc-600 dark:text-zinc-400">Administra y consulta las marcas registradas en
-                    el sistema.</flux:text>
+                <flux:heading size="lg" class="text-zinc-900 dark:text-white">Catálogo de Marcas</flux:heading>
+                <flux:text class="mt-2 text-zinc-600 dark:text-zinc-400">Administra y consulta las marcas registradas en el sistema.</flux:text>
             </div>
-            <div class="flex items-center justify-end gap-4 w-full md:w-auto">
-                <div class="w-full md:w-96">
-                    <flux:input type="search" placeholder="Buscar marcas..." wire:model.live="search"
-                        icon="magnifying-glass" />
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full lg:w-auto">
+                <div class="w-full sm:w-80">
+                    <flux:input type="search" placeholder="Buscar marcas..." wire:model.live="search" icon="magnifying-glass" />
                 </div>
-                <div class="flex items-end gap-2">
+                <div class="flex items-center gap-3">
                     <flux:button variant="primary" wire:click="nuevoMarca" icon="plus">Nueva Marca</flux:button>
                 </div>
             </div>
         </div>
     </div>
+
     <!-- Estadísticas Rápidas -->
     <div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm opacity-90">Total Marcas</p>
-                    <p class="text-2xl font-bold">{{ $marcas->total() }}</p>
+                    <p class="text-sm opacity-90 font-medium">Total Marcas</p>
+                    <p class="text-3xl font-bold">{{ $marcas->total() }}</p>
                 </div>
-                <flux:icon name="tag" class="w-8 h-8 opacity-80" />
+                <flux:icon.tag class="w-10 h-10 opacity-80" />
             </div>
         </div>
-        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-4 text-white">
+        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm opacity-90">Activas</p>
-                    <p class="text-2xl font-bold">{{ $marcas->where('isActive', 1)->count() }}</p>
+                    <p class="text-sm opacity-90 font-medium">Activas</p>
+                    <p class="text-3xl font-bold">{{ $marcas->where('isActive', 1)->count() }}</p>
                 </div>
-                <flux:icon name="check-circle" class="w-8 h-8 opacity-80" />
+                <flux:icon.check-circle class="w-10 h-10 opacity-80" />
             </div>
         </div>
-        <div class="bg-gradient-to-r from-red-500 to-red-600 rounded-lg p-4 text-white">
+        <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm opacity-90">Inactivas</p>
-                    <p class="text-2xl font-bold">{{ $marcas->where('isActive', 0)->count() }}</p>
+                    <p class="text-sm opacity-90 font-medium">Inactivas</p>
+                    <p class="text-3xl font-bold">{{ $marcas->where('isActive', 0)->count() }}</p>
                 </div>
-                <flux:icon name="x-circle" class="w-8 h-8 opacity-80" />
+                <flux:icon.x-circle class="w-10 h-10 opacity-80" />
             </div>
         </div>
     </div>
+
     <!-- Filtros Avanzados -->
-    <div class="mb-6 bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 shadow-sm">
+    <div class="mb-6 bg-zinc-50 dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-700">
+        <div class="flex items-center gap-3 mb-4">
+            <flux:icon.funnel class="w-5 h-5 text-zinc-500" />
+            <flux:heading size="md" class="text-zinc-700 dark:text-zinc-300">Filtros Avanzados</flux:heading>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-                <flux:label>Estado</flux:label>
-                <flux:select wire:model.live="isActiveFilter" class="w-full">
+                <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Estado</flux:label>
+                <flux:select wire:model.live="isActiveFilter" class="w-full mt-1">
                     <option value="">Todos</option>
                     <option value="1">Activa</option>
                     <option value="0">Inactiva</option>
                 </flux:select>
             </div>
             <div class="flex items-end">
-                <flux:button wire:click="$set('isActiveFilter', '')" color="red" icon="trash" class="w-full">Limpiar
-                    Filtros</flux:button>
+                <flux:button wire:click="$set('isActiveFilter', '')" color="red" icon="trash" class="w-full">
+                    Limpiar Filtros
+                </flux:button>
             </div>
         </div>
     </div>
+
     <!-- Tabla de Marcas -->
-    <div class="bg-white dark:bg-zinc-800 rounded-lg overflow-hidden shadow-sm">
+    <div class="bg-white dark:bg-zinc-800 rounded-xl overflow-hidden shadow-sm border border-zinc-200 dark:border-zinc-700">
+        <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-700/50">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Marcas</h3>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ $marcas->count() }} marcas encontradas</span>
+                </div>
+            </div>
+        </div>
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead class="bg-zinc-50 dark:bg-zinc-700">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-500 transition-colors"
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors"
                             wire:click="sortBy('name')">
-                            <div class="flex items-center space-x-1">
+                            <div class="flex items-center space-x-2">
                                 <span>Nombre</span>
-                                <flux:icon name="arrows-up-down" class="w-4 h-4" />
+                                <flux:icon name="{{ $sortField === 'name' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}" class="w-4 h-4" />
                             </div>
                         </th>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                            Logo</th>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                            Archivo</th>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                            Estado</th>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                            Acciones</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                            Logo
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                            Archivo
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                            Estado
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                            Acciones
+                        </th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
                     @forelse ($marcas as $marca)
-                        <tr wire:key="marca-{{ $marca->id }}"
-                            class="hover:bg-zinc-100 dark:hover:bg-zinc-600 transition-colors duration-200 ease-in-out">
+                        <tr wire:key="marca-{{ $marca->id }}" class="hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors">
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-300">
-                                {{ $marca->name }}</td>
+                                {{ $marca->name }}
+                            </td>
                             <td class="px-6 py-4 text-sm">
                                 @if($marca->logo)
                                     <div class="flex items-center gap-2">
@@ -107,7 +121,7 @@
                                     </div>
                                 @else
                                     <div class="flex items-center justify-center w-12 h-12 bg-zinc-100 dark:bg-zinc-700 rounded-lg">
-                                        <flux:icon name="photo" class="w-6 h-6 text-zinc-400" />
+                                        <flux:icon.photo class="w-6 h-6 text-zinc-400" />
                                     </div>
                                 @endif
                             </td>
@@ -117,38 +131,33 @@
                                         <a href="{{ asset('storage/' . $marca->archivo) }}"
                                            download="{{ $marca->name }}_archivo.{{ pathinfo($marca->archivo, PATHINFO_EXTENSION) }}"
                                            class="inline-flex items-center justify-center px-3 py-2 text-sm font-medium text-green-600 bg-green-100 border border-transparent rounded-md hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
-                                            <flux:icon name="document-arrow-down" class="w-4 h-4 mr-2" />
+                                            <flux:icon.document-arrow-down class="w-4 h-4 mr-2" />
                                             Descargar Archivo
                                         </a>
                                     </div>
                                 @else
                                     <div class="flex items-center justify-center w-full h-12 bg-zinc-100 dark:bg-zinc-700 rounded-lg">
-                                        <flux:icon name="document" class="w-6 h-6 text-zinc-400" />
+                                        <flux:icon.document class="w-6 h-6 text-zinc-400" />
                                     </div>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-sm">
-                                <span
-                                    class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $marca->isActive ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }}">
+                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $marca->isActive ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }}">
                                     {{ $marca->isActive ? 'Activa' : 'Inactiva' }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-sm">
                                 <div class="flex items-center gap-2">
-                                    <flux:button wire:click="editarMarca({{ $marca->id }})" size="xs"
-                                        variant="primary" icon="pencil" title="Editar marca"
-                                        class="hover:bg-blue-600 transition-colors"></flux:button>
-                                    <flux:button wire:click="eliminarMarca({{ $marca->id }})" size="xs"
-                                        variant="danger" icon="trash" title="Eliminar marca"
-                                        class="hover:bg-red-600 transition-colors"></flux:button>
+                                    <flux:button wire:click="editarMarca({{ $marca->id }})" size="xs" variant="primary" icon="pencil" title="Editar marca" class="hover:bg-blue-600 transition-colors"></flux:button>
+                                    <flux:button wire:click="eliminarMarca({{ $marca->id }})" size="xs" variant="danger" icon="trash" title="Eliminar marca" class="hover:bg-red-600 transition-colors"></flux:button>
                                 </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-8 text-center text-zinc-500 dark:text-zinc-400">
-                                <div class="flex flex-col items-center gap-2">
-                                    <flux:icon name="inbox" class="w-12 h-12 text-zinc-300" />
+                            <td colspan="5" class="px-6 py-12 text-center text-zinc-500 dark:text-zinc-400">
+                                <div class="flex flex-col items-center gap-3">
+                                    <flux:icon.inbox class="w-16 h-16 text-zinc-300" />
                                     <span class="text-lg font-medium">No se encontraron marcas</span>
                                     <span class="text-sm">Intenta ajustar los filtros de búsqueda</span>
                                 </div>
@@ -160,17 +169,18 @@
         </div>
         <!-- Paginación -->
         @if ($marcas->hasPages())
-            <div class="px-6 py-3 bg-zinc-50 dark:bg-zinc-700 border-t border-zinc-200 dark:border-zinc-600">
+            <div class="px-6 py-4 bg-zinc-50 dark:bg-zinc-700 border-t border-zinc-200 dark:border-zinc-600">
                 {{ $marcas->links() }}
             </div>
         @endif
     </div>
+
     <!-- Modal Form Marca -->
     <flux:modal wire:model="modal_form_marca" variant="flyout" class="w-2/3 max-w-2xl">
         <form wire:submit.prevent="guardarMarca">
             <div class="space-y-6">
                 <div class="border-b pb-4 mb-2 flex items-center gap-3">
-                    <flux:icon name="tag" class="w-8 h-8 text-blue-500" />
+                    <flux:icon.tag class="w-8 h-8 text-blue-500" />
                     <div>
                         <flux:heading size="lg">{{ $marca_id ? 'Editar Marca' : 'Nueva Marca' }}</flux:heading>
                         <flux:text class="mt-1 text-zinc-500">Complete los datos de la marca.</flux:text>
@@ -178,7 +188,7 @@
                 </div>
                 <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 shadow-sm border">
                     <div class="flex items-center gap-2 mb-4">
-                        <flux:icon name="information-circle" class="w-5 h-5 text-blue-400" />
+                        <flux:icon.information-circle class="w-5 h-5 text-blue-400" />
                         <flux:heading size="md">Información Básica</flux:heading>
                     </div>
                     <div class="grid grid-cols-1 gap-4">
@@ -194,7 +204,7 @@
                 <!-- Logo -->
                 <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 shadow-sm border">
                     <div class="flex items-center gap-2 mb-4">
-                        <flux:icon name="photo" class="w-5 h-5 text-blue-400" />
+                        <flux:icon.photo class="w-5 h-5 text-blue-400" />
                         <flux:heading size="md">Logo</flux:heading>
                         <span class="text-xs text-zinc-400 ml-2">Solo formatos JPG, PNG. Tamaño recomendado: 200x200px.</span>
                     </div>
@@ -258,7 +268,7 @@
                 <!-- Archivo -->
                 <div class="bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 shadow-sm border">
                     <div class="flex items-center gap-2 mb-4">
-                        <flux:icon name="document" class="w-5 h-5 text-purple-400" />
+                        <flux:icon.document class="w-5 h-5 text-purple-400" />
                         <flux:heading size="md">Archivo</flux:heading>
                         <span class="text-xs text-zinc-400 ml-2">Cualquier tipo de archivo. Tamaño máximo: 10MB.</span>
                     </div>

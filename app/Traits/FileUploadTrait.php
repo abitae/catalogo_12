@@ -3,95 +3,194 @@
 namespace App\Traits;
 
 use Illuminate\Support\Facades\Storage;
-use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
 trait FileUploadTrait
 {
-    use WithFileUploads;
-
     /**
-     * Procesa la carga de una imagen
+     * Procesa y almacena una imagen de forma segura
      */
-    protected function processImage($tempImage, $oldImage = null, $path = 'images')
+    protected function processImage(UploadedFile $file, string $directory, ?string $oldPath = null): string
     {
-        if (!$tempImage) {
-            return $oldImage;
-        }
-
-        // Eliminar imagen anterior si existe
-        if ($oldImage && Storage::disk('public')->exists($oldImage)) {
-            Storage::disk('public')->delete($oldImage);
-        }
-
-        // Guardar nueva imagen
-        return $tempImage->store($path, 'public');
-    }
-
-    /**
-     * Procesa la carga de un archivo
-     */
-    protected function processFile($tempFile, $oldFile = null, $path = 'archivos')
-    {
-        if (!$tempFile) {
-            return $oldFile;
-        }
-
         // Eliminar archivo anterior si existe
-        if ($oldFile && Storage::disk('public')->exists($oldFile)) {
-            Storage::disk('public')->delete($oldFile);
+        if ($oldPath) {
+            $this->deleteFileFromStorage($oldPath);
         }
 
-        // Guardar nuevo archivo
-        return $tempFile->store($path, 'public');
+        // Generar nombre único para el archivo
+        $fileName = $this->generateUniqueFileName($file);
+
+        // Almacenar en el directorio especificado
+        return $file->storeAs($directory, $fileName, 'public');
     }
 
     /**
-     * Elimina un archivo del storage
+     * Procesa y almacena un archivo de forma segura
      */
-    protected function deleteFile($filePath)
+    protected function processFile(UploadedFile $file, string $directory, ?string $oldPath = null): string
     {
-        if ($filePath && Storage::disk('public')->exists($filePath)) {
-            Storage::disk('public')->delete($filePath);
-            return true;
+        // Eliminar archivo anterior si existe
+        if ($oldPath) {
+            $this->deleteFileFromStorage($oldPath);
         }
-        return false;
+
+        // Generar nombre único para el archivo
+        $fileName = $this->generateUniqueFileName($file);
+
+        // Almacenar en el directorio especificado
+        return $file->storeAs($directory, $fileName, 'public');
     }
 
     /**
-     * Valida una imagen
+     * Elimina un archivo del storage de forma segura
      */
-    protected function validateImage($image, $maxSize = 20480)
+    protected function deleteFileFromStorage(?string $filePath): bool
     {
-        return [
-            $image => "nullable|image|mimes:jpeg,png,jpg,gif,svg|max:{$maxSize}"
-        ];
+        if (!$filePath) {
+            return false;
+        }
+
+        try {
+            if (Storage::disk('public')->exists($filePath)) {
+                return Storage::disk('public')->delete($filePath);
+            }
+            return false;
+        } catch (\Exception $e) {
+            Log::warning('Error al eliminar archivo: ' . $e->getMessage(), [
+                'file_path' => $filePath,
+                'user_id' => Auth::id() ?? 'guest'
+            ]);
+            return false;
+        }
     }
 
     /**
-     * Valida un archivo
+     * Genera un nombre único para el archivo
      */
-    protected function validateFile($file, $maxSize = 20480)
+    protected function generateUniqueFileName(UploadedFile $file): string
     {
-        return [
-            $file => "nullable|file|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx|max:{$maxSize}"
-        ];
+        $extension = $file->getClientOriginalExtension();
+        $baseName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $sanitizedName = Str::slug($baseName);
+
+        return $sanitizedName . '_' . time() . '_' . Str::random(8) . '.' . $extension;
     }
 
     /**
-     * Mensajes de validación para archivos
+     * Valida si un archivo es una imagen válida
      */
-    protected function getFileValidationMessages()
+    protected function isValidImage(UploadedFile $file): bool
     {
-        return [
-            'tempImage.image' => 'El archivo debe ser una imagen válida',
-            'tempImage.mimes' => 'La imagen debe ser en formato: jpeg, png, jpg, gif o svg',
-            'tempImage.max' => 'La imagen no debe superar los 20MB',
-            'tempArchivo.file' => 'El archivo adjunto no es válido',
-            'tempArchivo.mimes' => 'El archivo debe ser en formato: pdf, doc, docx, xls, xlsx, ppt o pptx',
-            'tempArchivo.max' => 'El archivo no debe superar los 20MB',
-            'tempArchivo2.file' => 'El archivo adjunto no es válido',
-            'tempArchivo2.mimes' => 'El archivo debe ser en formato: pdf, doc, docx, xls, xlsx, ppt o pptx',
-            'tempArchivo2.max' => 'El archivo no debe superar los 20MB',
+        $allowedMimes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif', 'image/svg+xml'];
+        return in_array($file->getMimeType(), $allowedMimes);
+    }
+
+    /**
+     * Valida si un archivo es un documento válido
+     */
+    protected function isValidDocument(UploadedFile $file): bool
+    {
+        $allowedMimes = [
+            'application/pdf',
+            'application/msword',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/vnd.ms-excel',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-powerpoint',
+            'application/vnd.openxmlformats-officedocument.presentationml.presentation'
         ];
+        return in_array($file->getMimeType(), $allowedMimes);
+    }
+
+    /**
+     * Obtiene la URL pública de un archivo
+     */
+    protected function getFileUrl(?string $filePath): ?string
+    {
+        if (!$filePath) {
+            return null;
+        }
+
+        try {
+            return asset('storage/' . $filePath);
+        } catch (\Exception $e) {
+            Log::warning('Error al obtener URL del archivo: ' . $e->getMessage(), [
+                'file_path' => $filePath
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Verifica si un archivo existe en el storage
+     */
+    protected function fileExists(?string $filePath): bool
+    {
+        if (!$filePath) {
+            return false;
+        }
+
+        try {
+            return Storage::disk('public')->exists($filePath);
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Obtiene el tamaño de un archivo en formato legible
+     */
+    protected function getFileSize(?string $filePath): string
+    {
+        if (!$filePath || !$this->fileExists($filePath)) {
+            return '0 B';
+        }
+
+        try {
+            $size = Storage::disk('public')->size($filePath);
+            return $this->formatBytes($size);
+        } catch (\Exception $e) {
+            return '0 B';
+        }
+    }
+
+    /**
+     * Formatea bytes a formato legible
+     */
+    protected function formatBytes(int $bytes, int $precision = 2): string
+    {
+        $units = ['B', 'KB', 'MB', 'GB', 'TB'];
+
+        for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
+            $bytes /= 1024;
+        }
+
+        return round($bytes, $precision) . ' ' . $units[$i];
+    }
+
+    /**
+     * Limpia archivos temporales no utilizados
+     */
+    protected function cleanupTempFiles(): void
+    {
+        try {
+            $tempDirectory = 'temp/' . Auth::id();
+            if (Storage::disk('public')->exists($tempDirectory)) {
+                $files = Storage::disk('public')->files($tempDirectory);
+                $cutoff = now()->subHours(24);
+
+                foreach ($files as $file) {
+                    $lastModified = Storage::disk('public')->lastModified($file);
+                    if ($lastModified < $cutoff->timestamp) {
+                        Storage::disk('public')->delete($file);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning('Error al limpiar archivos temporales: ' . $e->getMessage());
+        }
     }
 }

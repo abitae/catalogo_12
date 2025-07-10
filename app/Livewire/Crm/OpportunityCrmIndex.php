@@ -10,6 +10,8 @@ use App\Models\User;
 use App\Models\Crm\ContactCrm;
 use App\Models\Crm\ActivityCrm;
 use App\Models\Shared\TipoCustomer;
+use App\Services\OpportunityService;
+use App\Traits\FileUploadTrait;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
@@ -20,7 +22,7 @@ use Mary\Traits\Toast;
 
 class OpportunityCrmIndex extends Component
 {
-    use WithPagination, WithFileUploads, Toast;
+    use WithPagination, WithFileUploads, Toast, FileUploadTrait;
 
     public $search = '';
     public $sortField = 'nombre';
@@ -348,117 +350,190 @@ class OpportunityCrmIndex extends Component
         }
     }
 
+            /**
+     * Guarda o actualiza una oportunidad usando el servicio dedicado
+     */
     public function guardarOpportunity()
     {
-        // Validar primero - esto permitirá que Livewire muestre los errores
-        $data = $this->validate();
-
-        // Manejar fecha vacía
-        if (empty($data['fecha_cierre_esperada'])) {
-            $data['fecha_cierre_esperada'] = null;
-        }
-
-        // Validar que el contacto pertenece al cliente seleccionado
-        if ($this->contact_id && $this->customer_id) {
-            $contactBelongsToCustomer = ContactCrm::where('id', $this->contact_id)
-                ->where('customer_id', $this->customer_id)
-                ->exists();
-
-            if (!$contactBelongsToCustomer) {
-                $this->addError('contact_id', 'El contacto seleccionado no pertenece al cliente seleccionado.');
-                return;
-            }
-        }
+        // 1. Validación de datos (fuera del try para que Livewire maneje los errores automáticamente)
+        $validatedData = $this->validateOpportunityData();
 
         try {
-            // Manejar imagen
-            if ($this->tempImage) {
-                // Eliminar imagen anterior si existe
-                if ($this->opportunity_id && $this->opportunity && $this->opportunity->image) {
-                    Storage::disk('public')->delete($this->opportunity->image);
-                }
+            // 2. Validación de relaciones usando el servicio
+            $this->validateContactCustomerRelationship();
 
-                $imagePath = $this->tempImage->store('opportunities/images', 'public');
-                $data['image'] = $imagePath;
-            }
+            // 3. Procesamiento de archivos
+            $processedData = $this->processOpportunityFiles($validatedData);
 
-            // Manejar archivo
-            if ($this->tempArchivo) {
-                // Eliminar archivo anterior si existe
-                if ($this->opportunity_id && $this->opportunity && $this->opportunity->archivo) {
-                    Storage::disk('public')->delete($this->opportunity->archivo);
-                }
+            // 4. Guardado usando el servicio
+            $opportunity = $this->saveOpportunityUsingService($processedData);
 
-                $archivoPath = $this->tempArchivo->store('opportunities/archivos', 'public');
-                $data['archivo'] = $archivoPath;
-            }
+            // 5. Limpieza y respuesta
+            $this->handleSuccessfulSave();
 
-            // Remover campos temporales
-            unset($data['tempImage'], $data['tempArchivo']);
-
-            if ($this->opportunity_id) {
-                $opportunity = OpportunityCrm::find($this->opportunity_id);
-                $opportunity->update($data);
-
-                // Log de auditoría para actualización
-                Log::info('Auditoría: Oportunidad actualizada', [
-                    'user_id' => Auth::id(),
-                    'user_name' => Auth::user()->name ?? 'N/A',
-                    'action' => 'update_opportunity',
-                    'opportunity_id' => $this->opportunity_id,
-                    'opportunity_name' => $data['nombre'],
-                    'customer_id' => $data['customer_id'],
-                    'valor' => $data['valor'],
-                    'etapa' => $data['etapa'],
-                    'probabilidad' => $data['probabilidad'] ?? null,
-                    'timestamp' => now()
-                ]);
-
-                $this->success('Oportunidad actualizada correctamente');
-            } else {
-                $opportunity = OpportunityCrm::create($data);
-
-                // Log de auditoría para creación
-                Log::info('Auditoría: Oportunidad creada', [
-                    'user_id' => Auth::id(),
-                    'user_name' => Auth::user()->name ?? 'N/A',
-                    'action' => 'create_opportunity',
-                    'opportunity_id' => $opportunity->id,
-                    'opportunity_name' => $data['nombre'],
-                    'customer_id' => $data['customer_id'],
-                    'valor' => $data['valor'],
-                    'etapa' => $data['etapa'],
-                    'probabilidad' => $data['probabilidad'] ?? null,
-                    'timestamp' => now()
-                ]);
-
-                $this->success('Oportunidad creada correctamente');
-            }
-
-            $this->modal_form_opportunity = false;
-            $this->reset([
-                'opportunity_id',
-                'opportunity',
-                'nombre',
-                'valor',
-                'etapa',
-                'customer_id',
-                'contact_id',
-                'tipo_negocio_id',
-                'marca_id',
-                'probabilidad',
-                'fecha_cierre_esperada',
-                'fuente',
-                'descripcion',
-                'notas',
-                'tempImage',
-                'tempArchivo',
-                'imagePreview'
-            ]);
-            $this->resetValidation();
         } catch (\Exception $e) {
-            $this->error('Error al guardar la oportunidad: ' . $e->getMessage());
+            $this->handleSaveError($e);
         }
+    }
+
+    /**
+     * Valida los datos de la oportunidad
+     */
+    private function validateOpportunityData(): array
+    {
+        $data = $this->validate();
+
+        // Normalizar fecha de cierre
+        $data['fecha_cierre_esperada'] = $this->normalizeDate($data['fecha_cierre_esperada']);
+
+        return $data;
+    }
+
+    /**
+     * Valida que el contacto pertenece al cliente seleccionado usando el servicio
+     */
+    private function validateContactCustomerRelationship(): void
+    {
+        if (!$this->contact_id || !$this->customer_id) {
+            return;
+        }
+
+        $opportunityService = app(OpportunityService::class);
+        $contactExists = $opportunityService->validateContactCustomerRelationship(
+            (int) $this->contact_id,
+            (int) $this->customer_id
+        );
+
+        if (!$contactExists) {
+            $this->addError('contact_id', 'El contacto seleccionado no pertenece al cliente seleccionado.');
+            throw new \Exception('Validación de relación fallida');
+        }
+    }
+
+    /**
+     * Procesa los archivos de la oportunidad
+     */
+    private function processOpportunityFiles(array $data): array
+    {
+        // Procesar imagen
+        if ($this->tempImage) {
+            $data['image'] = $this->processOpportunityImage();
+        }
+
+        // Procesar archivo
+        if ($this->tempArchivo) {
+            $data['archivo'] = $this->processOpportunityFile();
+        }
+
+        // Remover campos temporales
+        unset($data['tempImage'], $data['tempArchivo']);
+
+        return $data;
+    }
+
+    /**
+     * Procesa la imagen de la oportunidad
+     */
+    private function processOpportunityImage(): string
+    {
+        $oldImagePath = $this->opportunity_id && $this->opportunity ? $this->opportunity->image : null;
+        return $this->processImage($this->tempImage, 'opportunities/images', $oldImagePath);
+    }
+
+    /**
+     * Procesa el archivo de la oportunidad
+     */
+    private function processOpportunityFile(): string
+    {
+        $oldFilePath = $this->opportunity_id && $this->opportunity ? $this->opportunity->archivo : null;
+        return $this->processFile($this->tempArchivo, 'opportunities/archivos', $oldFilePath);
+    }
+
+    /**
+     * Guarda la oportunidad usando el servicio
+     */
+    private function saveOpportunityUsingService(array $data): OpportunityCrm
+    {
+        $opportunityService = app(OpportunityService::class);
+
+        if ($this->opportunity_id) {
+            return $opportunityService->updateOpportunity((int) $this->opportunity_id, $data);
+        } else {
+            return $opportunityService->createOpportunity($data);
+        }
+    }
+
+
+
+    /**
+     * Maneja el guardado exitoso
+     */
+    private function handleSuccessfulSave(): void
+    {
+        $message = $this->opportunity_id ? 'Oportunidad actualizada correctamente' : 'Oportunidad creada correctamente';
+        $this->success($message);
+
+        $this->modal_form_opportunity = false;
+        $this->resetOpportunityForm();
+    }
+
+    /**
+     * Maneja errores durante el guardado
+     */
+    private function handleSaveError(\Exception $e): void
+    {
+        $errorMessage = 'Error al guardar la oportunidad: ' . $e->getMessage();
+
+        // Log del error para debugging
+        Log::error('Error al guardar oportunidad', [
+            'user_id' => Auth::id(),
+            'opportunity_id' => $this->opportunity_id,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'timestamp' => now()
+        ]);
+
+        $this->error($errorMessage);
+    }
+
+    /**
+     * Normaliza una fecha (convierte string vacío a null)
+     */
+    private function normalizeDate(?string $date): ?string
+    {
+        return empty($date) ? null : $date;
+    }
+
+
+
+    /**
+     * Resetea el formulario de oportunidad
+     */
+    private function resetOpportunityForm(): void
+    {
+        $this->reset([
+            'opportunity_id',
+            'opportunity',
+            'nombre',
+            'valor',
+            'etapa',
+            'customer_id',
+            'contact_id',
+            'tipo_negocio_id',
+            'marca_id',
+            'user_id',
+            'probabilidad',
+            'fecha_cierre_esperada',
+            'fuente',
+            'descripcion',
+            'notas',
+            'tempImage',
+            'tempArchivo',
+            'imagePreview'
+        ]);
+
+        $this->fecha_cierre_esperada = \Carbon\Carbon::now()->format('Y-m-d');
+        $this->resetValidation();
     }
 
     public function updatedTempImage()

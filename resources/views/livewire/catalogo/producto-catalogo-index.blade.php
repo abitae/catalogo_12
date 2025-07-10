@@ -1,23 +1,19 @@
 <div class="p-6 bg-white dark:bg-zinc-900 min-h-screen">
     <!-- Encabezado y Búsqueda -->
-    <div class="mb-6 bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 shadow-sm">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+    <div class="mb-6 bg-zinc-50 dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-700">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
             <div>
-                <flux:heading size="lg">Catálogo de Productos</flux:heading>
-                <flux:text class="mt-1 text-zinc-600 dark:text-zinc-400">Administra y consulta los productos registrados
-                    en el sistema.</flux:text>
+                <flux:heading size="lg" class="text-zinc-900 dark:text-white">Catálogo de Productos</flux:heading>
+                <flux:text class="mt-2 text-zinc-600 dark:text-zinc-400">Administra y consulta los productos registrados en el sistema.</flux:text>
             </div>
-            <div class="flex items-center justify-end gap-4 w-full md:w-auto">
-                <div class="w-full md:w-96">
-                    <flux:input type="search" placeholder="Buscar productos..." wire:model.live="search"
-                        icon="magnifying-glass" />
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full lg:w-auto">
+                <div class="w-full sm:w-80">
+                    <flux:input type="search" placeholder="Buscar productos..." wire:model.live="search" icon="magnifying-glass" />
                 </div>
-                <div class="flex items-end gap-2">
-                    <flux:button wire:click="exportarProductos" icon="arrow-down-tray">
+                <div class="flex items-center gap-3">
+                    <flux:button wire:click="exportarProductos" icon="arrow-down-tray" variant="secondary">
                         Exportar
                     </flux:button>
-                </div>
-                <div class="flex items-end gap-2">
                     <flux:button variant="primary" wire:click="nuevoProducto" icon="plus">
                         Nuevo Producto
                     </flux:button>
@@ -28,55 +24,55 @@
 
     <!-- Estadísticas Rápidas -->
     <div class="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-4 text-white">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm opacity-90">Total Productos</p>
-                    <p class="text-2xl font-bold">{{ $estadisticas['total'] }}</p>
+                    <p class="text-sm opacity-90 font-medium">Total Productos</p>
+                    <p class="text-3xl font-bold">{{ $estadisticas['total'] }}</p>
                 </div>
-                <flux:icon name="cube" class="w-8 h-8 opacity-80" />
+                <flux:icon.cube class="w-10 h-10 opacity-80" />
             </div>
         </div>
-        <div class="bg-gradient-to-r from-green-500 to-green-600 rounded-lg p-4 text-white">
+        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm opacity-90">Activos</p>
-                    <p class="text-2xl font-bold">{{ $estadisticas['activos'] }}</p>
+                    <p class="text-sm opacity-90 font-medium">Activos</p>
+                    <p class="text-3xl font-bold">{{ $estadisticas['activos'] }}</p>
                 </div>
-                <flux:icon name="check-circle" class="w-8 h-8 opacity-80" />
+                <flux:icon.check-circle class="w-10 h-10 opacity-80" />
             </div>
         </div>
-        <div class="bg-gradient-to-r from-red-500 to-red-600 rounded-lg p-4 text-white">
+        <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm opacity-90">Inactivos</p>
-                    <p class="text-2xl font-bold">{{ $estadisticas['inactivos'] }}</p>
+                    <p class="text-sm opacity-90 font-medium">Inactivos</p>
+                    <p class="text-3xl font-bold">{{ $estadisticas['inactivos'] }}</p>
                 </div>
-                <flux:icon name="x-circle" class="w-8 h-8 opacity-80" />
+                <flux:icon.x-circle class="w-10 h-10 opacity-80" />
             </div>
         </div>
-
-        <div
-            class="bg-gradient-to-r from-zinc-500 to-zinc-700 rounded-lg p-4 text-white col-span-1 md:col-span-2 lg:col-span-1">
+        <div class="bg-gradient-to-br from-zinc-500 to-zinc-700 rounded-xl p-6 text-white shadow-lg">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm opacity-90">Sin Stock</p>
-                    <p class="text-2xl font-bold">{{ $estadisticas['sin_stock'] }}</p>
+                    <p class="text-sm opacity-90 font-medium">Sin Stock</p>
+                    <p class="text-3xl font-bold">{{ $estadisticas['sin_stock'] }}</p>
                 </div>
-                <flux:icon name="minus-circle" class="w-8 h-8 opacity-80" />
+                <flux:icon.minus-circle class="w-10 h-10 opacity-80" />
             </div>
         </div>
-
     </div>
 
     <!-- Filtros Avanzados -->
-
-    <div class="mb-6 bg-zinc-50 dark:bg-zinc-800 rounded-lg p-4 shadow-sm">
+    <div class="mb-6 bg-zinc-50 dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-zinc-200 dark:border-zinc-700">
+        <div class="flex items-center gap-3 mb-4">
+            <flux:icon.funnel class="w-5 h-5 text-zinc-500" />
+            <flux:heading size="md" class="text-zinc-700 dark:text-zinc-300">Filtros Avanzados</flux:heading>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <!-- Marca -->
             <div>
-                <flux:label>Marca</flux:label>
-                <flux:select wire:model.live="brand_filter" class="w-full">
+                <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Marca</flux:label>
+                <flux:select wire:model.live="brand_filter" class="w-full mt-1">
                     <option value="">Todas las marcas</option>
                     @foreach ($brands as $brand)
                         <option value="{{ $brand->id }}">{{ $brand->name }}</option>
@@ -85,8 +81,8 @@
             </div>
             <!-- Categoría -->
             <div>
-                <flux:label>Categoría</flux:label>
-                <flux:select wire:model.live="category_filter" class="w-full">
+                <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Categoría</flux:label>
+                <flux:select wire:model.live="category_filter" class="w-full mt-1">
                     <option value="">Todas las categorías</option>
                     @foreach ($categories as $category)
                         <option value="{{ $category->id }}">{{ $category->name }}</option>
@@ -95,8 +91,8 @@
             </div>
             <!-- Línea -->
             <div>
-                <flux:label>Línea</flux:label>
-                <flux:select wire:model.live="line_filter" class="w-full">
+                <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Línea</flux:label>
+                <flux:select wire:model.live="line_filter" class="w-full mt-1">
                     <option value="">Todas las líneas</option>
                     @foreach ($lines as $line)
                         <option value="{{ $line->id }}">{{ $line->name }}</option>
@@ -105,8 +101,8 @@
             </div>
             <!-- Estado de Stock -->
             <div>
-                <flux:label>Estado de Stock</flux:label>
-                <flux:select wire:model.live="stock_status" class="w-full">
+                <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Estado de Stock</flux:label>
+                <flux:select wire:model.live="stock_status" class="w-full mt-1">
                     <option value="">Todos</option>
                     <option value="in_stock">En Stock</option>
                     <option value="out_of_stock">Sin Stock</option>
@@ -114,8 +110,8 @@
             </div>
             <!-- Rango de Precio -->
             <div>
-                <flux:label>Rango de Precio</flux:label>
-                <flux:select wire:model.live="price_range" class="w-full">
+                <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Rango de Precio</flux:label>
+                <flux:select wire:model.live="price_range" class="w-full mt-1">
                     <option value="">Todos los precios</option>
                     <option value="low">Hasta S/ 100</option>
                     <option value="medium">S/ 100 - S/ 500</option>
@@ -124,8 +120,8 @@
             </div>
             <!-- Estado -->
             <div>
-                <flux:label>Estado</flux:label>
-                <flux:select wire:model.live="isActive_filter" class="w-full">
+                <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Estado</flux:label>
+                <flux:select wire:model.live="isActive_filter" class="w-full mt-1">
                     <option value="">Todos</option>
                     <option value="1">Activo</option>
                     <option value="0">Inactivo</option>
@@ -133,8 +129,8 @@
             </div>
             <!-- Registros por página -->
             <div>
-                <flux:label>Registros por página</flux:label>
-                <flux:select wire:model.live="perPage" class="w-full">
+                <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Registros por página</flux:label>
+                <flux:select wire:model.live="perPage" class="w-full mt-1">
                     @foreach ([10, 25, 50, 100, 200, 500, 1000] as $option)
                         <option value="{{ $option }}">{{ $option }}</option>
                     @endforeach
@@ -149,56 +145,55 @@
         </div>
     </div>
 
-
     <!-- Tabla de Productos -->
-    <div class="bg-white dark:bg-zinc-800 rounded-lg overflow-hidden shadow-sm">
+    <div class="bg-white dark:bg-zinc-800 rounded-xl overflow-hidden shadow-sm border border-zinc-200 dark:border-zinc-700">
+        <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-700/50">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Productos</h3>
+                <div class="flex items-center gap-4">
+                    <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ $productos->count() }} productos encontrados</span>
+                </div>
+            </div>
+        </div>
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead class="bg-zinc-50 dark:bg-zinc-700">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-500 transition-colors"
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors"
                             wire:click="sortBy('code')">
-                            <div class="flex items-center space-x-1">
+                            <div class="flex items-center space-x-2">
                                 <span>Código</span>
-                                <flux:icon
-                                    name="{{ $sortField === 'code' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}"
-                                    class="w-4 h-4" />
+                                <flux:icon name="{{ $sortField === 'code' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}" class="w-4 h-4" />
                             </div>
                         </th>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                            Imagen</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-500 transition-colors"
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                            Imagen
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors"
                             wire:click="sortBy('description')">
-                            <div class="flex items-center space-x-1">
+                            <div class="flex items-center space-x-2">
                                 <span>Descripción</span>
-                                <flux:icon
-                                    name="{{ $sortField === 'description' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}"
-                                    class="w-4 h-4" />
+                                <flux:icon name="{{ $sortField === 'description' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}" class="w-4 h-4" />
                             </div>
                         </th>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                            Categorización</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-500 transition-colors"
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                            Categorización
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors"
                             wire:click="sortBy('stock')">
-                            <div class="flex items-center space-x-1">
+                            <div class="flex items-center space-x-2">
                                 <span>Stock</span>
-                                <flux:icon
-                                    name="{{ $sortField === 'stock' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}"
-                                    class="w-4 h-4" />
+                                <flux:icon name="{{ $sortField === 'stock' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}" class="w-4 h-4" />
                             </div>
                         </th>
-                        <th
-                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
-                            Documentos</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-500 transition-colors"
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                            Documentos
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors"
                             wire:click="sortBy('price_venta')">
-                            <div class="flex items-center space-x-1">
+                            <div class="flex items-center space-x-2">
                                 <span>Precio Venta</span>
-                                <flux:icon
-                                    name="{{ $sortField === 'price_venta' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}"
-                                    class="w-4 h-4" />
+                                <flux:icon name="{{ $sortField === 'price_venta' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}" class="w-4 h-4" />
                             </div>
                         </th>
                         <th
