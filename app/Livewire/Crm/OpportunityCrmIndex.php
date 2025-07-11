@@ -257,7 +257,10 @@ class OpportunityCrmIndex extends Component
             'tipos_negocio' => TipoNegocioCrm::all(),
             'marcas' => MarcaCrm::all(),
             'customers' => Customer::all(),
-            'users' => User::all(),
+            // Mostrar solo los usuarios que no sean Super Admin
+            'users' => User::whereDoesntHave('roles', function($q) {
+                $q->where('name', 'Super Admin');
+            })->get(),
             'estados' => ['nueva', 'en_proceso', 'ganada', 'perdida'],
             'etapas' => ['aceptada', 'entregada', 'pagada'],
             'fuentes' => ['web', 'referido', 'cold_call', 'email', 'evento', 'otro'],

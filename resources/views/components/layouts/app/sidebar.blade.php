@@ -13,8 +13,9 @@
 
             <flux:navlist variant="outline">
                 <flux:navlist.item icon="home" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>{{ __('Dashboard') }}</flux:navlist.item>
-                <flux:navlist.group :expanded="request()->routeIs('shared.*')" expandable heading="Clientes">
+                <flux:navlist.group :expanded="request()->routeIs('shared.*')" expandable heading="Directorio">
                     <flux:navlist.item icon="user-group" :href="route('shared.customers')" :current="request()->routeIs('shared.customers')" wire:navigate>{{ __('Clientes') }}</flux:navlist.item>
+                    <flux:navlist.item icon="user" :href="route('shared.colaboradores')" :current="request()->routeIs('shared.colaboradores')" wire:navigate>{{ __('Colaboradores') }}</flux:navlist.item>
                     <flux:navlist.item icon="tag" :href="route('shared.tipos-customer')" :current="request()->routeIs('shared.tipos-customer')" wire:navigate>{{ __('Tipos de Cliente') }}</flux:navlist.item>
                 </flux:navlist.group>
                 <flux:navlist.group :expanded="request()->routeIs('catalogo.*')" expandable heading="Catalogo">
@@ -40,6 +41,11 @@
                 <flux:navlist.group :expanded="request()->routeIs('almacen.reportes.*')" expandable heading="Reportes">
                     <flux:navlist.item icon="document-chart-bar" :href="route('almacen.reportes.lotes')" :current="request()->routeIs('almacen.reportes.lotes')" wire:navigate>{{ __('Reportes') }}</flux:navlist.item>
                     <flux:navlist.item icon="exclamation-triangle" :href="route('almacen.alertas.lotes')" :current="request()->routeIs('almacen.alertas.lotes')" wire:navigate>{{ __('Alertas') }}</flux:navlist.item>
+                </flux:navlist.group>
+                <flux:navlist.group :expanded="request()->routeIs('configuracion.*')" expandable heading="Configuración">
+                    <flux:navlist.item icon="user" :href="route('configuracion.usuarios')" :current="request()->routeIs('configuracion.usuarios')" wire:navigate>{{ __('Usuarios') }}</flux:navlist.item>
+                    <flux:navlist.item icon="key" :href="route('configuracion.roles')" :current="request()->routeIs('configuracion.roles')" wire:navigate>{{ __('Roles') }}</flux:navlist.item>
+                    <flux:navlist.item icon="lock-closed" :href="route('configuracion.permisos')" :current="request()->routeIs('configuracion.permisos')" wire:navigate>{{ __('Permisos') }}</flux:navlist.item>
                 </flux:navlist.group>
             </flux:navlist>
 

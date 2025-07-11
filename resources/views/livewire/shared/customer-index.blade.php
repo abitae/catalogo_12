@@ -180,7 +180,7 @@
 
                                     </flux:button>
                                     <flux:button wire:click="eliminarCustomer({{ $customer->id }})" size="sm" color="red" icon="trash">
-                                        
+
                                     </flux:button>
                                 </div>
                             </td>

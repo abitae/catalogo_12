@@ -19,6 +19,10 @@ use App\Livewire\Crm\TipoNegocioCrmIndex;
 use App\Livewire\Shared\DashboardLive;
 use App\Livewire\Shared\CustomerIndex;
 use App\Livewire\Shared\TipoCustomerIndex;
+use App\Livewire\Shared\UserIndex;
+use App\Livewire\Shared\RoleIndex;
+use App\Livewire\Shared\PermissionIndex;
+use App\Livewire\Shared\ColaboradorIndex;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
@@ -75,9 +79,15 @@ Route::middleware(['auth'])->group(function () {
     Route::get('crm/marcas', MarcaCrmIndex::class)->name('crm.marcas');
     Route::get('crm/tipos-negocio', TipoNegocioCrmIndex::class)->name('crm.tipos-negocio');
 
+    // Rutas de Configuración
+    Route::get('configuracion/usuarios', UserIndex::class)->name('configuracion.usuarios');
+    Route::get('configuracion/roles', RoleIndex::class)->name('configuracion.roles');
+    Route::get('configuracion/permisos', PermissionIndex::class)->name('configuracion.permisos');
+
     // Rutas de Shared
     Route::get('shared/customers', CustomerIndex::class)->name('shared.customers');
     Route::get('shared/tipos-customer', TipoCustomerIndex::class)->name('shared.tipos-customer');
+    Route::get('shared/colaboradores', ColaboradorIndex::class)->name('shared.colaboradores');
 });
 
 require __DIR__.'/auth.php';
