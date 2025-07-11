@@ -31,5 +31,8 @@ class DatabaseSeeder extends Seeder
 
         // Agregar el seeder de CRM
         $this->call(CrmSeeder::class);
+
+        // Agregar el seeder de acuerdos marco
+        $this->call(AcuerdoMarcoSeeder::class);
     }
 }

@@ -16,6 +16,8 @@ use App\Livewire\Crm\OpportunityCrmIndex;
 use App\Livewire\Crm\ActivityCrmIndex;
 use App\Livewire\Crm\MarcaCrmIndex;
 use App\Livewire\Crm\TipoNegocioCrmIndex;
+use App\Livewire\Pc\AcuerdoMarcoIndex;
+use App\Livewire\Pc\ProductoAcuerdoMarcoIndex;
 use App\Livewire\Shared\DashboardLive;
 use App\Livewire\Shared\CustomerIndex;
 use App\Livewire\Shared\TipoCustomerIndex;
@@ -23,6 +25,7 @@ use App\Livewire\Shared\UserIndex;
 use App\Livewire\Shared\RoleIndex;
 use App\Livewire\Shared\PermissionIndex;
 use App\Livewire\Shared\ColaboradorIndex;
+use App\Livewire\Pc\ImportarAcuerdoMarco;
 use Illuminate\Support\Facades\Route;
 use Livewire\Volt\Volt;
 
@@ -88,6 +91,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('shared/customers', CustomerIndex::class)->name('shared.customers');
     Route::get('shared/tipos-customer', TipoCustomerIndex::class)->name('shared.tipos-customer');
     Route::get('shared/colaboradores', ColaboradorIndex::class)->name('shared.colaboradores');
+
+    // Rutas de PC
+    Route::get('pc/acuerdo-marco', AcuerdoMarcoIndex::class)->name('pc.acuerdo-marco');
+    Route::get('pc/productos-acuerdo-marco', ProductoAcuerdoMarcoIndex::class)->name('pc.productos-acuerdo-marco');
+    Route::get('pc/importar-acuerdo-marco', ImportarAcuerdoMarco::class)->name('pc.importar-acuerdo-marco');
 });
 
 require __DIR__.'/auth.php';

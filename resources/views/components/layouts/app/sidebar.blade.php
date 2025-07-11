@@ -47,6 +47,11 @@
                     <flux:navlist.item icon="key" :href="route('configuracion.roles')" :current="request()->routeIs('configuracion.roles')" wire:navigate>{{ __('Roles') }}</flux:navlist.item>
                     <flux:navlist.item icon="lock-closed" :href="route('configuracion.permisos')" :current="request()->routeIs('configuracion.permisos')" wire:navigate>{{ __('Permisos') }}</flux:navlist.item>
                 </flux:navlist.group>
+                <flux:navlist.group :expanded="request()->routeIs('pc.*')" expandable heading="PC">
+                    <flux:navlist.item icon="document-chart-bar" :href="route('pc.acuerdo-marco')" :current="request()->routeIs('pc.acuerdo-marco')" wire:navigate>{{ __('Acuerdo Marco') }}</flux:navlist.item>
+                    <flux:navlist.item icon="exclamation-triangle" :href="route('pc.importar-acuerdo-marco')" :current="request()->routeIs('pc.importar-acuerdo-marco')" wire:navigate>{{ __('Importar Acuerdo Marco') }}</flux:navlist.item>
+                    <flux:navlist.item icon="cube" :href="route('pc.productos-acuerdo-marco')" :current="request()->routeIs('pc.productos-acuerdo-marco')" wire:navigate>{{ __('Productos Acuerdo Marco') }}</flux:navlist.item>
+                </flux:navlist.group>
             </flux:navlist>
 
             <flux:spacer />
