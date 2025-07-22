@@ -31,6 +31,7 @@ class CotizacionCatalogoIndex extends Component
     public $searchProducto = '';
     public $showProductosList = false;
     public $modoVisualizacion = false;
+    public $pdfUrl = null;
 
     // Campos de la cotización
     public $codigo_cotizacion;
@@ -292,6 +293,47 @@ class CotizacionCatalogoIndex extends Component
         }
     }
 
+    public function generarPdfCotizacion($id)
+    {
+        $cotizacion = \App\Models\Catalogo\CotizacionCatalogo::with(['detalles.producto', 'customer', 'user'])->find($id);
+        if (!$cotizacion) {
+            $this->toast('Cotización no encontrada', 'error');
+            return;
+        }
+
+        // Renderiza la vista Blade a HTML
+        $html = view('export.excel.cotizacion-pdf', [
+            'cotizacion' => $cotizacion
+        ])->render();
+
+        // Genera el PDF con mPDF
+        $mpdf = new \Mpdf\Mpdf([
+            'format' => 'A4',
+            'margin_top' => 10,
+            'margin_bottom' => 10,
+            'margin_left' => 10,
+            'margin_right' => 10,
+        ]);
+        $mpdf->WriteHTML($html);
+
+        // Guarda el PDF en storage/app/public/temp
+        $filename = 'cotizacion_' . $cotizacion->codigo_cotizacion . '_' . time() . '.pdf';
+        $dir = storage_path('app/public/temp');
+        if (!file_exists($dir)) {
+            mkdir($dir, 0777, true);
+        }
+        $path = $dir . '/' . $filename;
+        $mpdf->Output($path, \Mpdf\Output\Destination::FILE);
+
+        // Genera la URL pública
+        $this->pdfUrl = asset('storage/temp/' . $filename);
+
+        // Abre el modal de visualización
+        $this->modal_visualizacion = true;
+        $this->cotizacionVisualizar = $cotizacion;
+        $this->dispatch('pdfGenerado');
+    }
+
     public function guardarCotizacion()
     {
         $this->validate($this->rules());
@@ -456,6 +498,7 @@ class CotizacionCatalogoIndex extends Component
     {
         $this->modal_visualizacion = false;
         $this->cotizacionVisualizar = null;
+        $this->pdfUrl = null;
     }
 
     private function resetForm()
@@ -486,5 +529,10 @@ class CotizacionCatalogoIndex extends Component
         ]);
         $this->fecha_desde = Carbon::now()->subDays(15)->format('Y-m-d');
         $this->fecha_hasta = Carbon::now()->format('Y-m-d');
+    }
+
+    public function imprimirCotizacion()
+    {
+        $this->modal_visualizacion = true;
     }
 }

@@ -27,6 +27,8 @@ use App\Livewire\Shared\PermissionIndex;
 use App\Livewire\Shared\ColaboradorIndex;
 use App\Livewire\Pc\ImportarAcuerdoMarco;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\Request;
 use Livewire\Volt\Volt;
 
 Route::get('/', function () {
@@ -97,5 +99,15 @@ Route::middleware(['auth'])->group(function () {
     Route::get('pc/productos-acuerdo-marco', ProductoAcuerdoMarcoIndex::class)->name('pc.productos-acuerdo-marco');
     Route::get('pc/importar-acuerdo-marco', ImportarAcuerdoMarco::class)->name('pc.importar-acuerdo-marco');
 });
+
+// Ruta para servir PDFs temporales de cotización
+Route::get('pdfs/temp/{filename}', function ($filename) {
+    $path = 'public/temp/' . $filename;
+    if (!Storage::exists($path)) {
+        abort(404);
+    }
+    $mime = Storage::mimeType($path);
+    return response(Storage::get($path), 200)->header('Content-Type', $mime);
+})->where('filename', '.*');
 
 require __DIR__.'/auth.php';

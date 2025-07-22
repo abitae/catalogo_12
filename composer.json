@@ -16,6 +16,7 @@
         "livewire/livewire": "^3.6",
         "livewire/volt": "^1.7",
         "maatwebsite/excel": "^3.1",
+        "mpdf/mpdf": "^8.2",
         "robsontenorio/mary": "^2.4",
         "spatie/laravel-permission": "^6.20"
     },
