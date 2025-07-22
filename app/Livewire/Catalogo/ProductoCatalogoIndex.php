@@ -369,7 +369,7 @@ class ProductoCatalogoIndex extends Component
                 'observaciones' => 'nullable|string|max:1000',
                 'isActive' => 'boolean',
             ];
-            dd($rules);
+            
             // Validar características como array de pares clave-valor
             if (is_array($this->caracteristicas)) {
                 foreach ($this->caracteristicas as $i => $car) {
@@ -419,7 +419,7 @@ class ProductoCatalogoIndex extends Component
             $messages = array_merge($messages, $this->getFileValidationMessages());
 
             $data = $this->validate($rules, $messages);
-
+            dump($data);
             // Procesar características como array asociativo
             $data['caracteristicas'] = [];
             if (is_array($this->caracteristicas)) {
