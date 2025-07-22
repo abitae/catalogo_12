@@ -431,9 +431,17 @@ class ProductoCatalogoIndex extends Component
             }
 
             // Procesar archivos usando el trait
-            $data['image'] = $this->processImage($this->tempImage, $this->image, 'productos/images');
-            $data['archivo'] = $this->processFile($this->tempArchivo, $this->archivo, 'productos/archivos');
-            $data['archivo2'] = $this->processFile($this->tempArchivo2, $this->archivo2, 'productos/archivos');
+            $data['image'] = $this->tempImage
+                ? $this->processImage($this->tempImage, 'productos/images', $this->image)
+                : $this->image;
+
+            $data['archivo'] = $this->tempArchivo
+                ? $this->processFile($this->tempArchivo, 'productos/archivos', $this->archivo)
+                : $this->archivo;
+
+            $data['archivo2'] = $this->tempArchivo2
+                ? $this->processFile($this->tempArchivo2, 'productos/archivos', $this->archivo2)
+                : $this->archivo2;
 
             if ($this->producto_id) {
                 $producto = ProductoCatalogo::findOrFail($this->producto_id);
