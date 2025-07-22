@@ -15,10 +15,11 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Mary\Traits\Toast;
+use Livewire\WithFileUploads;
 
 class ProductoCatalogoIndex extends Component
 {
-    use TableTrait, FileUploadTrait, NotificationTrait, Toast;
+    use TableTrait, FileUploadTrait, NotificationTrait, Toast, WithFileUploads;
 
     // Filtros específicos de productos
     public $brand_filter = '';
