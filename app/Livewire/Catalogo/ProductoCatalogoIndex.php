@@ -560,4 +560,14 @@ class ProductoCatalogoIndex extends Component
             array_splice($this->caracteristicas, $index, 1);
         }
     }
+
+    /**
+     * Validación para imágenes subidas
+     */
+    protected function validateImage($field)
+    {
+        return [
+            $field => 'nullable|image|max:2048', // 2MB máximo, solo imágenes
+        ];
+    }
 }
