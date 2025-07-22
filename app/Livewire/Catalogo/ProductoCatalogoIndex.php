@@ -417,7 +417,7 @@ class ProductoCatalogoIndex extends Component
 
             // Agregar mensajes de validación de archivos
             $messages = array_merge($messages, $this->getFileValidationMessages());
-
+            dd('hola error de data');
             $data = $this->validate($rules, $messages);
             dump($data);
             // Procesar características como array asociativo
