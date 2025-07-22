@@ -369,7 +369,7 @@ class ProductoCatalogoIndex extends Component
                 'observaciones' => 'nullable|string|max:1000',
                 'isActive' => 'boolean',
             ];
-
+            dd($rules);
             // Validar características como array de pares clave-valor
             if (is_array($this->caracteristicas)) {
                 foreach ($this->caracteristicas as $i => $car) {
