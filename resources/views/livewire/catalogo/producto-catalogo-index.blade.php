@@ -394,55 +394,32 @@
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <flux:label>Código</flux:label>
-                            <flux:input type="text" wire:model.live="code" placeholder="Ej: P-001" />
-                            @error('code')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
-                            @enderror
+                            <flux:input type="text" label="Código" wire:model.live="code"
+                                placeholder="Ej: P-001" />
                         </div>
                         <div>
-                            <flux:label>Código de Fábrica</flux:label>
-                            <flux:input type="text" wire:model.live="code_fabrica" placeholder="Ej: FAB-123" />
-                            @error('code_fabrica')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
-                            @enderror
+                            <flux:input type="text" label="Código de Fábrica" wire:model.live="code_fabrica"
+                                placeholder="Ej: FAB-123" />
                         </div>
                         <div>
-                            <flux:label>Código de Perú</flux:label>
-                            <flux:input type="text" wire:model.live="code_peru" placeholder="Ej: PER-456" />
-                            @error('code_peru')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
-                            @enderror
+                            <flux:input type="text" label="Código de Perú" wire:model.live="code_peru"
+                                placeholder="Ej: PER-456" />
                         </div>
                         <div class="md:col-span-2">
-                            <flux:label>Descripción</flux:label>
-                            <flux:textarea wire:model.live="description" rows="3"
+                            <flux:textarea label="Descripción" wire:model.live="description" rows="3"
                                 placeholder="Descripción breve del producto" />
-                            @error('description')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
-                            @enderror
                         </div>
                         <div>
-                            <flux:label>Garantía</flux:label>
-                            <flux:input type="text" wire:model.live="garantia" placeholder="Ej: 1 año" />
-                            @error('garantia')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
-                            @enderror
+                            <flux:input type="text" label="Garantía" wire:model.live="garantia"
+                                placeholder="Ej: 1 año" />
                         </div>
                         <div>
-                            <flux:label>Días de Entrega</flux:label>
-                            <flux:input type="number" wire:model.live="dias_entrega" placeholder="Ej: 7" />
-                            @error('dias_entrega')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
-                            @enderror
+                            <flux:input type="number" label="Días de Entrega" wire:model.live="dias_entrega"
+                                placeholder="Ej: 7" required min="1" step="1" />
                         </div>
                         <div class="md:col-span-2">
-                            <flux:label>Observaciones</flux:label>
-                            <flux:textarea wire:model.live="observaciones" rows="2"
+                            <flux:textarea label="Observaciones" wire:model.live="observaciones" rows="2"
                                 placeholder="Notas adicionales" />
-                            @error('observaciones')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
-                            @enderror
                         </div>
                     </div>
                 </div>
@@ -501,28 +478,16 @@
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <div>
-                            <flux:label>Precio de Compra</flux:label>
-                            <flux:input type="number" step="0.01" min="0" wire:model.live="price_compra"
-                                placeholder="Ej: 100.00" />
-                            @error('price_compra')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
-                            @enderror
+                            <flux:input type="number" label="Precio de Compra" step="0.01" min="0"
+                                wire:model.live="price_compra" placeholder="Ej: 100.00" />
                         </div>
                         <div>
-                            <flux:label>Precio de Venta</flux:label>
-                            <flux:input type="number" step="0.01" min="0" wire:model.live="price_venta"
-                                placeholder="Ej: 150.00" />
-                            @error('price_venta')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
-                            @enderror
+                            <flux:input type="number" label="Precio de Venta" step="0.01" min="0"
+                                wire:model.live="price_venta" placeholder="Ej: 150.00" />
                         </div>
                         <div>
-                            <flux:label>Stock</flux:label>
-                            <flux:input type="number" min="0" wire:model.live="stock"
+                            <flux:input type="number" label="Stock" min="0" wire:model.live="stock"
                                 placeholder="Ej: 10" />
-                            @error('stock')
-                                <span class="text-red-500 text-sm">{{ $message }}</span>
-                            @enderror
                         </div>
                         <div class="flex items-center mt-6">
                             <flux:checkbox wire:model.live="isActive" label="Producto activo" />
@@ -547,17 +512,12 @@
                         @endif
                         @foreach ($caracteristicasArray as $i => $car)
                             <div class="flex gap-2 items-center">
-                                <flux:input type="text" wire:model.live="caracteristicas.{{ $i }}.key"
-                                    placeholder="Clave" class="w-1/3" />
-                                @error("caracteristicas.{$i}.key")
-                                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                                @enderror
-                                <flux:input type="text"
+                                <flux:input type="text" label="Clave"
+                                    wire:model.live="caracteristicas.{{ $i }}.key" placeholder="Clave"
+                                    class="w-1/3" />
+                                <flux:input type="text" label="Valor"
                                     wire:model.live="caracteristicas.{{ $i }}.value" placeholder="Valor"
                                     class="w-1/2" />
-                                @error("caracteristicas.{$i}.value")
-                                    <span class="text-red-500 text-sm">{{ $message }}</span>
-                                @enderror
                                 <flux:button type="button" icon="trash" variant="danger" size="xs"
                                     wire:click="removeCaracteristica({{ $i }})" />
                             </div>
@@ -704,7 +664,8 @@
                             </div>
                             <div class="text-sm text-blue-800 dark:text-blue-200 space-y-1">
                                 <p>• El archivo debe tener las siguientes columnas: <strong>brand</strong>,
-                                    <strong>category</strong>, <strong>line</strong>, <strong>code</strong></p>
+                                    <strong>category</strong>, <strong>line</strong>, <strong>code</strong>
+                                </p>
                                 <p>• Las marcas, categorías y líneas deben existir previamente en el sistema</p>
                                 <p>• Los códigos de producto deben ser únicos</p>
                                 <p>• Formatos soportados: .xlsx, .xls (máximo 10MB)</p>
