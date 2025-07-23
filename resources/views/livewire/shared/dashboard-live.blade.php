@@ -83,8 +83,6 @@
             <div class="flex items-center justify-between mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-t-lg border-b border-gray-200 dark:border-gray-700">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Movimientos de Almacén</h3>
                 <div class="flex items-center gap-2">
-                    <x-mary-button size="sm" icon="o-arrow-path" color="blue"
-                        wire:click="cambiarTipoGrafico('movimientosChart')" tooltip="Cambiar tipo de gráfico" />
                     <x-mary-button size="sm" icon="o-arrow-path" color="green" tooltip="Actualizar datos" />
                     <flux:icon.chart-bar class="h-5 w-5 text-gray-400" />
                 </div>
@@ -99,157 +97,12 @@
             <div class="flex items-center justify-between mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-t-lg border-b border-gray-200 dark:border-gray-700">
                 <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Productos por Categoría</h3>
                 <div class="flex items-center gap-2">
-                    <x-mary-button size="sm" icon="o-arrow-path" color="purple"
-                        wire:click="cambiarTipoGrafico('categoriasChart')" tooltip="Cambiar tipo de gráfico" />
                     <x-mary-button size="sm" icon="o-arrow-path" color="green" tooltip="Actualizar datos" />
                     <flux:icon.chart-pie class="h-5 w-5 text-gray-400" />
                 </div>
             </div>
             <div class="h-64 p-4">
                 <x-mary-chart wire:model="categoriasChart" />
-            </div>
-        </x-mary-card>
-    </div>
-
-    <!-- Secciones Detalladas -->
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <!-- Catálogo -->
-        <x-mary-card class="border border-[var(--color-blue-200)] dark:border-[var(--color-blue-700)] shadow-lg">
-            <div class="flex items-center justify-between mb-4 p-4 bg-[var(--color-blue-50)] dark:bg-[var(--color-blue-900)]/20 rounded-t-lg border-b border-[var(--color-blue-200)] dark:border-[var(--color-blue-700)]">
-                <h3 class="text-lg font-semibold text-[var(--color-blue-600)]">Catálogo</h3>
-                <div class="flex items-center gap-2">
-                    <x-mary-button icon="o-shopping-bag" size="sm" tooltip="Ver catálogo"
-                        class="text-[var(--color-blue-500)] hover:text-[var(--color-blue-600)]" />
-                    <x-mary-button icon="o-plus" size="sm" color="blue" tooltip="Agregar producto" />
-                </div>
-            </div>
-
-            <div class="space-y-3 p-4">
-                <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Productos Activos</span>
-                    <x-mary-badge value="{{ number_format($estadisticasCatalogo['productos_activos']) }}" color="blue"
-                        tooltip="Activos" />
-                </div>
-                <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Sin Stock</span>
-                    <x-mary-badge value="{{ number_format($estadisticasCatalogo['productos_sin_stock']) }}"
-                        color="red" tooltip="Sin Stock" />
-                </div>
-                <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Stock Bajo</span>
-                    <x-mary-badge value="{{ number_format($estadisticasCatalogo['productos_stock_bajo']) }}"
-                        color="orange" />
-                </div>
-                <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Valor Total</span>
-                    <x-mary-badge value="S/ {{ number_format($estadisticasCatalogo['valor_total_inventario'], 2) }}"
-                        color="green" />
-                </div>
-            </div>
-
-            <div class="mt-4">
-                <h4 class="text-sm font-medium text-gray-700 mb-2">Top Marcas</h4>
-                <div class="space-y-2">
-                    @foreach ($estadisticasCatalogo['productos_por_marca']->take(3) as $marca)
-                        <div class="flex justify-between items-center text-xs">
-                            <span class="truncate">{{ $marca->name }}</span>
-                            <span class="font-medium">{{ $marca->products_count }}</span>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        </x-mary-card>
-
-        <!-- Almacén -->
-        <x-mary-card class="border border-[var(--color-green-200)] dark:border-[var(--color-green-700)] shadow-lg">
-            <div class="flex items-center justify-between mb-4 p-4 bg-[var(--color-green-50)] dark:bg-[var(--color-green-900)]/20 rounded-t-lg border-b border-[var(--color-green-200)] dark:border-[var(--color-green-700)]">
-                <h3 class="text-lg font-semibold text-[var(--color-green-600)]">Almacén</h3>
-                <div class="flex items-center gap-2">
-                    <x-mary-button icon="o-building-storefront" size="sm" tooltip="Ver almacén"
-                        class="text-[var(--color-green-500)] hover:text-[var(--color-green-600)]" />
-                    <x-mary-button icon="o-plus" size="sm" color="green" tooltip="Agregar producto" />
-                </div>
-            </div>
-
-            <div class="space-y-3 p-4">
-                <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Productos Activos</span>
-                    <x-mary-badge value="{{ number_format($estadisticasAlmacen['productos_activos']) }}"
-                        color="green" />
-                </div>
-                <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Con Stock</span>
-                    <x-mary-badge value="{{ number_format($estadisticasAlmacen['productos_con_stock']) }}"
-                        color="blue" />
-                </div>
-                <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Stock Bajo</span>
-                    <x-mary-badge value="{{ number_format($estadisticasAlmacen['productos_stock_bajo']) }}"
-                        color="orange" />
-                </div>
-                <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Agotados</span>
-                    <x-mary-badge value="{{ number_format($estadisticasAlmacen['productos_agotados']) }}"
-                        color="red" />
-                </div>
-            </div>
-
-            <div class="mt-4">
-                <h4 class="text-sm font-medium text-gray-700 mb-2">Almacenes</h4>
-                <div class="space-y-2">
-                    @foreach ($estadisticasAlmacen['productos_por_almacen']->take(3) as $almacen)
-                        <div class="flex justify-between items-center text-xs">
-                            <span class="truncate">{{ $almacen->nombre }}</span>
-                            <span class="font-medium">{{ $almacen->productos_count }}</span>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        </x-mary-card>
-
-        <!-- CRM -->
-        <x-mary-card class="border border-[var(--color-purple-200)] dark:border-[var(--color-purple-700)] shadow-lg">
-            <div class="flex items-center justify-between mb-4 p-4 bg-[var(--color-purple-50)] dark:bg-[var(--color-purple-900)]/20 rounded-t-lg border-b border-[var(--color-purple-200)] dark:border-[var(--color-purple-700)]">
-                <h3 class="text-lg font-semibold text-[var(--color-purple-600)]">CRM</h3>
-                <div class="flex items-center gap-2">
-                    <x-mary-button icon="o-user-group" size="sm" tooltip="Ver CRM"
-                        class="text-[var(--color-purple-500)] hover:text-[var(--color-purple-600)]" />
-                    <x-mary-button icon="o-plus" size="sm" color="purple" tooltip="Agregar oportunidad" />
-                </div>
-            </div>
-
-            <div class="space-y-3 p-4">
-                <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Oportunidades</span>
-                    <x-mary-badge value="{{ number_format($estadisticasCrm['total_oportunidades']) }}"
-                        color="purple" />
-                </div>
-                <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Abiertas</span>
-                    <x-mary-badge value="{{ number_format($estadisticasCrm['oportunidades_abiertas']) }}"
-                        color="green" />
-                </div>
-                <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Valor Total</span>
-                    <x-mary-badge value="S/ {{ number_format($estadisticasCrm['valor_total_oportunidades'], 2) }}"
-                        color="blue" />
-                </div>
-                <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-800 rounded border border-gray-200 dark:border-gray-700">
-                    <span class="text-sm text-gray-600 dark:text-gray-400">Clientes</span>
-                    <x-mary-badge value="{{ number_format($estadisticasCrm['total_clientes']) }}" color="orange" />
-                </div>
-            </div>
-
-            <div class="mt-4">
-                <h4 class="text-sm font-medium text-gray-700 mb-2">Oportunidades por Etapa</h4>
-                <div class="space-y-2">
-                    @foreach ($estadisticasCrm['oportunidades_por_etapa']->take(3) as $etapa)
-                        <div class="flex justify-between items-center text-xs">
-                            <span class="truncate">{{ $etapa->etapa }}</span>
-                            <span class="font-medium">{{ $etapa->total }}</span>
-                        </div>
-                    @endforeach
-                </div>
             </div>
         </x-mary-card>
     </div>
@@ -261,8 +114,6 @@
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold">Stock por Almacén</h3>
                 <div class="flex items-center gap-2">
-                    <x-mary-button size="sm" icon="o-arrow-path" wire:click="cambiarTipoGrafico('stockChart')"
-                        tooltip="Cambiar" />
                     <x-mary-button size="sm" icon="o-chart-bar" tooltip="Gráfico" class="text-gray-400" />
                 </div>
             </div>
@@ -276,8 +127,6 @@
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold">Oportunidades por Etapa</h3>
                 <div class="flex items-center gap-2">
-                    <x-mary-button size="sm" icon="o-arrow-path"
-                        wire:click="cambiarTipoGrafico('oportunidadesChart')" tooltip="Cambiar" />
                     <x-mary-button size="sm" icon="o-chart-pie" tooltip="Gráfico" class="text-gray-400" />
                 </div>
             </div>
@@ -348,34 +197,6 @@
         <x-mary-button class="w-full" color="purple" icon="o-user-group">
             Administrar CRM
         </x-mary-button>
-    </div>
-
-    <!-- Controles de Gráficos -->
-    <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <x-mary-card class="text-center">
-            <x-mary-button size="sm" color="blue" wire:click="cambiarTipoGrafico('movimientosChart')" spinner>
-                Cambiar Tipo Movimientos
-            </x-mary-button>
-        </x-mary-card>
-
-        <x-mary-card class="text-center">
-            <x-mary-button size="sm" color="purple" wire:click="cambiarTipoGrafico('categoriasChart')" spinner>
-                Cambiar Tipo Categorías
-            </x-mary-button>
-        </x-mary-card>
-
-        <x-mary-card class="text-center">
-            <x-mary-button size="sm" color="green" wire:click="cambiarTipoGrafico('stockChart')" spinner>
-                Cambiar Tipo Stock
-            </x-mary-button>
-        </x-mary-card>
-
-        <x-mary-card class="text-center">
-            <x-mary-button size="sm" color="orange" wire:click="cambiarTipoGrafico('oportunidadesChart')"
-                spinner>
-                Cambiar Tipo Oportunidades
-            </x-mary-button>
-        </x-mary-card>
     </div>
 
     <!-- Indicadores de Estado -->

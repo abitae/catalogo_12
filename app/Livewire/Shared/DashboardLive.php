@@ -17,36 +17,42 @@ use App\Models\Crm\MarcaCrm;
 use App\Models\Shared\Customer;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
-use Illuminate\Support\Arr;
 use Mary\Traits\Toast;
 
 class DashboardLive extends Component
 {
     use Toast;
-    // Propiedades públicas para los gráficos de MaryUI
+    // Propiedades públicas para los gráficos y estadísticas
     public array $movimientosChart = [];
     public array $categoriasChart = [];
     public array $stockChart = [];
     public array $oportunidadesChart = [];
+    public array $estadisticasCatalogo = [];
+    public array $estadisticasAlmacen = [];
+    public array $estadisticasCrm = [];
 
     public function mount()
     {
+        $this->estadisticasCatalogo = $this->obtenerEstadisticasCatalogo();
+        $this->estadisticasAlmacen = $this->obtenerEstadisticasAlmacen();
+        $this->estadisticasCrm = $this->obtenerEstadisticasCrm();
         $this->inicializarGraficos();
     }
 
     public function render()
     {
-        $estadisticasCatalogo = $this->obtenerEstadisticasCatalogo();
-        $estadisticasAlmacen = $this->obtenerEstadisticasAlmacen();
-        $estadisticasCrm = $this->obtenerEstadisticasCrm();
-
         return view('livewire.shared.dashboard-live', [
-            'estadisticasCatalogo' => $estadisticasCatalogo,
-            'estadisticasAlmacen' => $estadisticasAlmacen,
-            'estadisticasCrm' => $estadisticasCrm,
+            'estadisticasCatalogo' => $this->estadisticasCatalogo,
+            'estadisticasAlmacen' => $this->estadisticasAlmacen,
+            'estadisticasCrm' => $this->estadisticasCrm,
+            'movimientosChart' => $this->movimientosChart,
+            'categoriasChart' => $this->categoriasChart,
+            'stockChart' => $this->stockChart,
+            'oportunidadesChart' => $this->oportunidadesChart,
         ]);
     }
 
+    // Inicializa los datos de los gráficos solo una vez
     private function inicializarGraficos()
     {
         // Gráfico de Movimientos por Mes
@@ -54,7 +60,6 @@ class DashboardLive extends Component
         for ($i = 5; $i >= 0; $i--) {
             $meses->push(Carbon::now()->subMonths($i)->format('M Y'));
         }
-
         $movimientosPorMes = collect();
         foreach ($meses as $mes) {
             $fecha = Carbon::createFromFormat('M Y', $mes);
@@ -63,7 +68,6 @@ class DashboardLive extends Component
                 ->count();
             $movimientosPorMes->push($count);
         }
-
         $this->movimientosChart = [
             'type' => 'line',
             'data' => [
@@ -103,58 +107,25 @@ class DashboardLive extends Component
             ]
         ];
 
-        // Gráfico de Productos por Categoría
-        $productosPorCategoria = CategoryCatalogo::withCount('products')
+        // Gráfico de Productos por Categoría (ahora línea)
+        $productosPorCategoria = CategoryCatalogo::select('name')
+            ->selectRaw('(SELECT COUNT(*) FROM producto_catalogos WHERE producto_catalogos.category_id = category_catalogos.id AND producto_catalogos.isActive = 1) as products_count')
             ->where('isActive', true)
-            ->orderBy('products_count', 'desc')
+            ->orderByDesc('products_count')
             ->limit(5)
             ->get();
-
         $this->categoriasChart = [
-            'type' => 'doughnut',
+            'type' => 'line',
             'data' => [
                 'labels' => $productosPorCategoria->pluck('name')->toArray(),
                 'datasets' => [
                     [
                         'label' => 'Productos',
                         'data' => $productosPorCategoria->pluck('products_count')->toArray(),
-                        'backgroundColor' => [
-                            'rgb(147, 51, 234)',
-                            'rgb(59, 130, 246)',
-                            'rgb(34, 197, 94)',
-                            'rgb(251, 146, 60)',
-                            'rgb(239, 68, 68)'
-                        ]
-                    ]
-                ]
-            ],
-            'options' => [
-                'responsive' => true,
-                'maintainAspectRatio' => false,
-                'plugins' => [
-                    'legend' => [
-                        'position' => 'bottom'
-                    ]
-                ]
-            ]
-        ];
-
-        // Gráfico de Stock por Almacén
-        $stockPorAlmacen = WarehouseAlmacen::where('estado', true)
-            ->withSum('productos', 'stock_actual')
-            ->get();
-
-        $this->stockChart = [
-            'type' => 'bar',
-            'data' => [
-                'labels' => $stockPorAlmacen->pluck('nombre')->toArray(),
-                'datasets' => [
-                    [
-                        'label' => 'Stock',
-                        'data' => $stockPorAlmacen->pluck('productos_sum_stock_actual')->toArray(),
-                        'backgroundColor' => 'rgb(34, 197, 94)',
-                        'borderColor' => 'rgb(34, 197, 94)',
-                        'borderWidth' => 1
+                        'borderColor' => 'rgb(147, 51, 234)',
+                        'backgroundColor' => 'rgba(147, 51, 234, 0.1)',
+                        'tension' => 0.4,
+                        'fill' => true
                     ]
                 ]
             ],
@@ -182,27 +153,23 @@ class DashboardLive extends Component
             ]
         ];
 
-        // Gráfico de Oportunidades por Etapa
-        $oportunidadesPorEtapa = OpportunityCrm::select('etapa', DB::raw('count(*) as total'))
-            ->groupBy('etapa')
-            ->orderBy('total', 'desc')
+        // Gráfico de Stock por Almacén (ahora línea)
+        $stockPorAlmacen = WarehouseAlmacen::select('nombre')
+            ->selectRaw('(SELECT SUM(stock_actual) FROM productos_almacen WHERE productos_almacen.almacen_id = almacenes.id AND productos_almacen.estado = 1) as productos_sum_stock_actual')
+            ->where('estado', true)
             ->get();
-
-        $this->oportunidadesChart = [
-            'type' => 'pie',
+        $this->stockChart = [
+            'type' => 'line',
             'data' => [
-                'labels' => $oportunidadesPorEtapa->pluck('etapa')->toArray(),
+                'labels' => $stockPorAlmacen->pluck('nombre')->toArray(),
                 'datasets' => [
                     [
-                        'label' => 'Oportunidades',
-                        'data' => $oportunidadesPorEtapa->pluck('total')->toArray(),
-                        'backgroundColor' => [
-                            'rgb(168, 85, 247)',
-                            'rgb(59, 130, 246)',
-                            'rgb(34, 197, 94)',
-                            'rgb(251, 146, 60)',
-                            'rgb(239, 68, 68)'
-                        ]
+                        'label' => 'Stock',
+                        'data' => $stockPorAlmacen->pluck('productos_sum_stock_actual')->toArray(),
+                        'borderColor' => 'rgb(34, 197, 94)',
+                        'backgroundColor' => 'rgba(34, 197, 94, 0.1)',
+                        'tension' => 0.4,
+                        'fill' => true
                     ]
                 ]
             ],
@@ -211,51 +178,93 @@ class DashboardLive extends Component
                 'maintainAspectRatio' => false,
                 'plugins' => [
                     'legend' => [
-                        'position' => 'bottom'
+                        'display' => false
+                    ]
+                ],
+                'scales' => [
+                    'y' => [
+                        'beginAtZero' => true,
+                        'grid' => [
+                            'color' => 'rgba(0, 0, 0, 0.1)'
+                        ]
+                    ],
+                    'x' => [
+                        'grid' => [
+                            'display' => false
+                        ]
+                    ]
+                ]
+            ]
+        ];
+
+        // Gráfico de Oportunidades por Etapa (ahora línea)
+        $oportunidadesPorEtapa = OpportunityCrm::select('etapa', DB::raw('count(*) as total'))
+            ->groupBy('etapa')
+            ->orderBy('total', 'desc')
+            ->get();
+        $this->oportunidadesChart = [
+            'type' => 'line',
+            'data' => [
+                'labels' => $oportunidadesPorEtapa->pluck('etapa')->toArray(),
+                'datasets' => [
+                    [
+                        'label' => 'Oportunidades',
+                        'data' => $oportunidadesPorEtapa->pluck('total')->toArray(),
+                        'borderColor' => 'rgb(168, 85, 247)',
+                        'backgroundColor' => 'rgba(168, 85, 247, 0.1)',
+                        'tension' => 0.4,
+                        'fill' => true
+                    ]
+                ]
+            ],
+            'options' => [
+                'responsive' => true,
+                'maintainAspectRatio' => false,
+                'plugins' => [
+                    'legend' => [
+                        'display' => false
+                    ]
+                ],
+                'scales' => [
+                    'y' => [
+                        'beginAtZero' => true,
+                        'grid' => [
+                            'color' => 'rgba(0, 0, 0, 0.1)'
+                        ]
+                    ],
+                    'x' => [
+                        'grid' => [
+                            'display' => false
+                        ]
                     ]
                 ]
             ]
         ];
     }
 
-    // Método para cambiar el tipo de gráfico (ejemplo)
-    public function cambiarTipoGrafico($grafico)
-    {
-        $tipos = ['line', 'bar', 'pie', 'doughnut'];
-        $tipoActual = $this->{$grafico}['type'];
-        $nuevoTipo = $tipos[(array_search($tipoActual, $tipos) + 1) % count($tipos)];
-
-        Arr::set($this->{$grafico}, 'type', $nuevoTipo);
-
-        $this->info("Tipo de gráfico cambiado a {$nuevoTipo}");
-    }
-
+    // Métodos optimizados para obtener estadísticas
     private function obtenerEstadisticasCatalogo()
     {
         $totalProductos = ProductoCatalogo::count();
         $productosActivos = ProductoCatalogo::where('isActive', true)->count();
-        $productosInactivos = ProductoCatalogo::where('isActive', false)->count();
+        $productosInactivos = $totalProductos - $productosActivos;
         $productosSinStock = ProductoCatalogo::where('stock', 0)->count();
         $productosStockBajo = ProductoCatalogo::where('stock', '<=', 5)->where('stock', '>', 0)->count();
-
         $valorTotalInventario = ProductoCatalogo::where('isActive', true)
-            ->get()
-            ->sum(function ($producto) {
-                return $producto->stock * $producto->price_venta;
-            });
-
-        $productosPorCategoria = CategoryCatalogo::withCount('products')
+            ->select(DB::raw('SUM(stock * price_venta) as total'))
+            ->value('total') ?? 0;
+        $productosPorCategoria = CategoryCatalogo::select('name')
+            ->selectRaw('(SELECT COUNT(*) FROM producto_catalogos WHERE producto_catalogos.category_id = category_catalogos.id AND producto_catalogos.isActive = 1) as products_count')
             ->where('isActive', true)
-            ->orderBy('products_count', 'desc')
+            ->orderByDesc('products_count')
             ->limit(5)
             ->get();
-
-        $productosPorMarca = BrandCatalogo::withCount('products')
+        $productosPorMarca = BrandCatalogo::select('name')
+            ->selectRaw('(SELECT COUNT(*) FROM producto_catalogos WHERE producto_catalogos.brand_id = brand_catalogos.id AND producto_catalogos.isActive = 1) as products_count')
             ->where('isActive', true)
-            ->orderBy('products_count', 'desc')
+            ->orderByDesc('products_count')
             ->limit(5)
             ->get();
-
         return [
             'total_productos' => $totalProductos,
             'productos_activos' => $productosActivos,
@@ -275,22 +284,18 @@ class DashboardLive extends Component
         $productosConStock = ProductoAlmacen::where('stock_actual', '>', 0)->count();
         $productosStockBajo = ProductoAlmacen::whereRaw('stock_actual <= stock_minimo')->count();
         $productosAgotados = ProductoAlmacen::where('stock_actual', 0)->count();
-
-        $valorTotalInventario = ProductoAlmacen::sum(DB::raw('stock_actual * precio_unitario'));
-
+        $valorTotalInventario = ProductoAlmacen::select(DB::raw('SUM(stock_actual * precio_unitario) as total'))->value('total') ?? 0;
         $totalAlmacenes = WarehouseAlmacen::count();
         $almacenesActivos = WarehouseAlmacen::where('estado', true)->count();
-
         $movimientosRecientes = MovimientoAlmacen::with(['producto', 'almacen'])
             ->orderBy('fecha_movimiento', 'desc')
             ->limit(10)
             ->get();
-
-        $productosPorAlmacen = WarehouseAlmacen::withCount('productos')
+        $productosPorAlmacen = WarehouseAlmacen::select('nombre')
+            ->selectRaw('(SELECT COUNT(*) FROM productos_almacen WHERE productos_almacen.almacen_id = almacenes.id AND productos_almacen.estado = 1) as productos_count')
             ->where('estado', true)
-            ->orderBy('productos_count', 'desc')
+            ->orderByDesc('productos_count')
             ->get();
-
         return [
             'total_productos' => $totalProductos,
             'productos_activos' => $productosActivos,
@@ -310,29 +315,25 @@ class DashboardLive extends Component
         $totalOportunidades = OpportunityCrm::count();
         $oportunidadesAbiertas = OpportunityCrm::where('estado', 'abierta')->count();
         $oportunidadesCerradas = OpportunityCrm::where('estado', 'cerrada')->count();
-        $valorTotalOportunidades = OpportunityCrm::sum('valor');
-        $valorOportunidadesAbiertas = OpportunityCrm::where('estado', 'abierta')->sum('valor');
-
+        $valorTotalOportunidades = OpportunityCrm::select(DB::raw('SUM(valor) as total'))->value('total') ?? 0;
+        $valorOportunidadesAbiertas = OpportunityCrm::where('estado', 'abierta')->select(DB::raw('SUM(valor) as total'))->value('total') ?? 0;
         $totalContactos = ContactCrm::count();
         $totalClientes = Customer::count();
         $totalActividades = ActivityCrm::count();
-
         $oportunidadesPorEtapa = OpportunityCrm::select('etapa', DB::raw('count(*) as total'))
             ->groupBy('etapa')
             ->orderBy('total', 'desc')
             ->get();
-
-        $oportunidadesPorMarca = MarcaCrm::withCount('oportunidades')
+        $oportunidadesPorMarca = MarcaCrm::select('nombre')
+            ->selectRaw('(SELECT COUNT(*) FROM opportunities_crm WHERE opportunities_crm.marca_id = marcas_crm.id) as oportunidades_count')
             ->where('activo', true)
-            ->orderBy('oportunidades_count', 'desc')
+            ->orderByDesc('oportunidades_count')
             ->limit(5)
             ->get();
-
         $actividadesRecientes = ActivityCrm::with(['contacto', 'oportunidad'])
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
-
         return [
             'total_oportunidades' => $totalOportunidades,
             'oportunidades_abiertas' => $oportunidadesAbiertas,
