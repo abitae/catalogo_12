@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Mary\Traits\Toast;
 use Livewire\WithFileUploads;
+use Illuminate\Support\Facades\Storage;
 
 class ProductoCatalogoIndex extends Component
 {
@@ -283,14 +284,14 @@ class ProductoCatalogoIndex extends Component
     {
         try {
             // Eliminar archivos asociados
-            if ($this->producto->image && \Storage::disk('public')->exists($this->producto->image)) {
-                \Storage::disk('public')->delete($this->producto->image);
+            if ($this->producto->image && Storage::disk('public')->exists($this->producto->image)) {
+                Storage::disk('public')->delete($this->producto->image);
             }
-            if ($this->producto->archivo && \Storage::disk('public')->exists($this->producto->archivo)) {
-                \Storage::disk('public')->delete($this->producto->archivo);
+            if ($this->producto->archivo && Storage::disk('public')->exists($this->producto->archivo)) {
+                Storage::disk('public')->delete($this->producto->archivo);
             }
-            if ($this->producto->archivo2 && \Storage::disk('public')->exists($this->producto->archivo2)) {
-                \Storage::disk('public')->delete($this->producto->archivo2);
+            if ($this->producto->archivo2 && Storage::disk('public')->exists($this->producto->archivo2)) {
+                Storage::disk('public')->delete($this->producto->archivo2);
             }
 
             $this->producto->delete();
@@ -301,8 +302,8 @@ class ProductoCatalogoIndex extends Component
             $this->success('Producto eliminado correctamente');
         } catch (\Exception $e) {
             $this->error('Error al eliminar el producto: ' . $e->getMessage());
-            \Log::error('Error en eliminación de producto', [
-                'user_id' => \Auth::id(),
+            Log::error('Error en eliminación de producto', [
+                'user_id' => Auth::id(),
                 'error' => $e->getMessage(),
                 'producto_id' => $this->producto_id ?? null
             ]);
@@ -344,8 +345,8 @@ class ProductoCatalogoIndex extends Component
 
     public function removeImage()
     {
-        if ($this->image && \Storage::disk('public')->exists($this->image)) {
-            \Storage::disk('public')->delete($this->image);
+        if ($this->image && Storage::disk('public')->exists($this->image)) {
+            Storage::disk('public')->delete($this->image);
         }
         $this->image = null;
         $this->tempImage = null;
@@ -354,8 +355,8 @@ class ProductoCatalogoIndex extends Component
 
     public function removeArchivo()
     {
-        if ($this->archivo && \Storage::disk('public')->exists($this->archivo)) {
-            \Storage::disk('public')->delete($this->archivo);
+        if ($this->archivo && Storage::disk('public')->exists($this->archivo)) {
+            Storage::disk('public')->delete($this->archivo);
         }
         $this->archivo = null;
         $this->tempArchivo = null;
@@ -364,8 +365,8 @@ class ProductoCatalogoIndex extends Component
 
     public function removeArchivo2()
     {
-        if ($this->archivo2 && \Storage::disk('public')->exists($this->archivo2)) {
-            \Storage::disk('public')->delete($this->archivo2);
+        if ($this->archivo2 && Storage::disk('public')->exists($this->archivo2)) {
+            Storage::disk('public')->delete($this->archivo2);
         }
         $this->archivo2 = null;
         $this->tempArchivo2 = null;
@@ -796,8 +797,8 @@ class ProductoCatalogoIndex extends Component
      */
     public function processImage($file, $folder, $oldFile = null)
     {
-        if ($oldFile && \Storage::disk('public')->exists($oldFile)) {
-            \Storage::disk('public')->delete($oldFile);
+        if ($oldFile && Storage::disk('public')->exists($oldFile)) {
+            Storage::disk('public')->delete($oldFile);
         }
         $path = $file->store($folder, 'public');
         return $path;
@@ -808,8 +809,8 @@ class ProductoCatalogoIndex extends Component
      */
     public function processFile($file, $folder, $oldFile = null)
     {
-        if ($oldFile && \Storage::disk('public')->exists($oldFile)) {
-            \Storage::disk('public')->delete($oldFile);
+        if ($oldFile && Storage::disk('public')->exists($oldFile)) {
+            Storage::disk('public')->delete($oldFile);
         }
         $path = $file->store($folder, 'public');
         return $path;
