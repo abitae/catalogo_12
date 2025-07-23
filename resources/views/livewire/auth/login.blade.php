@@ -29,11 +29,11 @@ new #[Layout('components.layouts.auth')] class extends Component {
 
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
+        if (!Auth::attempt(['email' => $this->email, 'password' => $this->password], $this->remember)) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => __('auth.failed'),
+                'email' => __('Credenciales incorrectas'),
             ]);
         }
 
@@ -48,7 +48,7 @@ new #[Layout('components.layouts.auth')] class extends Component {
      */
     protected function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        if (!RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
             return;
         }
 
@@ -69,58 +69,62 @@ new #[Layout('components.layouts.auth')] class extends Component {
      */
     protected function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->email).'|'.request()->ip());
+        return Str::transliterate(Str::lower($this->email) . '|' . request()->ip());
     }
 }; ?>
 
-<div class="flex flex-col gap-6">
-    <x-auth-header :title="__('Log in to your account')" :description="__('Enter your email and password below to log in')" />
+<!DOCTYPE html>
+<html lang="es">
 
-    <!-- Session Status -->
-    <x-auth-session-status class="text-center" :status="session('status')" />
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Iniciar sesión - ElizaLte</title>
+    <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+</head>
 
-    <form wire:submit="login" class="flex flex-col gap-6">
-        <!-- Email Address -->
-        <flux:input
-            wire:model="email"
-            :label="__('Email address')"
-            type="email"
-            required
-            autofocus
-            autocomplete="email"
-            placeholder="email@example.com"
-        />
-
-        <!-- Password -->
-        <div class="relative">
-            <flux:input
-                wire:model="password"
-                :label="__('Password')"
-                type="password"
-                required
-                autocomplete="current-password"
-                :placeholder="__('Password')"
-            />
-
-            @if (Route::has('password.request'))
-                <flux:link class="absolute right-0 top-0 text-sm" :href="route('password.request')" wire:navigate>
-                    {{ __('Forgot your password?') }}
-                </flux:link>
-            @endif
+<body class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-blue-100 to-white">
+    <div class="w-full max-w-md mx-auto bg-white rounded-2xl shadow-xl px-8 py-10 flex flex-col items-center text-center">
+        <div class="text-4xl font-extrabold tracking-wide text-blue-600 mb-2">ElizaLte</div>
+        <div class="text-base text-slate-500 mb-6">Inicia sesión en tu cuenta</div>
+        <div class="flex justify-center mb-8">
+            <svg class="w-20 h-20" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="60" cy="60" r="56" fill="#3b82f6" fill-opacity="0.08" />
+                <circle cx="60" cy="60" r="40" fill="#3b82f6" fill-opacity="0.15" />
+                <circle cx="60" cy="60" r="24" fill="#3b82f6" fill-opacity="0.25" />
+                <circle cx="60" cy="60" r="10" fill="#3b82f6" />
+            </svg>
         </div>
-
-        <!-- Remember Me -->
-        <flux:checkbox wire:model="remember" :label="__('Remember me')" />
-
-        <div class="flex items-center justify-end">
-            <flux:button variant="primary" type="submit" class="w-full">{{ __('Log in') }}</flux:button>
+        <x-auth-session-status class="text-center mb-4" :status="session('status')" />
+        <form wire:submit="login" class="flex flex-col gap-6 w-full">
+            <div class="flex flex-col items-start">
+                <label for="email" class="mb-1 text-sm font-medium text-slate-700">Correo electrónico</label>
+                <input id="email" name="email" type="email" wire:model="email" required autofocus autocomplete="email" placeholder="correo@ejemplo.com"
+                    class="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition" />
+            </div>
+            <div class="flex flex-col items-start">
+                <label for="password" class="mb-1 text-sm font-medium text-slate-700">Contraseña</label>
+                <input id="password" name="password" type="password" wire:model="password" required autocomplete="current-password" placeholder="Contraseña"
+                    class="w-full px-4 py-3 rounded-lg border border-slate-200 focus:border-blue-400 focus:ring-2 focus:ring-blue-100 outline-none transition" />
+            </div>
+            <div class="flex items-center">
+                <input id="remember" name="remember" type="checkbox" wire:model="remember" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                <label for="remember" class="ml-2 text-sm text-slate-600">Recuérdame</label>
+            </div>
+            <div class="flex justify-center w-full mt-2">
+                <button type="submit"
+                    class="w-full px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-300">
+                    Iniciar sesión
+                </button>
+            </div>
+        </form>
+        <div class="mt-8 text-xs text-slate-400 text-center w-full">
+            Desarrollado por Abel Arana Cortez &middot; <a href="https://open9.cloud"
+                class="underline hover:text-blue-600 transition" target="_blank">open9.cloud</a>
         </div>
-    </form>
+    </div>
+</body>
 
-    @if (Route::has('register'))
-        <div class="space-x-1 text-center text-sm text-zinc-600 dark:text-zinc-400">
-            {{ __('Don\'t have an account?') }}
-            <flux:link :href="route('register')" wire:navigate>{{ __('Sign up') }}</flux:link>
-        </div>
-    @endif
-</div>
+</html>

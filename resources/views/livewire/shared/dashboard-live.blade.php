@@ -1,6 +1,6 @@
 <div class="flex h-full w-full flex-1 flex-col gap-6 p-6">
     <!-- Header con Título y Acciones -->
-    <div class="flex items-center justify-between mb-6 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+    <div class="flex items-center justify-between mb-6 p-4 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
         <div>
             <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
             <p class="text-gray-600 dark:text-gray-400">Vista general de tu sistema</p>

@@ -108,9 +108,7 @@ class CotizacionCatalogoIndex extends Component
         $this->validez_dias = 15;
         $this->user_id = 1; // Usuario por defecto
 
-        // Fechas para los filtros (vacías para mostrar todas las cotizaciones)
-        $this->fecha_desde = Carbon::now()->subDays(15)->format('Y-m-d');
-        $this->fecha_hasta = Carbon::now()->format('Y-m-d');
+        
     }
 
     public function calcularFechaVencimiento()
@@ -183,6 +181,10 @@ class CotizacionCatalogoIndex extends Component
 
     public function render()
     {
+        // Fechas para los filtros (vacías para mostrar todas las cotizaciones)
+        $this->fecha_desde = Carbon::now()->subDays(15)->format('Y-m-d');
+        $this->fecha_hasta = Carbon::now()->format('Y-m-d');
+
         $cotizaciones = CotizacionCatalogo::query()
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
@@ -216,6 +218,7 @@ class CotizacionCatalogoIndex extends Component
                 });
             })
             ->with(['brand', 'category', 'line'])
+            ->latest()
             ->orderBy('code')
             ->get();
         $lines = LineCatalogo::where('isActive', true)->orderBy('name')->get();
