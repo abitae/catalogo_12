@@ -4,11 +4,13 @@
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
             <div>
                 <flux:heading size="lg" class="text-zinc-900 dark:text-white">Catálogo de Productos</flux:heading>
-                <flux:text class="mt-2 text-zinc-600 dark:text-zinc-400">Administra y consulta los productos registrados en el sistema.</flux:text>
+                <flux:text class="mt-2 text-zinc-600 dark:text-zinc-400">Administra y consulta los productos registrados
+                    en el sistema.</flux:text>
             </div>
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 w-full lg:w-auto">
                 <div class="w-full sm:w-80">
-                    <flux:input type="search" placeholder="Buscar productos..." wire:model.live="search" icon="magnifying-glass" />
+                    <flux:input type="search" placeholder="Buscar productos..." wire:model.live="search"
+                        icon="magnifying-glass" />
                 </div>
                 <div class="flex items-center gap-3">
                     <flux:button wire:click="exportarProductos" icon="arrow-down-tray">
@@ -132,7 +134,8 @@
             </div>
             <!-- Registros por página -->
             <div>
-                <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Registros por página</flux:label>
+                <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Registros por página
+                </flux:label>
                 <flux:select wire:model.live="perPage" class="w-full mt-1">
                     @foreach ([10, 25, 50, 100, 200, 500, 1000] as $option)
                         <option value="{{ $option }}">{{ $option }}</option>
@@ -149,12 +152,14 @@
     </div>
 
     <!-- Tabla de Productos -->
-    <div class="bg-white dark:bg-zinc-800 rounded-xl overflow-hidden shadow-sm border border-zinc-200 dark:border-zinc-700">
+    <div
+        class="bg-white dark:bg-zinc-800 rounded-xl overflow-hidden shadow-sm border border-zinc-200 dark:border-zinc-700">
         <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-700/50">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Productos</h3>
                 <div class="flex items-center gap-4">
-                    <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ $productos->count() }} productos encontrados</span>
+                    <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ $productos->count() }} productos
+                        encontrados</span>
                 </div>
             </div>
         </div>
@@ -166,37 +171,48 @@
                             wire:click="sortBy('code')">
                             <div class="flex items-center space-x-2">
                                 <span>Código</span>
-                                <flux:icon name="{{ $sortField === 'code' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}" class="w-4 h-4" />
+                                <flux:icon
+                                    name="{{ $sortField === 'code' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}"
+                                    class="w-4 h-4" />
                             </div>
                         </th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                        <th
+                            class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Imagen
                         </th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors"
                             wire:click="sortBy('description')">
                             <div class="flex items-center space-x-2">
                                 <span>Descripción</span>
-                                <flux:icon name="{{ $sortField === 'description' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}" class="w-4 h-4" />
+                                <flux:icon
+                                    name="{{ $sortField === 'description' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}"
+                                    class="w-4 h-4" />
                             </div>
                         </th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                        <th
+                            class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Categorización
                         </th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors"
                             wire:click="sortBy('stock')">
                             <div class="flex items-center space-x-2">
                                 <span>Stock</span>
-                                <flux:icon name="{{ $sortField === 'stock' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}" class="w-4 h-4" />
+                                <flux:icon
+                                    name="{{ $sortField === 'stock' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}"
+                                    class="w-4 h-4" />
                             </div>
                         </th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                        <th
+                            class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Documentos
                         </th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors"
                             wire:click="sortBy('price_venta')">
                             <div class="flex items-center space-x-2">
                                 <span>Precio Venta</span>
-                                <flux:icon name="{{ $sortField === 'price_venta' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}" class="w-4 h-4" />
+                                <flux:icon
+                                    name="{{ $sortField === 'price_venta' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}"
+                                    class="w-4 h-4" />
                             </div>
                         </th>
                         <th
@@ -220,14 +236,16 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
-                                <div class="relative group">
+                                <div class="relative group w-20 h-20">
                                     <img src="{{ $producto->image ? asset('storage/' . $producto->image) : 'https://placehold.co/600x400/e2e8f0/64748b?text=Sin+Imagen' }}"
                                         alt="Imagen del producto"
-                                        class="w-16 h-16 rounded-lg object-cover border-2 border-zinc-200 dark:border-zinc-600 hover:border-blue-300 transition-colors">
+                                        class="w-20 h-20 rounded-lg object-cover border-2 border-zinc-200 dark:border-zinc-600 hover:border-blue-300 transition-colors shadow-sm cursor-pointer"
+                                        loading="lazy"
+                                        @if ($producto->image) onclick="window.open('{{ asset('storage/' . $producto->image) }}', '_blank')" @endif>
                                     @if ($producto->image)
                                         <div
-                                            class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100">
-                                            <flux:icon name="eye" class="w-6 h-6 text-white" />
+                                            class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 pointer-events-none">
+                                            <flux:icon name="eye" class="w-7 h-7 text-white" />
                                         </div>
                                     @endif
                                 </div>
@@ -378,39 +396,53 @@
                         <div>
                             <flux:label>Código</flux:label>
                             <flux:input type="text" wire:model.live="code" placeholder="Ej: P-001" />
-                            @error('code') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            @error('code')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
                         </div>
                         <div>
                             <flux:label>Código de Fábrica</flux:label>
                             <flux:input type="text" wire:model.live="code_fabrica" placeholder="Ej: FAB-123" />
-                            @error('code_fabrica') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            @error('code_fabrica')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
                         </div>
                         <div>
                             <flux:label>Código de Perú</flux:label>
                             <flux:input type="text" wire:model.live="code_peru" placeholder="Ej: PER-456" />
-                            @error('code_peru') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            @error('code_peru')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
                         </div>
-                        <div  class="md:col-span-2">
+                        <div class="md:col-span-2">
                             <flux:label>Descripción</flux:label>
                             <flux:textarea wire:model.live="description" rows="3"
                                 placeholder="Descripción breve del producto" />
-                            @error('description') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            @error('description')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
                         </div>
                         <div>
                             <flux:label>Garantía</flux:label>
                             <flux:input type="text" wire:model.live="garantia" placeholder="Ej: 1 año" />
-                            @error('garantia') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            @error('garantia')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
                         </div>
                         <div>
                             <flux:label>Días de Entrega</flux:label>
                             <flux:input type="number" wire:model.live="dias_entrega" placeholder="Ej: 7" />
-                            @error('dias_entrega') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            @error('dias_entrega')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
                         </div>
                         <div class="md:col-span-2">
                             <flux:label>Observaciones</flux:label>
                             <flux:textarea wire:model.live="observaciones" rows="2"
                                 placeholder="Notas adicionales" />
-                            @error('observaciones') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            @error('observaciones')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
                         </div>
                     </div>
                 </div>
@@ -430,7 +462,9 @@
                                     <option value="{{ $brand->id }}">{{ $brand->name }}</option>
                                 @endforeach
                             </flux:select>
-                            @error('brand_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            @error('brand_id')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
                         </div>
                         <div>
                             <flux:label>Categoría</flux:label>
@@ -440,7 +474,9 @@
                                     <option value="{{ $category->id }}">{{ $category->name }}</option>
                                 @endforeach
                             </flux:select>
-                            @error('category_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            @error('category_id')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
                         </div>
                         <div>
                             <flux:label>Línea</flux:label>
@@ -450,7 +486,9 @@
                                     <option value="{{ $line->id }}">{{ $line->name }}</option>
                                 @endforeach
                             </flux:select>
-                            @error('line_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            @error('line_id')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
                         </div>
                     </div>
                 </div>
@@ -466,19 +504,25 @@
                             <flux:label>Precio de Compra</flux:label>
                             <flux:input type="number" step="0.01" min="0" wire:model.live="price_compra"
                                 placeholder="Ej: 100.00" />
-                            @error('price_compra') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            @error('price_compra')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
                         </div>
                         <div>
                             <flux:label>Precio de Venta</flux:label>
                             <flux:input type="number" step="0.01" min="0" wire:model.live="price_venta"
                                 placeholder="Ej: 150.00" />
-                            @error('price_venta') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            @error('price_venta')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
                         </div>
                         <div>
                             <flux:label>Stock</flux:label>
                             <flux:input type="number" min="0" wire:model.live="stock"
                                 placeholder="Ej: 10" />
-                            @error('stock') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            @error('stock')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
                         </div>
                         <div class="flex items-center mt-6">
                             <flux:checkbox wire:model.live="isActive" label="Producto activo" />
@@ -505,11 +549,15 @@
                             <div class="flex gap-2 items-center">
                                 <flux:input type="text" wire:model.live="caracteristicas.{{ $i }}.key"
                                     placeholder="Clave" class="w-1/3" />
-                                @error("caracteristicas.{$i}.key") <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                @error("caracteristicas.{$i}.key")
+                                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                                @enderror
                                 <flux:input type="text"
                                     wire:model.live="caracteristicas.{{ $i }}.value" placeholder="Valor"
                                     class="w-1/2" />
-                                @error("caracteristicas.{$i}.value") <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                @error("caracteristicas.{$i}.value")
+                                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                                @enderror
                                 <flux:button type="button" icon="trash" variant="danger" size="xs"
                                     wire:click="removeCaracteristica({{ $i }})" />
                             </div>
@@ -543,7 +591,9 @@
                                 </div>
                             @endif
                             <flux:input wire:model="tempImage" type="file" accept="image/*" />
-                            @error('tempImage') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            @error('tempImage')
+                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                            @enderror
                         </div>
                     </div>
                 </div>
@@ -569,7 +619,9 @@
                                 @endif
                                 <flux:input wire:model="tempArchivo" type="file"
                                     accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" />
-                                @error('tempArchivo') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                @error('tempArchivo')
+                                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                                @enderror
                             </div>
                         </div>
                         <div>
@@ -585,7 +637,9 @@
                                 @endif
                                 <flux:input wire:model="tempArchivo2" type="file"
                                     accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" />
-                                @error('tempArchivo2') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                                @error('tempArchivo2')
+                                    <span class="text-red-500 text-sm">{{ $message }}</span>
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -622,7 +676,8 @@
         <div class="space-y-6">
             <!-- Encabezado -->
             <div class="text-center">
-                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900 mb-4">
+                <div
+                    class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900 mb-4">
                     <flux:icon name="arrow-up-tray" class="h-6 w-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <flux:heading size="lg" class="text-zinc-900 dark:text-white">Importar Productos</flux:heading>
@@ -631,26 +686,25 @@
                 </flux:text>
             </div>
 
-            @if(!$mostrarResultados)
+            @if (!$mostrarResultados)
                 <!-- Instrucciones -->
                 <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
                     <div class="flex items-start gap-3">
-                        <flux:icon name="information-circle" class="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                        <flux:icon name="information-circle"
+                            class="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
                         <div class="space-y-2 flex-1">
                             <div class="flex items-center justify-between">
-                                <flux:heading size="sm" class="text-blue-900 dark:text-blue-100">Instrucciones de Importación</flux:heading>
-                                <flux:button
-                                    wire:click="descargarEjemplo"
-                                    size="xs"
-                                    variant="outline"
+                                <flux:heading size="sm" class="text-blue-900 dark:text-blue-100">Instrucciones de
+                                    Importación</flux:heading>
+                                <flux:button wire:click="descargarEjemplo" size="xs" variant="outline"
                                     icon="arrow-down-tray"
-                                    class="text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-600 hover:bg-blue-100 dark:hover:bg-blue-800"
-                                >
+                                    class="text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-600 hover:bg-blue-100 dark:hover:bg-blue-800">
                                     Descargar Ejemplo
                                 </flux:button>
                             </div>
                             <div class="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-                                <p>• El archivo debe tener las siguientes columnas: <strong>brand</strong>, <strong>category</strong>, <strong>line</strong>, <strong>code</strong></p>
+                                <p>• El archivo debe tener las siguientes columnas: <strong>brand</strong>,
+                                    <strong>category</strong>, <strong>line</strong>, <strong>code</strong></p>
                                 <p>• Las marcas, categorías y líneas deben existir previamente en el sistema</p>
                                 <p>• Los códigos de producto deben ser únicos</p>
                                 <p>• Formatos soportados: .xlsx, .xls (máximo 10MB)</p>
@@ -664,23 +718,22 @@
                     <!-- Área de carga de archivo -->
                     <div class="space-y-4">
                         <div>
-                            <flux:label for="archivoExcel" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                            <flux:label for="archivoExcel"
+                                class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
                                 Seleccionar archivo Excel
                             </flux:label>
                             <div class="mt-2">
-                                <div class="flex justify-center px-6 pt-5 pb-6 border-2 border-zinc-300 dark:border-zinc-600 border-dashed rounded-lg hover:border-blue-400 dark:hover:border-blue-500 transition-colors">
+                                <div
+                                    class="flex justify-center px-6 pt-5 pb-6 border-2 border-zinc-300 dark:border-zinc-600 border-dashed rounded-lg hover:border-blue-400 dark:hover:border-blue-500 transition-colors">
                                     <div class="space-y-2 text-center">
-                                        <flux:icon name="document-arrow-up" class="mx-auto h-12 w-12 text-zinc-400 dark:text-zinc-500" />
+                                        <flux:icon name="document-arrow-up"
+                                            class="mx-auto h-12 w-12 text-zinc-400 dark:text-zinc-500" />
                                         <div class="flex text-sm text-zinc-600 dark:text-zinc-400">
-                                            <label for="archivoExcel" class="relative cursor-pointer bg-white dark:bg-zinc-800 rounded-md font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                            <label for="archivoExcel"
+                                                class="relative cursor-pointer bg-white dark:bg-zinc-800 rounded-md font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
                                                 <span>Subir archivo</span>
-                                                <flux:input
-                                                    id="archivoExcel"
-                                                    wire:model="archivoExcel"
-                                                    type="file"
-                                                    accept=".xlsx,.xls"
-                                                    class="sr-only"
-                                                />
+                                                <flux:input id="archivoExcel" wire:model="archivoExcel"
+                                                    type="file" accept=".xlsx,.xls" class="sr-only" />
                                             </label>
                                             <p class="pl-1">o arrastrar y soltar</p>
                                         </div>
@@ -699,10 +752,12 @@
                         </div>
 
                         <!-- Vista previa del archivo -->
-                        @if($archivoExcel)
-                            <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                        @if ($archivoExcel)
+                            <div
+                                class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
                                 <div class="flex items-center gap-3">
-                                    <flux:icon name="check-circle" class="w-5 h-5 text-green-600 dark:text-green-400" />
+                                    <flux:icon name="check-circle"
+                                        class="w-5 h-5 text-green-600 dark:text-green-400" />
                                     <div>
                                         <p class="text-sm font-medium text-green-900 dark:text-green-100">
                                             Archivo seleccionado: {{ $archivoExcel->getClientOriginalName() }}
@@ -718,21 +773,12 @@
 
                     <!-- Botones de acción -->
                     <div class="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">
-                        <flux:button
-                            wire:click="cancelarImportacion"
-                            variant="outline"
-                            icon="x-circle"
-                            class="px-4 py-2"
-                        >
+                        <flux:button wire:click="cancelarImportacion" variant="outline" icon="x-circle"
+                            class="px-4 py-2">
                             Cancelar
                         </flux:button>
-                        <flux:button
-                            type="submit"
-                            variant="primary"
-                            icon="arrow-up-tray"
-                            class="px-4 py-2"
-                            :disabled="!$archivoExcel"
-                        >
+                        <flux:button type="submit" variant="primary" icon="arrow-up-tray" class="px-4 py-2"
+                            :disabled="!$archivoExcel">
                             <span wire:loading.remove wire:target="procesarImportacion">
                                 Importar Productos
                             </span>
@@ -778,15 +824,19 @@
                     </div>
 
                     <!-- Errores detallados -->
-                    @if(!empty($importacionErrores))
-                        <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-800">
+                    @if (!empty($importacionErrores))
+                        <div
+                            class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-800">
                             <div class="flex items-center gap-2 mb-3">
-                                <flux:icon name="exclamation-triangle" class="w-5 h-5 text-red-600 dark:text-red-400" />
-                                <flux:heading size="sm" class="text-red-900 dark:text-red-100">Errores Encontrados</flux:heading>
+                                <flux:icon name="exclamation-triangle"
+                                    class="w-5 h-5 text-red-600 dark:text-red-400" />
+                                <flux:heading size="sm" class="text-red-900 dark:text-red-100">Errores
+                                    Encontrados</flux:heading>
                             </div>
                             <div class="max-h-40 overflow-y-auto space-y-2">
-                                @foreach($importacionErrores as $error)
-                                    <div class="text-sm text-red-800 dark:text-red-200 bg-red-100 dark:bg-red-800/50 rounded p-2">
+                                @foreach ($importacionErrores as $error)
+                                    <div
+                                        class="text-sm text-red-800 dark:text-red-200 bg-red-100 dark:bg-red-800/50 rounded p-2">
                                         {{ $error }}
                                     </div>
                                 @endforeach
@@ -796,11 +846,7 @@
 
                     <!-- Botones de acción -->
                     <div class="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">
-                        <flux:button
-                            wire:click="cerrarModalImportacion"
-                            variant="primary"
-                            class="px-4 py-2"
-                        >
+                        <flux:button wire:click="cerrarModalImportacion" variant="primary" class="px-4 py-2">
                             Cerrar
                         </flux:button>
                     </div>

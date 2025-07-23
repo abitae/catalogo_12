@@ -8,7 +8,6 @@ use App\Models\Catalogo\BrandCatalogo;
 use App\Models\Catalogo\CategoryCatalogo;
 use App\Models\Catalogo\LineCatalogo;
 use App\Models\Catalogo\ProductoCatalogo;
-use App\Traits\FileUploadTrait;
 use App\Traits\NotificationTrait;
 use App\Traits\TableTrait;
 use Livewire\Component;
@@ -20,7 +19,7 @@ use Livewire\WithFileUploads;
 
 class ProductoCatalogoIndex extends Component
 {
-    use TableTrait, FileUploadTrait, NotificationTrait, Toast, WithFileUploads;
+    use TableTrait, NotificationTrait, Toast, WithFileUploads;
 
     // Filtros específicos de productos
     public $brand_filter = '';
@@ -284,9 +283,15 @@ class ProductoCatalogoIndex extends Component
     {
         try {
             // Eliminar archivos asociados
-            $this->deleteFile($this->producto->image);
-            $this->deleteFile($this->producto->archivo);
-            $this->deleteFile($this->producto->archivo2);
+            if ($this->producto->image && \Storage::disk('public')->exists($this->producto->image)) {
+                \Storage::disk('public')->delete($this->producto->image);
+            }
+            if ($this->producto->archivo && \Storage::disk('public')->exists($this->producto->archivo)) {
+                \Storage::disk('public')->delete($this->producto->archivo);
+            }
+            if ($this->producto->archivo2 && \Storage::disk('public')->exists($this->producto->archivo2)) {
+                \Storage::disk('public')->delete($this->producto->archivo2);
+            }
 
             $this->producto->delete();
 
@@ -296,8 +301,8 @@ class ProductoCatalogoIndex extends Component
             $this->success('Producto eliminado correctamente');
         } catch (\Exception $e) {
             $this->error('Error al eliminar el producto: ' . $e->getMessage());
-            Log::error('Error en eliminación de producto', [
-                'user_id' => Auth::id(),
+            \Log::error('Error en eliminación de producto', [
+                'user_id' => \Auth::id(),
                 'error' => $e->getMessage(),
                 'producto_id' => $this->producto_id ?? null
             ]);
@@ -339,7 +344,9 @@ class ProductoCatalogoIndex extends Component
 
     public function removeImage()
     {
-        $this->deleteFile($this->image);
+        if ($this->image && \Storage::disk('public')->exists($this->image)) {
+            \Storage::disk('public')->delete($this->image);
+        }
         $this->image = null;
         $this->tempImage = null;
         $this->imagePreview = null;
@@ -347,7 +354,9 @@ class ProductoCatalogoIndex extends Component
 
     public function removeArchivo()
     {
-        $this->deleteFile($this->archivo);
+        if ($this->archivo && \Storage::disk('public')->exists($this->archivo)) {
+            \Storage::disk('public')->delete($this->archivo);
+        }
         $this->archivo = null;
         $this->tempArchivo = null;
         $this->archivoPreview = null;
@@ -355,7 +364,9 @@ class ProductoCatalogoIndex extends Component
 
     public function removeArchivo2()
     {
-        $this->deleteFile($this->archivo2);
+        if ($this->archivo2 && \Storage::disk('public')->exists($this->archivo2)) {
+            \Storage::disk('public')->delete($this->archivo2);
+        }
         $this->archivo2 = null;
         $this->tempArchivo2 = null;
         $this->archivo2Preview = null;
@@ -778,6 +789,30 @@ class ProductoCatalogoIndex extends Component
         $this->archivoExcel = null;
         $this->reset(['importacionResultado', 'importacionErrores', 'importacionStats', 'mostrarResultados']);
         $this->resetValidation();
+    }
+
+    /**
+     * Procesa y guarda una imagen, eliminando la anterior si existe.
+     */
+    public function processImage($file, $folder, $oldFile = null)
+    {
+        if ($oldFile && \Storage::disk('public')->exists($oldFile)) {
+            \Storage::disk('public')->delete($oldFile);
+        }
+        $path = $file->store($folder, 'public');
+        return $path;
+    }
+
+    /**
+     * Procesa y guarda un archivo, eliminando el anterior si existe.
+     */
+    public function processFile($file, $folder, $oldFile = null)
+    {
+        if ($oldFile && \Storage::disk('public')->exists($oldFile)) {
+            \Storage::disk('public')->delete($oldFile);
+        }
+        $path = $file->store($folder, 'public');
+        return $path;
     }
 
 
