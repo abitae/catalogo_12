@@ -53,7 +53,7 @@ class ProductoCatalogoIndex extends Component
     public $price_compra = '';
     public $price_venta = '';
     public $stock = '';
-    public $dias_entrega = '';
+    public $dias_entrega = 0;
     public $description = '';
     public $garantia = '';
     public $observaciones = '';
@@ -454,9 +454,9 @@ class ProductoCatalogoIndex extends Component
             $messages['tempArchivo2.max'] = 'El archivo no debe exceder los 10MB';
 
             $data = $this->validate($rules, $messages);
-            // Conversión para evitar error SQL: si dias_entrega es string vacío, ponerlo en null
-            if (isset($data['dias_entrega']) && ($data['dias_entrega'] === '' || $data['dias_entrega'] === null)) {
-                $data['dias_entrega'] = null;
+            // Conversión para evitar error SQL: si dias_entrega es string vacío o null, ponerlo en 0
+            if (empty($data['dias_entrega']) && $data['dias_entrega'] !== 0) {
+                $data['dias_entrega'] = 0;
             }
             // Procesar características como array asociativo
             $data['caracteristicas'] = [];
