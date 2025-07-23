@@ -29,6 +29,7 @@ return new class extends Migration
             $table->text('condiciones_pago')->nullable();
             $table->text('condiciones_entrega')->nullable();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('line_id')->constrained('line_catalogos')->onDelete('cascade')->nullable();
             $table->timestamps();
         });
     }

@@ -5,6 +5,8 @@ namespace App\Livewire\Crm;
 use App\Models\Crm\MarcaCrm;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Mary\Traits\Toast;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\Storage;
@@ -180,11 +182,27 @@ class MarcaCrmIndex extends Component
                     Storage::disk('public')->delete($this->marca->logo);
                 }
 
+                $marcaName = $this->marca->nombre;
                 $this->marca->delete();
+
+                Log::info('Auditoría: Marca CRM eliminada', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'delete_marca_crm',
+                    'marca_id' => $this->marca_id,
+                    'marca_name' => $marcaName,
+                    'timestamp' => now()
+                ]);
+
                 $this->success('Marca eliminada correctamente');
             }
         } catch (\Exception $e) {
             $this->error('Error al eliminar la marca: ' . $e->getMessage());
+            Log::error('Error en eliminación de marca CRM', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'marca_id' => $this->marca_id ?? null
+            ]);
         }
 
         $this->modal_form_eliminar_marca = false;
@@ -242,9 +260,33 @@ class MarcaCrmIndex extends Component
             if ($this->marca_id) {
                 $marca = MarcaCrm::find($this->marca_id);
                 $marca->update($data);
+
+                Log::info('Auditoría: Marca CRM actualizada', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'update_marca_crm',
+                    'marca_id' => $this->marca_id,
+                    'marca_name' => $data['nombre'],
+                    'marca_codigo' => $data['codigo'],
+                    'activo' => $data['activo'],
+                    'timestamp' => now()
+                ]);
+
                 $this->success('Marca actualizada correctamente');
             } else {
-                MarcaCrm::create($data);
+                $marca = MarcaCrm::create($data);
+
+                Log::info('Auditoría: Marca CRM creada', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'create_marca_crm',
+                    'marca_id' => $marca->id,
+                    'marca_name' => $data['nombre'],
+                    'marca_codigo' => $data['codigo'],
+                    'activo' => $data['activo'],
+                    'timestamp' => now()
+                ]);
+
                 $this->success('Marca creada correctamente');
             }
 
@@ -252,6 +294,11 @@ class MarcaCrmIndex extends Component
             $this->resetForm();
         } catch (\Exception $e) {
             $this->error('Error al guardar la marca: ' . $e->getMessage());
+            Log::error('Error en guardado de marca CRM', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'marca_id' => $this->marca_id ?? null
+            ]);
         }
     }
 }

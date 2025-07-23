@@ -110,9 +110,6 @@
                             Cliente
                         </th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
-                            Estado
-                        </th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Etapa
                         </th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
@@ -154,16 +151,6 @@
                                 @else
                                     <span class="text-zinc-400">Sin cliente</span>
                                 @endif
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
-                                    @if ($opportunity->estado === 'nueva') bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
-                                    @elseif($opportunity->estado === 'en_proceso') bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
-                                    @elseif($opportunity->estado === 'ganada') bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
-                                    @elseif($opportunity->estado === 'perdida') bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200
-                                    @else bg-zinc-100 text-zinc-800 dark:bg-zinc-900 dark:text-zinc-200 @endif">
-                                    {{ ucfirst(str_replace('_', ' ', $opportunity->estado)) }}
-                                </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span

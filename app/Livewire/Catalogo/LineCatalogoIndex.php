@@ -7,6 +7,8 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Mary\Traits\Toast;
 
@@ -38,6 +40,8 @@ class LineCatalogoIndex extends Component
     public $isActiveFilter = '';
 
     protected $rules = [
+        'name' => 'required|min:3|max:255',
+        'code' => 'required|min:2|max:100|unique:line_catalogos,code',
         'tempLogo' => 'nullable|image|max:20480', // 2MB max
         'tempFondo' => 'nullable|image|max:20480', // 2MB max
         'tempArchivo' => 'nullable|file|max:10240', // 10MB max
@@ -122,54 +126,55 @@ class LineCatalogoIndex extends Component
 
     public function confirmarEliminarLinea()
     {
-        $linea = LineCatalogo::findOrFail($this->linea_id);
+        try {
+            $linea = LineCatalogo::findOrFail($this->linea_id);
 
-        // Eliminar archivos si existen
-        if ($linea->logo) {
-            Storage::disk('public')->delete($linea->logo);
-        }
-        if ($linea->fondo) {
-            Storage::disk('public')->delete($linea->fondo);
-        }
-        if ($linea->archivo) {
-            Storage::disk('public')->delete($linea->archivo);
-        }
+            // Eliminar archivos si existen
+            if ($linea->logo) {
+                Storage::disk('public')->delete($linea->logo);
+            }
+            if ($linea->fondo) {
+                Storage::disk('public')->delete($linea->fondo);
+            }
+            if ($linea->archivo) {
+                Storage::disk('public')->delete($linea->archivo);
+            }
 
-        $linea->delete();
+            $linea->delete();
 
-        $this->modal_form_eliminar_linea = false;
-        $this->success('Línea eliminada correctamente');
+            $this->modal_form_eliminar_linea = false;
+            $this->success('Línea eliminada correctamente');
+
+            Log::info('Auditoría: Línea eliminada', [
+                'user_id' => Auth::id(),
+                'user_name' => Auth::user()->name ?? 'N/A',
+                'action' => 'delete_linea',
+                'linea_id' => $this->linea_id,
+                'linea_name' => $linea->name,
+                'linea_code' => $linea->code,
+                'timestamp' => now()
+            ]);
+        } catch (\Exception $e) {
+            $this->error('Error al eliminar la línea: ' . $e->getMessage());
+            Log::error('Error en eliminación de línea', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'linea_id' => $this->linea_id ?? null
+            ]);
+        }
     }
 
         public function updatedName()
     {
         // Limpiar errores previos del nombre
         $this->resetErrorBag('name');
-
-        // Generar código automáticamente basado en el nombre
-        if ($this->name) {
-            $this->code = $this->generateUniqueCode($this->name);
-
-            // Solo validar en tiempo real si estamos creando una nueva línea
-            if (!$this->linea_id) {
-                $existingLine = LineCatalogo::where('code', $this->code)->first();
-
-                if ($existingLine) {
-                    $this->addError('name', 'Ya existe una línea con este nombre. Por favor, elige un nombre diferente.');
-                }
-            }
-        }
     }
 
-    private function generateUniqueCode($name)
-    {
-        return Str::slug($name);
-    }
-
-        public function guardarLinea()
+    public function guardarLinea()
     {
         $rules = [
             'name' => 'required|min:3|max:255',
+            'code' => 'required|min:2|max:100|unique:line_catalogos,code',
             'tempLogo' => 'nullable|image|max:20480', // 2MB max
             'tempFondo' => 'nullable|image|max:20480', // 2MB max
             'tempArchivo' => 'nullable|file|max:10240', // 10MB max
@@ -179,27 +184,21 @@ class LineCatalogoIndex extends Component
             'name.required' => 'El nombre es requerido',
             'name.min' => 'El nombre debe tener al menos 3 caracteres',
             'name.max' => 'El nombre debe tener menos de 255 caracteres',
+            'code.required' => 'El código es requerido',
+            'code.min' => 'El código debe tener al menos 2 caracteres',
+            'code.max' => 'El código debe tener menos de 100 caracteres',
+            'code.unique' => 'El código ya está en uso. Por favor, elige uno diferente.',
             'tempLogo.image' => 'El logo debe ser una imagen',
             'tempFondo.image' => 'El fondo debe ser una imagen',
             'tempArchivo.file' => 'El archivo debe ser válido',
         ];
 
-        $this->validate($rules, $messages);
-
-        // Generar código automáticamente basado en el nombre
-        $this->code = $this->generateUniqueCode($this->name);
-
-        // Verificar que el código sea único
-        $existingLine = LineCatalogo::where('code', $this->code)
-            ->when($this->linea_id, function ($query) {
-                $query->where('id', '!=', $this->linea_id);
-            })
-            ->first();
-
-        if ($existingLine) {
-            $this->addError('name', 'Ya existe una línea con este nombre. Por favor, elige un nombre diferente.');
-            return;
+        // Si está editando, ignorar el código actual en la validación de único
+        if ($this->linea_id) {
+            $rules['code'] = 'required|min:2|max:100|unique:line_catalogos,code,' . $this->linea_id;
         }
+
+        $this->validate($rules, $messages);
 
         if ($this->linea_id) {
             $linea = LineCatalogo::findOrFail($this->linea_id);
@@ -244,6 +243,16 @@ class LineCatalogoIndex extends Component
 
         $this->modal_form_linea = false;
         $this->success($this->linea_id ? 'Línea actualizada correctamente' : 'Línea creada correctamente');
+
+        Log::info('Auditoría: Línea guardada', [
+            'user_id' => Auth::id(),
+            'user_name' => Auth::user()->name ?? 'N/A',
+            'action' => $this->linea_id ? 'update_linea' : 'create_linea',
+            'linea_id' => $this->linea_id,
+            'linea_name' => $this->name,
+            'linea_code' => $this->code,
+            'timestamp' => now()
+        ]);
     }
 
     public function render()

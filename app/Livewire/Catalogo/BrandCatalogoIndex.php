@@ -7,6 +7,8 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Mary\Traits\Toast;
 
 class BrandCatalogoIndex extends Component
@@ -97,74 +99,140 @@ class BrandCatalogoIndex extends Component
 
     public function confirmarEliminarMarca()
     {
-        $marca = BrandCatalogo::findOrFail($this->marca_id);
+        try {
+            $marca = BrandCatalogo::findOrFail($this->marca_id);
 
-        // Eliminar archivos si existen
-        if ($marca->logo) {
-            Storage::disk('public')->delete($marca->logo);
+            // Eliminar archivos si existen
+            if ($marca->logo) {
+                Storage::disk('public')->delete($marca->logo);
+            }
+            if ($marca->archivo) {
+                Storage::disk('public')->delete($marca->archivo);
+            }
+
+            $marca->delete();
+
+            $this->modal_form_eliminar_marca = false;
+            $this->success('Marca eliminada correctamente');
+
+            Log::info('Auditoría: Marca eliminada', [
+                'user_id' => Auth::id(),
+                'user_name' => Auth::user()->name ?? 'N/A',
+                'action' => 'delete_marca',
+                'marca_id' => $this->marca_id,
+                'marca_name' => $marca->name,
+                'timestamp' => now()
+            ]);
+        } catch (\Exception $e) {
+            $this->error('Error al eliminar la marca: ' . $e->getMessage());
+            Log::error('Error en eliminación de marca', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'marca_id' => $this->marca_id ?? null
+            ]);
         }
-        if ($marca->archivo) {
-            Storage::disk('public')->delete($marca->archivo);
-        }
-
-        $marca->delete();
-
-        $this->modal_form_eliminar_marca = false;
-        $this->success('Marca eliminada correctamente');
     }
 
     public function guardarMarca()
     {
-        $rules = [
-            'name' => 'required|min:3|max:255|unique:brand_catalogos,name,' . ($this->marca_id ?? ''),
-            'tempLogo' => 'nullable|image|max:20480', // 2MB max
-            'tempArchivo' => 'nullable|file|max:10240', // 10MB max
-        ];
+        try {
+            $rules = [
+                'name' => 'required|min:3|max:255|unique:brand_catalogos,name,' . ($this->marca_id ?? ''),
+                'tempLogo' => 'nullable|image|max:20480', // 2MB max
+                'tempArchivo' => 'nullable|file|max:10240', // 10MB max
+            ];
 
-        $messages = [
-            'name.required' => 'El nombre es requerido',
-            'name.min' => 'El nombre debe tener al menos 3 caracteres',
-            'name.max' => 'El nombre debe tener menos de 255 caracteres',
-            'name.unique' => 'Ya existe una marca con este nombre',
-            'tempLogo.image' => 'El logo debe ser una imagen',
-            'tempArchivo.file' => 'El archivo debe ser válido',
-        ];
+            $messages = [
+                'name.required' => 'El nombre es requerido',
+                'name.min' => 'El nombre debe tener al menos 3 caracteres',
+                'name.max' => 'El nombre debe tener menos de 255 caracteres',
+                'name.unique' => 'Ya existe una marca con este nombre',
+                'tempLogo.image' => 'El logo debe ser una imagen',
+                'tempArchivo.file' => 'El archivo debe ser válido',
+            ];
 
-        $this->validate($rules, $messages);
+            $this->validate($rules, $messages);
 
-        if ($this->marca_id) {
-            $marca = BrandCatalogo::findOrFail($this->marca_id);
+            if ($this->marca_id) {
+                $marca = BrandCatalogo::findOrFail($this->marca_id);
 
-            // Eliminar archivos anteriores si existen y se suben nuevos
-            if ($this->tempLogo && $marca->logo) {
-                Storage::disk('public')->delete($marca->logo);
+                // Eliminar archivos anteriores si existen y se suben nuevos
+                if ($this->tempLogo && $marca->logo) {
+                    Storage::disk('public')->delete($marca->logo);
+                }
+                if ($this->tempArchivo && $marca->archivo) {
+                    Storage::disk('public')->delete($marca->archivo);
+                }
+
+                $marca->name = $this->name;
+                $marca->isActive = $this->isActive;
+
+                // Procesar logo si se subió uno nuevo
+                if ($this->tempLogo) {
+                    $path = $this->tempLogo->store('marcas/logos', 'public');
+                    $marca->logo = $path;
+                }
+
+                // Procesar archivo si se subió uno nuevo
+                if ($this->tempArchivo) {
+                    $path = $this->tempArchivo->store('marcas/archivos', 'public');
+                    $marca->archivo = $path;
+                }
+
+                $marca->save();
+
+                Log::info('Auditoría: Marca actualizada', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'update_marca',
+                    'marca_id' => $this->marca_id,
+                    'marca_name' => $this->name,
+                    'isActive' => $this->isActive,
+                    'timestamp' => now()
+                ]);
+
+                $this->success('Marca actualizada correctamente');
+            } else {
+                $marca = new BrandCatalogo();
+                $marca->name = $this->name;
+                $marca->isActive = $this->isActive;
+
+                // Procesar logo si se subió uno nuevo
+                if ($this->tempLogo) {
+                    $path = $this->tempLogo->store('marcas/logos', 'public');
+                    $marca->logo = $path;
+                }
+
+                // Procesar archivo si se subió uno nuevo
+                if ($this->tempArchivo) {
+                    $path = $this->tempArchivo->store('marcas/archivos', 'public');
+                    $marca->archivo = $path;
+                }
+
+                $marca->save();
+
+                Log::info('Auditoría: Marca creada', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'create_marca',
+                    'marca_id' => $marca->id,
+                    'marca_name' => $this->name,
+                    'isActive' => $this->isActive,
+                    'timestamp' => now()
+                ]);
+
+                $this->success('Marca creada correctamente');
             }
-            if ($this->tempArchivo && $marca->archivo) {
-                Storage::disk('public')->delete($marca->archivo);
-            }
-        } else {
-            $marca = new BrandCatalogo();
+
+            $this->modal_form_marca = false;
+        } catch (\Exception $e) {
+            $this->error('Error al guardar la marca: ' . $e->getMessage());
+            Log::error('Error en guardado de marca', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'marca_id' => $this->marca_id ?? null
+            ]);
         }
-
-        $marca->name = $this->name;
-        $marca->isActive = $this->isActive;
-
-        // Procesar logo si se subió uno nuevo
-        if ($this->tempLogo) {
-            $path = $this->tempLogo->store('marcas/logos', 'public');
-            $marca->logo = $path;
-        }
-
-        // Procesar archivo si se subió uno nuevo
-        if ($this->tempArchivo) {
-            $path = $this->tempArchivo->store('marcas/archivos', 'public');
-            $marca->archivo = $path;
-        }
-
-        $marca->save();
-
-        $this->modal_form_marca = false;
-        $this->success($this->marca_id ? 'Marca actualizada correctamente' : 'Marca creada correctamente');
     }
 
     public function render()

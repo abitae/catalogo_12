@@ -508,8 +508,17 @@ class MovimientoAlmacenIndex extends Component
 
     public function exportarMovimientos()
     {
-        return Excel::download(new MovimientoAlmacenExport($this->movimientosExportar), 'movimientos_' . date('Y-m-d_H-i-s') . '.xlsx');
-        $this->reset(['movimientosExportar']);
+        try {
+            $this->info('Preparando exportación de movimientos...');
+
+            return Excel::download(new MovimientoAlmacenExport($this->movimientosExportar), 'movimientos_' . date('Y-m-d_H-i-s') . '.xlsx');
+        } catch (\Exception $e) {
+            $this->error('Error al exportar movimientos: ' . $e->getMessage());
+            Log::error('Error en exportación de movimientos', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     public function actualizarProductosDisponibles()

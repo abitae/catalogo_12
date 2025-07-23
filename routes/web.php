@@ -25,6 +25,7 @@ use App\Livewire\Shared\UserIndex;
 use App\Livewire\Shared\RoleIndex;
 use App\Livewire\Shared\PermissionIndex;
 use App\Livewire\Shared\ColaboradorIndex;
+use App\Livewire\Shared\LogViewerIndex;
 use App\Livewire\Pc\ImportarAcuerdoMarco;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -88,6 +89,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('configuracion/usuarios', UserIndex::class)->name('configuracion.usuarios');
     Route::get('configuracion/roles', RoleIndex::class)->name('configuracion.roles');
     Route::get('configuracion/permisos', PermissionIndex::class)->name('configuracion.permisos');
+    Route::get('configuracion/logs', LogViewerIndex::class)->name('configuracion.logs');
 
     // Rutas de Shared
     Route::get('shared/customers', CustomerIndex::class)->name('shared.customers');

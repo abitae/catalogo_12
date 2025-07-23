@@ -545,12 +545,18 @@ class ProductoAlmacenIndex extends Component
     public function exportarProductos()
     {
         try {
+            $this->info('Preparando exportación de productos...');
+
             return Excel::download(
                 new \App\Exports\ProducCatalogoExport($this->productosExportar),
                 'productos_almacen_' . date('Y-m-d_H-i-s') . '.xlsx'
             );
         } catch (\Exception $e) {
             $this->error('Error al exportar: ' . $e->getMessage());
+            Log::error('Error en exportación de productos almacén', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage()
+            ]);
         }
     }
 

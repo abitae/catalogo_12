@@ -20,4 +20,8 @@ class LineCatalogo extends Model
     {
         return $this->hasMany(ProductoCatalogo::class, 'line_id');
     }
+    public function cotizaciones()
+    {
+        return $this->hasMany(CotizacionCatalogo::class, 'line_id');
+    }
 }

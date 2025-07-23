@@ -18,9 +18,11 @@ use App\Models\Shared\Customer;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
+use Mary\Traits\Toast;
 
 class DashboardLive extends Component
 {
+    use Toast;
     // Propiedades públicas para los gráficos de MaryUI
     public array $movimientosChart = [];
     public array $categoriasChart = [];
@@ -224,6 +226,8 @@ class DashboardLive extends Component
         $nuevoTipo = $tipos[(array_search($tipoActual, $tipos) + 1) % count($tipos)];
 
         Arr::set($this->{$grafico}, 'type', $nuevoTipo);
+
+        $this->info("Tipo de gráfico cambiado a {$nuevoTipo}");
     }
 
     private function obtenerEstadisticasCatalogo()

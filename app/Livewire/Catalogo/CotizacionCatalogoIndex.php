@@ -3,6 +3,7 @@
 namespace App\Livewire\Catalogo;
 
 use App\Models\Catalogo\CotizacionCatalogo;
+use App\Models\Catalogo\LineCatalogo;
 use App\Models\Catalogo\ProductoCatalogo;
 use App\Models\Shared\Customer;
 use App\Models\User;
@@ -33,6 +34,7 @@ class CotizacionCatalogoIndex extends Component
     public $modoVisualizacion = false;
     public $pdfUrl = null;
 
+
     // Campos de la cotización
     public $codigo_cotizacion;
     public $customer_id;
@@ -46,6 +48,7 @@ class CotizacionCatalogoIndex extends Component
     public $condiciones_pago;
     public $condiciones_entrega;
     public $user_id;
+    public $line_id;
     public $estado_cotizacion = 'borrador';
 
     protected function rules()
@@ -59,6 +62,7 @@ class CotizacionCatalogoIndex extends Component
             'fecha_vencimiento' => 'nullable|date|after:fecha_cotizacion',
             'validez_dias' => 'required|integer|min:1|max:30',
             'user_id' => 'required|exists:users,id',
+            'line_id' => 'required|exists:line_catalogos,id',
         ];
 
         if (!$this->editingCotizacion) {
@@ -91,6 +95,8 @@ class CotizacionCatalogoIndex extends Component
             'user_id.exists' => 'El vendedor seleccionado no existe.',
             'codigo_cotizacion.required' => 'El código de cotización es obligatorio.',
             'codigo_cotizacion.unique' => 'El código de cotización ya existe.',
+            'line_id.required' => 'Debe seleccionar una línea.',
+            'line_id.exists' => 'La línea seleccionada no existe.',
         ];
     }
 
@@ -212,12 +218,14 @@ class CotizacionCatalogoIndex extends Component
             ->with(['brand', 'category', 'line'])
             ->orderBy('code')
             ->get();
+        $lines = LineCatalogo::where('isActive', true)->orderBy('name')->get();
 
         return view('livewire.catalogo.cotizacion-catalogo-index', [
             'cotizaciones' => $cotizaciones,
             'customers' => $customers,
             'users' => $users,
             'productos' => $productos,
+            'lines' => $lines,
         ]);
     }
 
@@ -230,19 +238,20 @@ class CotizacionCatalogoIndex extends Component
         $this->fecha_cotizacion = now()->format('Y-m-d');
         $this->fecha_vencimiento = now()->addDays(15)->format('Y-m-d');
         $this->validez_dias = 15;
+        $this->line_id = null;
     }
 
     public function editarCotizacion($id)
     {
-        $cotizacion = CotizacionCatalogo::with(['detalles.producto'])->find($id);
+        $cotizacion = CotizacionCatalogo::with(['detalles.producto', 'line'])->find($id);
         if (!$cotizacion) {
-            $this->toast('Cotización no encontrada', 'error');
+            $this->error('Cotización no encontrada');
             return;
         }
 
         // No permitir editar cotizaciones aprobadas
         if ($cotizacion->estado === 'aprobada') {
-            $this->toast('No se puede editar una cotización aprobada', 'error');
+            $this->error('No se puede editar una cotización aprobada');
             return;
         }
 
@@ -260,8 +269,8 @@ class CotizacionCatalogoIndex extends Component
         $this->condiciones_entrega = $cotizacion->condiciones_entrega;
         $this->user_id = $cotizacion->user_id;
         $this->estado_cotizacion = $cotizacion->estado;
+        $this->line_id = $cotizacion->line_id;
 
-        // Cargar detalles
         foreach ($cotizacion->detalles as $detalle) {
             $this->selectedProductos[] = $detalle->producto_id;
             $this->cantidades[$detalle->producto_id] = $detalle->cantidad;
@@ -277,18 +286,14 @@ class CotizacionCatalogoIndex extends Component
     {
         try {
             $cotizacion = CotizacionCatalogo::with(['detalles.producto', 'customer', 'user'])->find($id);
-
             if (!$cotizacion) {
-                $this->toast('Cotización no encontrada', 'error');
+                $this->error('Cotización no encontrada');
                 return;
             }
-
-            // Cargar la cotización para visualización
-            $this->cotizacionVisualizar = $cotizacion;
-            $this->modal_visualizacion = true;
-
+            // Generar el PDF automáticamente
+            $this->generarPdfCotizacion($id);
         } catch (\Exception $e) {
-            $this->toast('Error al cargar la cotización', 'error');
+            $this->error('Error al cargar la cotización');
             $this->cotizacionVisualizar = null;
         }
     }
@@ -297,7 +302,7 @@ class CotizacionCatalogoIndex extends Component
     {
         $cotizacion = \App\Models\Catalogo\CotizacionCatalogo::with(['detalles.producto', 'customer', 'user'])->find($id);
         if (!$cotizacion) {
-            $this->toast('Cotización no encontrada', 'error');
+            $this->error('Cotización no encontrada');
             return;
         }
 
@@ -340,7 +345,7 @@ class CotizacionCatalogoIndex extends Component
 
         // Verificar que no se esté editando una cotización aprobada
         if ($this->editingCotizacion && $this->editingCotizacion->estado === 'aprobada') {
-            $this->toast('No se puede editar una cotización aprobada', 'error');
+            $this->error('No se puede editar una cotización aprobada');
             return;
         }
 
@@ -358,6 +363,7 @@ class CotizacionCatalogoIndex extends Component
             'condiciones_entrega' => $this->condiciones_entrega,
             'user_id' => $this->user_id,
             'estado' => $this->estado_cotizacion,
+            'line_id' => $this->line_id,
         ];
 
         if ($this->editingCotizacion) {
@@ -384,7 +390,7 @@ class CotizacionCatalogoIndex extends Component
 
         $cotizacion->calcularTotales();
 
-        $this->toast('Cotización guardada exitosamente', 'success');
+        $this->success('Cotización guardada exitosamente');
         $this->cerrarModal();
     }
 
@@ -393,13 +399,13 @@ class CotizacionCatalogoIndex extends Component
         $cotizacion = CotizacionCatalogo::find($id);
 
         if (!$cotizacion) {
-            $this->toast('Cotización no encontrada', 'error');
+            $this->error('Cotización no encontrada');
             return;
         }
 
         // Solo permitir eliminar cotizaciones en estado borrador
         if ($cotizacion->estado !== 'borrador') {
-            $this->toast('Solo se pueden eliminar cotizaciones en estado borrador', 'error');
+            $this->error('Solo se pueden eliminar cotizaciones en estado borrador');
             return;
         }
 
@@ -408,9 +414,9 @@ class CotizacionCatalogoIndex extends Component
             $cotizacion->detalles()->delete();
             // Eliminar la cotización
             $cotizacion->delete();
-            $this->toast('Cotización eliminada correctamente', 'success');
+            $this->success('Cotización eliminada correctamente');
         } catch (\Exception $e) {
-            $this->toast('Error al eliminar la cotización', 'error');
+            $this->error('Error al eliminar la cotización');
         }
     }
 
@@ -419,34 +425,34 @@ class CotizacionCatalogoIndex extends Component
         $cotizacion = CotizacionCatalogo::with(['detalles'])->find($id);
 
         if (!$cotizacion) {
-            $this->toast('Cotización no encontrada', 'error');
+            $this->error('Cotización no encontrada');
             return;
         }
 
         // No permitir cambiar el estado de cotizaciones aprobadas
         if ($cotizacion->estado === 'aprobada') {
-            $this->toast('No se puede cambiar el estado de una cotización aprobada', 'error');
+            $this->error('No se puede cambiar el estado de una cotización aprobada');
             return;
         }
 
         // Validar que tenga al menos un producto para aprobar
         if ($estado === 'aprobada' && $cotizacion->detalles->count() === 0) {
-            $this->toast('No se puede aprobar una cotización sin productos', 'error');
+            $this->error('No se puede aprobar una cotización sin productos');
             return;
         }
 
         // Validar que el estado sea válido
         $estadosValidos = ['borrador', 'enviada', 'aprobada', 'rechazada'];
         if (!in_array($estado, $estadosValidos)) {
-            $this->toast('Estado no válido', 'error');
+            $this->error('Estado no válido');
             return;
         }
 
         try {
             $cotizacion->update(['estado' => $estado]);
-            $this->toast('Estado actualizado exitosamente', 'success');
+            $this->success('Estado actualizado exitosamente');
         } catch (\Exception $e) {
-            $this->toast('Error al actualizar el estado', 'error');
+            $this->error('Error al actualizar el estado');
         }
     }
 
@@ -469,6 +475,9 @@ class CotizacionCatalogoIndex extends Component
             // El precio de venta ya incluye IGV
             $producto = ProductoCatalogo::find($productoId);
             $this->precios[$productoId] = $producto ? $producto->price_venta : 0;
+            $this->success('Producto agregado a la cotización');
+        } else {
+            $this->warning('El producto ya está en la cotización');
         }
         $this->showProductosList = false;
         $this->searchProducto = '';
@@ -482,6 +491,7 @@ class CotizacionCatalogoIndex extends Component
             unset($this->cantidades[$productoId]);
             unset($this->precios[$productoId]);
             unset($this->observaciones[$productoId]);
+            $this->info('Producto removido de la cotización');
         }
     }
 
@@ -517,7 +527,7 @@ class CotizacionCatalogoIndex extends Component
             'cliente_telefono', 'observaciones_general', 'fecha_cotizacion',
             'fecha_vencimiento', 'validez_dias', 'condiciones_pago',
             'condiciones_entrega', 'user_id', 'estado_cotizacion',
-            'customer_filter', 'fecha_desde', 'fecha_hasta'
+            'customer_filter', 'fecha_desde', 'fecha_hasta', 'line_id'
         ]);
         $this->resetErrorBag();
     }
@@ -529,6 +539,7 @@ class CotizacionCatalogoIndex extends Component
         ]);
         $this->fecha_desde = Carbon::now()->subDays(15)->format('Y-m-d');
         $this->fecha_hasta = Carbon::now()->format('Y-m-d');
+        $this->info('Filtros limpiados correctamente');
     }
 
     public function imprimirCotizacion()

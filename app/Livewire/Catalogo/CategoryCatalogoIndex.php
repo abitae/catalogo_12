@@ -7,6 +7,8 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Mary\Traits\Toast;
 
 class CategoryCatalogoIndex extends Component
@@ -119,88 +121,90 @@ class CategoryCatalogoIndex extends Component
 
     public function confirmarEliminarCategoria()
     {
-        $categoria = CategoryCatalogo::findOrFail($this->categoria_id);
+        try {
+            $categoria = CategoryCatalogo::findOrFail($this->categoria_id);
+            $categoria->delete();
 
-        // Eliminar archivos si existen
-        if ($categoria->logo) {
-            Storage::disk('public')->delete($categoria->logo);
-        }
-        if ($categoria->fondo) {
-            Storage::disk('public')->delete($categoria->fondo);
-        }
-        if ($categoria->archivo) {
-            Storage::disk('public')->delete($categoria->archivo);
-        }
+            $this->modal_form_eliminar_categoria = false;
+            $this->reset(['categoria_id']);
 
-        $categoria->delete();
+            $this->success('Categoría eliminada correctamente');
 
-        $this->modal_form_eliminar_categoria = false;
-        $this->success('Categoría eliminada correctamente');
+            Log::info('Auditoría: Categoría eliminada', [
+                'user_id' => Auth::id(),
+                'user_name' => Auth::user()->name ?? 'N/A',
+                'action' => 'delete_categoria',
+                'categoria_id' => $this->categoria_id,
+                'categoria_name' => $categoria->name,
+                'timestamp' => now()
+            ]);
+        } catch (\Exception $e) {
+            $this->error('Error al eliminar la categoría: ' . $e->getMessage());
+            Log::error('Error en eliminación de categoría', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'categoria_id' => $this->categoria_id ?? null
+            ]);
+        }
     }
 
     public function guardarCategoria()
     {
-        $rules = [
-            'name' => 'required|min:3|max:255|unique:category_catalogos,name,' . ($this->categoria_id ?? ''),
-            'tempLogo' => 'nullable|image|max:20480', // 2MB max
-            'tempFondo' => 'nullable|image|max:20480', // 2MB max
-            'tempArchivo' => 'nullable|file|max:10240', // 10MB max
-        ];
+        try {
+            $data = $this->validate();
 
-        $messages = [
-            'name.required' => 'El nombre es requerido',
-            'name.min' => 'El nombre debe tener al menos 3 caracteres',
-            'name.max' => 'El nombre debe tener menos de 255 caracteres',
-            'name.unique' => 'Ya existe una categoría con este nombre',
-            'tempLogo.image' => 'El logo debe ser una imagen',
-            'tempFondo.image' => 'El fondo debe ser una imagen',
-            'tempArchivo.file' => 'El archivo debe ser válido',
-        ];
-
-        $this->validate($rules, $messages);
-
-        if ($this->categoria_id) {
-            $categoria = CategoryCatalogo::findOrFail($this->categoria_id);
-
-            // Eliminar archivos anteriores si existen y se suben nuevos
-            if ($this->tempLogo && $categoria->logo) {
-                Storage::disk('public')->delete($categoria->logo);
+            // Procesar archivos si se subieron
+            if ($this->tempLogo) {
+                $data['logo'] = $this->tempLogo->store('categorias/logos', 'public');
             }
-            if ($this->tempFondo && $categoria->fondo) {
-                Storage::disk('public')->delete($categoria->fondo);
+            if ($this->tempFondo) {
+                $data['fondo'] = $this->tempFondo->store('categorias/fondos', 'public');
             }
-            if ($this->tempArchivo && $categoria->archivo) {
-                Storage::disk('public')->delete($categoria->archivo);
+            if ($this->tempArchivo) {
+                $data['archivo'] = $this->tempArchivo->store('categorias/archivos', 'public');
             }
-        } else {
-            $categoria = new CategoryCatalogo();
+
+            if ($this->categoria_id) {
+                $categoria = CategoryCatalogo::findOrFail($this->categoria_id);
+                $categoria->update($data);
+
+                Log::info('Auditoría: Categoría actualizada', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'update_categoria',
+                    'categoria_id' => $this->categoria_id,
+                    'categoria_name' => $data['name'],
+                    'isActive' => $data['isActive'],
+                    'timestamp' => now()
+                ]);
+
+                $this->success('Categoría actualizada correctamente');
+            } else {
+                $categoria = CategoryCatalogo::create($data);
+
+                Log::info('Auditoría: Categoría creada', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'create_categoria',
+                    'categoria_id' => $categoria->id,
+                    'categoria_name' => $data['name'],
+                    'isActive' => $data['isActive'],
+                    'timestamp' => now()
+                ]);
+
+                $this->success('Categoría creada correctamente');
+            }
+
+            $this->modal_form_categoria = false;
+            $this->reset(['name', 'isActive', 'tempLogo', 'tempFondo', 'tempArchivo', 'logoPreview', 'fondoPreview', 'categoria_id']);
+        } catch (\Exception $e) {
+            $this->error('Error al guardar la categoría: ' . $e->getMessage());
+            Log::error('Error en guardado de categoría', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'categoria_id' => $this->categoria_id ?? null
+            ]);
         }
-
-        $categoria->name = $this->name;
-        $categoria->isActive = $this->isActive;
-
-        // Procesar logo si se subió uno nuevo
-        if ($this->tempLogo) {
-            $path = $this->tempLogo->store('categorias/logos', 'public');
-            $categoria->logo = $path;
-        }
-
-        // Procesar fondo si se subió uno nuevo
-        if ($this->tempFondo) {
-            $path = $this->tempFondo->store('categorias/fondos', 'public');
-            $categoria->fondo = $path;
-        }
-
-        // Procesar archivo si se subió uno nuevo
-        if ($this->tempArchivo) {
-            $path = $this->tempArchivo->store('categorias/archivos', 'public');
-            $categoria->archivo = $path;
-        }
-
-        $categoria->save();
-
-        $this->modal_form_categoria = false;
-        $this->success($this->categoria_id ? 'Categoría actualizada correctamente' : 'Categoría creada correctamente');
     }
 
     public function render()

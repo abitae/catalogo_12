@@ -9,6 +9,8 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Mary\Traits\Toast;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class ProductoAcuerdoMarcoIndex extends Component
 {
@@ -84,15 +86,14 @@ class ProductoAcuerdoMarcoIndex extends Component
 
     public function verDetalleProducto($id)
     {
-        $this->producto = ProductoAcuerdoMarco::find($id);
-
-        if (!$this->producto) {
-            $this->toast('Producto no encontrado', 'error');
+        $producto = ProductoAcuerdoMarco::find($id);
+        if (!$producto) {
+            $this->error('Producto no encontrado');
             return;
         }
 
         // Obtener todos los productos de la misma orden electrónica
-        $this->productosOrden = ProductoAcuerdoMarco::where('orden_electronica', $this->producto->orden_electronica)
+        $this->productosOrden = ProductoAcuerdoMarco::where('orden_electronica', $producto->orden_electronica)
             ->orderBy('descripcion_ficha_producto')
             ->get();
 
@@ -118,16 +119,27 @@ class ProductoAcuerdoMarcoIndex extends Component
             'cod_acuerdo_marco_filter'
         ]);
         $this->resetPage();
+        $this->info('Filtros limpiados correctamente');
     }
 
     public function exportarProductos()
     {
-        $productos = $this->getProductosQuery()->get();
+        try {
+            $this->info('Preparando exportación de productos...');
 
-        return Excel::download(
-            new ProductoAcuerdoMarcoExport($productos),
-            'productos_acuerdo_marco_' . date('Y-m-d_H-i-s') . '.xlsx'
-        );
+            $productos = $this->getProductosQuery()->get();
+
+            return Excel::download(
+                new ProductoAcuerdoMarcoExport($productos),
+                'productos_acuerdo_marco_' . date('Y-m-d_H-i-s') . '.xlsx'
+            );
+        } catch (\Exception $e) {
+            $this->error('Error al exportar productos: ' . $e->getMessage());
+            Log::error('Error en exportación de productos acuerdo marco', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     private function getProductosQuery()

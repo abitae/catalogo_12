@@ -76,6 +76,9 @@
                             Fecha</th>
                         <th
                             class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                            Línea</th>
+                        <th
+                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                             Total</th>
                         <th
                             class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
@@ -96,6 +99,8 @@
                                 {{ $cotizacion->cliente_nombre }}</td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
                                 {{ $cotizacion->fecha_cotizacion->format('d/m/Y') }}</td>
+                            <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
+                                {{ $cotizacion->line?->name ?? '-' }}</td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300 font-semibold">S/
                                 {{ number_format($cotizacion->total, 2) }}</td>
                             <td class="px-6 py-4 text-sm">
@@ -113,12 +118,12 @@
                             </td>
                             <td class="px-6 py-4 text-sm">
                                 <div class="flex items-center gap-2">
+                                    <flux:button wire:click="visualizarCotizacion({{ $cotizacion->id }})"
+                                        size="xs" icon="eye" title="Visualizar cotización aprobada">
+                                    </flux:button>
                                     @if ($cotizacion->estado !== 'aprobada')
-                                        <flux:button wire:click="editarCotizacion({{ $cotizacion->id }})" size="xs"
-                                            variant="primary" icon="pencil" title="Editar cotización"></flux:button>
-                                    @else
-                                        <flux:button wire:click="visualizarCotizacion({{ $cotizacion->id }})"
-                                            size="xs" icon="eye" title="Visualizar cotización aprobada">
+                                        <flux:button wire:click="editarCotizacion({{ $cotizacion->id }})"
+                                            size="xs" variant="primary" icon="pencil" title="Editar cotización">
                                         </flux:button>
                                     @endif
                                     @if ($cotizacion->estado === 'borrador')
@@ -236,18 +241,31 @@
                                 </flux:select>
                             </div>
                             <div>
+                                <flux:label class="text-xs font-medium">Línea</flux:label>
+                                <flux:select wire:model.live="line_id" size="sm">
+                                    <option value="">Seleccionar línea</option>
+                                    @forelse ($lines as $line)
+                                        <option value="{{ $line->id }}">{{ $line->name }}</option>
+                                    @empty
+                                        <option value="">No hay líneas disponibles</option>
+                                    @endforelse
+                                </flux:select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                            <div>
                                 <flux:label class="text-xs font-medium">Fecha Cotización</flux:label>
                                 <flux:input type="date" wire:model.live="fecha_cotizacion"
                                     wire:change="calcularFechaVencimiento" size="sm" />
                             </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <flux:label class="text-xs font-medium">Validez (días)</flux:label>
                                 <flux:input type="number" wire:model.live="validez_dias"
                                     wire:change="calcularFechaVencimiento" min="1" max="30"
                                     size="sm" />
                             </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 mb-3">
                             <div>
                                 <flux:label class="text-xs font-medium">Fecha Vencimiento</flux:label>
                                 <flux:input type="date" wire:model.live="fecha_vencimiento"
@@ -483,41 +501,22 @@
     </flux:modal>
 
     <!-- Modal de Visualización de Cotización - Formato A4 -->
-    <flux:modal wire:model="modal_visualizacion" class="w-full max-w-5xl h-full">
+    <flux:modal wire:model="modal_visualizacion" class="w-full max-w-5xl">
         @if ($pdfUrl)
             <div class="flex flex-col items-center justify-center h-[80vh]">
-                <iframe src="{{ $pdfUrl }}" class="w-full h-full min-h-[70vh] rounded shadow" frameborder="0"></iframe>
+                <iframe src="{{ $pdfUrl }}" class="w-full h-full min-h-[70vh] rounded shadow"
+                    frameborder="0"></iframe>
                 <div class="mt-4 flex justify-end w-full">
                     <flux:button wire:click="cerrarModalVisualizacion" variant="outline">
                         Cerrar
                     </flux:button>
                 </div>
             </div>
-        @elseif ($cotizacionVisualizar)
-            <div class="flex items-center justify-center h-64">
-                <div class="text-center">
-                    <flux:icon name="printer" class="w-16 h-16 mx-auto mb-4 text-yellow-500" />
-                    <p class="text-lg font-medium text-gray-700">¿Desea generar el PDF de la cotización?</p>
-                    <p class="text-sm text-gray-500 mt-2">Presione el botón para generar y visualizar el PDF.</p>
-                    <div class="mt-4 flex justify-center gap-2">
-                        <flux:button wire:click="cerrarModalVisualizacion" variant="outline">
-                            Cancelar
-                        </flux:button>
-                        <flux:button icon="printer" variant="primary" class="bg-blue-600 hover:bg-blue-700" wire:click="generarPdfCotizacion({{ $cotizacionVisualizar->id }})">
-                            Generar PDF
-                        </flux:button>
-                    </div>
-                </div>
-            </div>
         @else
             <div class="flex items-center justify-center h-64">
                 <div class="text-center">
-                    <flux:icon name="exclamation-triangle" class="w-16 h-16 mx-auto mb-4 text-yellow-500" />
-                    <p class="text-lg font-medium text-gray-700">No se pudo cargar la cotización</p>
-                    <p class="text-sm text-gray-500 mt-2">La cotización solicitada no está disponible</p>
-                    <flux:button wire:click="cerrarModalVisualizacion" class="mt-4" variant="primary">
-                        Cerrar
-                    </flux:button>
+                    <flux:icon name="printer" class="w-16 h-16 mx-auto mb-4 text-yellow-500" />
+                    <p class="text-lg font-medium text-gray-700">Generando PDF de la cotización...</p>
                 </div>
             </div>
         @endif

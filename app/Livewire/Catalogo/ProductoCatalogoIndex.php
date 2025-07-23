@@ -3,6 +3,7 @@
 namespace App\Livewire\Catalogo;
 
 use App\Exports\ProducCatalogoExport;
+use App\Imports\ProductCatalogoImport;
 use App\Models\Catalogo\BrandCatalogo;
 use App\Models\Catalogo\CategoryCatalogo;
 use App\Models\Catalogo\LineCatalogo;
@@ -35,7 +36,13 @@ class ProductoCatalogoIndex extends Component
     public $producto_id = '';
     public $producto = null;
     public $productosExportar = null;
-
+    public $modal_form_importar_productos = false;
+    public $archivoExcel = null;
+    // Variables para mostrar resultados de importación
+    public $importacionResultado = null;
+    public $importacionErrores = [];
+    public $importacionStats = [];
+    public $mostrarResultados = false;
     // Variables para el formulario
     public $brand_id = '';
     public $category_id = '';
@@ -95,7 +102,7 @@ class ProductoCatalogoIndex extends Component
         ]);
         $this->sortField = 'code';
         $this->resetPage();
-        $this->info('Filtros limpiados');
+        $this->info('Filtros limpiados correctamente');
     }
 
     public function render()
@@ -286,15 +293,22 @@ class ProductoCatalogoIndex extends Component
             $this->modal_form_eliminar_producto = false;
             $this->reset(['producto_id', 'producto']);
 
-            $this->handleSuccess('Producto eliminado correctamente', 'eliminación de producto');
+            $this->success('Producto eliminado correctamente');
         } catch (\Exception $e) {
-            $this->handleError($e, 'eliminación de producto');
+            $this->error('Error al eliminar el producto: ' . $e->getMessage());
+            Log::error('Error en eliminación de producto', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'producto_id' => $this->producto_id ?? null
+            ]);
         }
     }
 
     public function updatedTempImage()
     {
-        $this->validate($this->validateImage('tempImage'));
+        $this->validate([
+            'tempImage' => 'nullable|image|max:2048', // 2MB máximo, solo imágenes
+        ]);
 
         if ($this->tempImage) {
             $this->imagePreview = $this->tempImage->temporaryUrl();
@@ -303,7 +317,9 @@ class ProductoCatalogoIndex extends Component
 
     public function updatedTempArchivo()
     {
-        $this->validate($this->validateFile('tempArchivo'));
+        $this->validate([
+            'tempArchivo' => 'nullable|file|max:10240', // 10MB máximo para archivos
+        ]);
 
         if ($this->tempArchivo) {
             $this->archivoPreview = $this->tempArchivo->getClientOriginalName();
@@ -312,7 +328,9 @@ class ProductoCatalogoIndex extends Component
 
     public function updatedTempArchivo2()
     {
-        $this->validate($this->validateFile('tempArchivo2'));
+        $this->validate([
+            'tempArchivo2' => 'nullable|file|max:10240', // 10MB máximo para archivos
+        ]);
 
         if ($this->tempArchivo2) {
             $this->archivo2Preview = $this->tempArchivo2->getClientOriginalName();
@@ -369,7 +387,7 @@ class ProductoCatalogoIndex extends Component
                 'observaciones' => 'nullable|string|max:1000',
                 'isActive' => 'boolean',
             ];
-            
+
             // Validar características como array de pares clave-valor
             if (is_array($this->caracteristicas)) {
                 foreach ($this->caracteristicas as $i => $car) {
@@ -379,9 +397,9 @@ class ProductoCatalogoIndex extends Component
             }
 
             // Agregar validaciones de archivos
-            $rules = array_merge($rules, $this->validateImage('tempImage'));
-            $rules = array_merge($rules, $this->validateFile('tempArchivo'));
-            $rules = array_merge($rules, $this->validateFile('tempArchivo2'));
+            $rules['tempImage'] = 'nullable|image|max:2048'; // 2MB máximo, solo imágenes
+            $rules['tempArchivo'] = 'nullable|file|max:10240'; // 10MB máximo para archivos
+            $rules['tempArchivo2'] = 'nullable|file|max:10240'; // 10MB máximo para archivos
 
             $messages = [
                 'brand_id.required' => 'Por favor, seleccione una marca',
@@ -416,10 +434,14 @@ class ProductoCatalogoIndex extends Component
             }
 
             // Agregar mensajes de validación de archivos
-            $messages = array_merge($messages, $this->getFileValidationMessages());
-            dd('hola error de data');
+            $messages['tempImage.image'] = 'El archivo debe ser una imagen válida (JPG, PNG, GIF, SVG)';
+            $messages['tempImage.max'] = 'La imagen no debe exceder los 2MB';
+            $messages['tempArchivo.file'] = 'El archivo debe ser un documento válido';
+            $messages['tempArchivo.max'] = 'El archivo no debe exceder los 10MB';
+            $messages['tempArchivo2.file'] = 'El archivo debe ser un documento válido';
+            $messages['tempArchivo2.max'] = 'El archivo no debe exceder los 10MB';
+
             $data = $this->validate($rules, $messages);
-            dump($data);
             // Procesar características como array asociativo
             $data['caracteristicas'] = [];
             if (is_array($this->caracteristicas)) {
@@ -523,36 +545,139 @@ class ProductoCatalogoIndex extends Component
             ]);
             $this->resetValidation();
 
-            $this->handleSuccess($message, $context);
+            if ($this->producto_id) {
+                $this->success('Producto actualizado correctamente');
+            } else {
+                $this->success('Producto creado correctamente');
+            }
         } catch (\Illuminate\Validation\ValidationException $e) {
             // Los errores de validación se manejan automáticamente por Livewire
             throw $e;
         } catch (\Exception $e) {
-            $this->handleError($e, 'guardado de producto');
+            $this->error('Error al guardar el producto: ' . $e->getMessage());
+            Log::error('Error en guardado de producto', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'producto_id' => $this->producto_id ?? null
+            ]);
         }
     }
 
     public function exportarProductos()
     {
         try {
+            $this->info('Preparando exportación de productos...');
+
             return Excel::download(
                 new ProducCatalogoExport($this->productosExportar),
                 'productos_' . date('Y-m-d_H-i-s') . '.xlsx'
             );
         } catch (\Exception $e) {
-            $this->handleError($e, 'exportación de productos');
+            $this->error('Error al exportar productos: ' . $e->getMessage());
+            Log::error('Error en exportación de productos', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage()
+            ]);
         }
     }
+    public function importarProductos()
+    {
+        $this->modal_form_importar_productos = true;
+    }
+    public function procesarImportacion()
+    {
+        try {
+            $this->validate([
+                'archivoExcel' => 'required|file|mimes:xlsx,xls|max:10240',
+            ], [
+                'archivoExcel.required' => 'Por favor, seleccione un archivo Excel',
+                'archivoExcel.file' => 'El archivo debe ser válido',
+                'archivoExcel.mimes' => 'El archivo debe ser un Excel (.xlsx, .xls)',
+                'archivoExcel.max' => 'El archivo no debe exceder los 10MB',
+            ]);
 
+            // Mostrar toast de inicio
+            $this->info('Iniciando importación de productos...');
+
+            // Procesar la importación
+            $import = new ProductCatalogoImport;
+            Excel::import($import, $this->archivoExcel);
+
+            // Obtener estadísticas de la importación
+            $stats = $import->getImportStats();
+            $importados = $stats['imported'];
+            $omitidos = $stats['skipped'];
+            $errores = $stats['errors'];
+
+            // Guardar resultados para mostrar en el modal
+            $this->importacionStats = $stats;
+            $this->importacionErrores = $errores;
+            $this->mostrarResultados = true;
+
+            // Mostrar resultado
+            if ($importados > 0 && empty($errores)) {
+                $this->importacionResultado = 'success';
+                $this->success("Importación completada exitosamente. Se importaron {$importados} productos.");
+            } elseif ($importados > 0 && !empty($errores)) {
+                $this->importacionResultado = 'warning';
+                $mensaje = "Importación completada con advertencias. Se importaron {$importados} productos.";
+                if ($omitidos > 0) {
+                    $mensaje .= " Se omitieron {$omitidos} filas.";
+                }
+                $this->warning($mensaje);
+
+                // Log de errores para debugging
+                Log::warning('Advertencias en importación de productos', [
+                    'user_id' => Auth::id(),
+                    'importados' => $importados,
+                    'omitidos' => $omitidos,
+                    'errores' => $errores,
+                    'archivo' => $this->archivoExcel ? $this->archivoExcel->getClientOriginalName() : 'N/A'
+                ]);
+            } else {
+                $this->importacionResultado = 'error';
+                $this->error("No se importó ningún producto. Verifique el formato del archivo.");
+
+                Log::error('Fallo en importación de productos', [
+                    'user_id' => Auth::id(),
+                    'stats' => $stats,
+                    'archivo' => $this->archivoExcel ? $this->archivoExcel->getClientOriginalName() : 'N/A'
+                ]);
+            }
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $this->importacionResultado = 'error';
+            $this->importacionErrores = [$e->getMessage()];
+            $this->mostrarResultados = true;
+            $this->error('Error de validación: ' . $e->getMessage());
+            throw $e;
+        } catch (\Exception $e) {
+            $this->importacionResultado = 'error';
+            $this->importacionErrores = [$e->getMessage()];
+            $this->mostrarResultados = true;
+            $this->error('Error durante la importación: ' . $e->getMessage());
+            Log::error('Error en importación de productos', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'archivo' => $this->archivoExcel ? $this->archivoExcel->getClientOriginalName() : 'N/A'
+            ]);
+        }
+    }
     public function toggleProductStatus($id)
     {
         try {
             $producto = ProductoCatalogo::findOrFail($id);
             $producto->update(['isActive' => !$producto->isActive]);
 
-            $this->handleSuccess('Estado del producto actualizado correctamente', 'cambio de estado');
+            $estado = $producto->isActive ? 'activado' : 'desactivado';
+            $this->success("Estado del producto actualizado correctamente. Producto {$estado}.");
         } catch (\Exception $e) {
-            $this->handleError($e, 'cambio de estado');
+            $this->error('Error al cambiar el estado del producto: ' . $e->getMessage());
+            Log::error('Error en cambio de estado de producto', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'producto_id' => $id
+            ]);
         }
     }
 
@@ -569,13 +694,91 @@ class ProductoCatalogoIndex extends Component
         }
     }
 
-    /**
-     * Validación para imágenes subidas
-     */
-    protected function validateImage($field)
+    public function descargarEjemplo()
     {
-        return [
-            $field => 'nullable|image|max:2048', // 2MB máximo, solo imágenes
-        ];
+        try {
+            // Crear datos de ejemplo
+            $datos = [
+                [
+                    'brand' => 'Marca Ejemplo',
+                    'category' => 'Categoría Ejemplo',
+                    'line' => 'Línea Ejemplo',
+                    'code' => 'PROD001',
+                    'code_fabrica' => 'FAB001',
+                    'code_peru' => 'PER001',
+                    'price_compra' => 100.00,
+                    'price_venta' => 150.00,
+                    'stock' => 50,
+                    'dias_entrega' => 3,
+                    'description' => 'Producto de ejemplo para importación',
+                    'garantia' => '1 año',
+                    'observaciones' => 'Observaciones del producto'
+                ],
+                [
+                    'brand' => 'Otra Marca',
+                    'category' => 'Otra Categoría',
+                    'line' => 'Otra Línea',
+                    'code' => 'PROD002',
+                    'code_fabrica' => 'FAB002',
+                    'code_peru' => 'PER002',
+                    'price_compra' => 200.00,
+                    'price_venta' => 300.00,
+                    'stock' => 25,
+                    'dias_entrega' => 5,
+                    'description' => 'Segundo producto de ejemplo',
+                    'garantia' => '6 meses',
+                    'observaciones' => 'Más observaciones'
+                ]
+            ];
+
+            // Crear el archivo Excel usando la librería Maatwebsite Excel
+            $export = new class($datos) implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings {
+                private $datos;
+
+                public function __construct($datos) {
+                    $this->datos = $datos;
+                }
+
+                public function array(): array {
+                    return $this->datos;
+                }
+
+                public function headings(): array {
+                    return [
+                        'brand', 'category', 'line', 'code', 'code_fabrica', 'code_peru',
+                        'price_compra', 'price_venta', 'stock', 'dias_entrega',
+                        'description', 'garantia', 'observaciones'
+                    ];
+                }
+            };
+
+            return Excel::download($export, 'ejemplo_importacion_productos.xlsx');
+
+        } catch (\Exception $e) {
+            $this->error('Error al generar el archivo de ejemplo');
+            Log::error('Error al generar archivo de ejemplo', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage()
+            ]);
+        }
     }
+
+    public function cancelarImportacion()
+    {
+        $this->modal_form_importar_productos = false;
+        $this->archivoExcel = null;
+        $this->resetValidation();
+        $this->reset(['importacionResultado', 'importacionErrores', 'importacionStats', 'mostrarResultados']);
+        $this->info('Importación cancelada');
+    }
+
+    public function cerrarModalImportacion()
+    {
+        $this->modal_form_importar_productos = false;
+        $this->archivoExcel = null;
+        $this->reset(['importacionResultado', 'importacionErrores', 'importacionStats', 'mostrarResultados']);
+        $this->resetValidation();
+    }
+
+
 }

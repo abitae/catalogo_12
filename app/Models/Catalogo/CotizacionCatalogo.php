@@ -31,6 +31,7 @@ class CotizacionCatalogo extends Model
         'condiciones_pago',
         'condiciones_entrega',
         'user_id',
+        'line_id',
     ];
 
     protected $casts = [
@@ -49,6 +50,11 @@ class CotizacionCatalogo extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function line(): BelongsTo
+    {
+        return $this->belongsTo(LineCatalogo::class);
     }
 
     public function detalles(): HasMany

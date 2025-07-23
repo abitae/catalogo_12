@@ -6,6 +6,8 @@ use App\Models\Crm\TipeNegocioCrm;
 use App\Models\Crm\TipoNegocioCrm;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Mary\Traits\Toast;
 
 class TipoNegocioCrmIndex extends Component
@@ -145,12 +147,28 @@ class TipoNegocioCrmIndex extends Component
     public function confirmarEliminarTipoNegocio()
     {
         try {
+            $tipoNegocioName = $this->tipo_negocio->nombre;
             $this->tipo_negocio->delete();
+
+            Log::info('Auditoría: Tipo de negocio CRM eliminado', [
+                'user_id' => Auth::id(),
+                'user_name' => Auth::user()->name ?? 'N/A',
+                'action' => 'delete_tipo_negocio_crm',
+                'tipo_negocio_id' => $this->tipo_negocio_id,
+                'tipo_negocio_name' => $tipoNegocioName,
+                'timestamp' => now()
+            ]);
+
             $this->modal_form_eliminar_tipo_negocio = false;
             $this->reset(['tipo_negocio_id', 'tipo_negocio']);
             $this->success('Tipo de negocio eliminado correctamente');
         } catch (\Exception $e) {
             $this->error('Error al eliminar el tipo de negocio: ' . $e->getMessage());
+            Log::error('Error en eliminación de tipo de negocio CRM', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'tipo_negocio_id' => $this->tipo_negocio_id ?? null
+            ]);
         }
     }
 
@@ -168,9 +186,31 @@ class TipoNegocioCrmIndex extends Component
             if ($this->tipo_negocio_id) {
                 $tipo_negocio = TipoNegocioCrm::find($this->tipo_negocio_id);
                 $tipo_negocio->update($data);
+
+                Log::info('Auditoría: Tipo de negocio CRM actualizado', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'update_tipo_negocio_crm',
+                    'tipo_negocio_id' => $this->tipo_negocio_id,
+                    'tipo_negocio_name' => $data['nombre'],
+                    'activo' => $data['activo'],
+                    'timestamp' => now()
+                ]);
+
                 $this->success('Tipo de negocio actualizado correctamente');
             } else {
-                TipoNegocioCrm::create($data);
+                $tipo_negocio = TipoNegocioCrm::create($data);
+
+                Log::info('Auditoría: Tipo de negocio CRM creado', [
+                    'user_id' => Auth::id(),
+                    'user_name' => Auth::user()->name ?? 'N/A',
+                    'action' => 'create_tipo_negocio_crm',
+                    'tipo_negocio_id' => $tipo_negocio->id,
+                    'tipo_negocio_name' => $data['nombre'],
+                    'activo' => $data['activo'],
+                    'timestamp' => now()
+                ]);
+
                 $this->success('Tipo de negocio creado correctamente');
             }
 
@@ -188,6 +228,11 @@ class TipoNegocioCrmIndex extends Component
             $this->resetValidation();
         } catch (\Exception $e) {
             $this->error('Error al guardar el tipo de negocio: ' . $e->getMessage());
+            Log::error('Error en guardado de tipo de negocio CRM', [
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage(),
+                'tipo_negocio_id' => $this->tipo_negocio_id ?? null
+            ]);
         }
     }
 }

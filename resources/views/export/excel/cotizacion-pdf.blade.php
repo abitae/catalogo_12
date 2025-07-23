@@ -26,9 +26,24 @@
         <table width="100%">
             <tr>
                 <td>
-                    <div class="empresa">EMPRESA S.A.C.</div>
-                    <div class="ruc">RUC: 20123456789</div>
-                    <div style="font-size:11px; color:#555;">Av. Principal 123, Lima<br>Tel: (01) 123-4567 | ventas@empresa.com</div>
+                    @php
+                        // Usar storage_path para obtener la ruta absoluta del logo almacenado en storage/app/public
+                        $logoRelativePath = $cotizacion->line->logo ?? '';
+                        $logoPath = storage_path('app/public/' . ltrim($logoRelativePath, '/'));
+                        $logoExists = file_exists($logoPath) && !empty($logoRelativePath);
+                    @endphp
+                    @if($logoExists)
+                        <img src="file://{{ $logoPath }}" alt="Logo" style="width: 100px; height: 100px;">
+                    @else
+                        <div style="width:100px; height:100px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; color:#bbb; font-size:12px;">
+                            Sin logo
+                        </div>
+                    @endif
+                </td>
+                <td>
+                    <div class="empresa">{{ $cotizacion->line->name }}</div>
+                    <div class="ruc">RUC: {{ $cotizacion->customer->ruc }}</div>
+                    <div style="font-size:11px; color:#555;">{{ $cotizacion->customer->address }}<br>Tel: {{ $cotizacion->customer->phone }} | {{ $cotizacion->customer->email }}</div>
                 </td>
                 <td style="text-align:right;">
                     <div style="font-size:18px; color:#0074D9; font-weight:bold;">COTIZACIÓN</div>
@@ -76,7 +91,6 @@
                 <th>Cantidad</th>
                 <th>Precio Unit.</th>
                 <th>Subtotal</th>
-                <th>Obs.</th>
             </tr>
         </thead>
         <tbody>
@@ -87,7 +101,6 @@
                     <td style="text-align:center;">{{ $detalle->cantidad }}</td>
                     <td style="text-align:right;">S/ {{ number_format($detalle->precio_unitario, 2) }}</td>
                     <td style="text-align:right;">S/ {{ number_format($detalle->subtotal, 2) }}</td>
-                    <td>{{ $detalle->observaciones }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -123,4 +136,4 @@
         Documento generado automáticamente - EMPRESA S.A.C. | {{ date('d/m/Y H:i') }}
     </div>
 </body>
-</html> 
+</html>

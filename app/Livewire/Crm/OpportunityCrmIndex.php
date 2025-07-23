@@ -372,10 +372,25 @@ class OpportunityCrmIndex extends Component
             $opportunity = $this->saveOpportunityUsingService($processedData);
 
             // 5. Limpieza y respuesta
-            $this->handleSuccessfulSave();
+            $message = $this->opportunity_id ? 'Oportunidad actualizada correctamente' : 'Oportunidad creada correctamente';
+            $this->success($message);
+
+            $this->modal_form_opportunity = false;
+            $this->resetOpportunityForm();
 
         } catch (\Exception $e) {
-            $this->handleSaveError($e);
+            $errorMessage = 'Error al guardar la oportunidad: ' . $e->getMessage();
+
+            // Log del error para debugging
+            Log::error('Error al guardar oportunidad', [
+                'user_id' => Auth::id(),
+                'opportunity_id' => $this->opportunity_id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'timestamp' => now()
+            ]);
+
+            $this->error($errorMessage);
         }
     }
 
@@ -471,37 +486,6 @@ class OpportunityCrmIndex extends Component
     }
 
 
-
-    /**
-     * Maneja el guardado exitoso
-     */
-    private function handleSuccessfulSave(): void
-    {
-        $message = $this->opportunity_id ? 'Oportunidad actualizada correctamente' : 'Oportunidad creada correctamente';
-        $this->success($message);
-
-        $this->modal_form_opportunity = false;
-        $this->resetOpportunityForm();
-    }
-
-    /**
-     * Maneja errores durante el guardado
-     */
-    private function handleSaveError(\Exception $e): void
-    {
-        $errorMessage = 'Error al guardar la oportunidad: ' . $e->getMessage();
-
-        // Log del error para debugging
-        Log::error('Error al guardar oportunidad', [
-            'user_id' => Auth::id(),
-            'opportunity_id' => $this->opportunity_id,
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-            'timestamp' => now()
-        ]);
-        dd($errorMessage);
-        $this->error($errorMessage);
-    }
 
     /**
      * Normaliza una fecha (convierte string vacío a null)

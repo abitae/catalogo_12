@@ -14,8 +14,11 @@
                     <flux:button wire:click="exportarProductos" icon="arrow-down-tray">
                         Exportar
                     </flux:button>
+                    <flux:button wire:click="importarProductos" icon="arrow-up-tray">
+                        Importar
+                    </flux:button>
                     <flux:button variant="primary" wire:click="nuevoProducto" icon="plus">
-                        Nuevo Producto
+                        Nuevo
                     </flux:button>
                 </div>
             </div>
@@ -614,5 +617,195 @@
             </div>
         </div>
     </flux:modal>
+    <!-- Modal Importar Productos -->
+    <flux:modal wire:model="modal_form_importar_productos" class="w-2/3 max-w-4xl">
+        <div class="space-y-6">
+            <!-- Encabezado -->
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900 mb-4">
+                    <flux:icon name="arrow-up-tray" class="h-6 w-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <flux:heading size="lg" class="text-zinc-900 dark:text-white">Importar Productos</flux:heading>
+                <flux:text class="mt-2 text-zinc-600 dark:text-zinc-400">
+                    Sube un archivo Excel con los productos que deseas importar al sistema.
+                </flux:text>
+            </div>
 
+            @if(!$mostrarResultados)
+                <!-- Instrucciones -->
+                <div class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                    <div class="flex items-start gap-3">
+                        <flux:icon name="information-circle" class="w-5 h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                        <div class="space-y-2 flex-1">
+                            <div class="flex items-center justify-between">
+                                <flux:heading size="sm" class="text-blue-900 dark:text-blue-100">Instrucciones de Importación</flux:heading>
+                                <flux:button
+                                    wire:click="descargarEjemplo"
+                                    size="xs"
+                                    variant="outline"
+                                    icon="arrow-down-tray"
+                                    class="text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-600 hover:bg-blue-100 dark:hover:bg-blue-800"
+                                >
+                                    Descargar Ejemplo
+                                </flux:button>
+                            </div>
+                            <div class="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                                <p>• El archivo debe tener las siguientes columnas: <strong>brand</strong>, <strong>category</strong>, <strong>line</strong>, <strong>code</strong></p>
+                                <p>• Las marcas, categorías y líneas deben existir previamente en el sistema</p>
+                                <p>• Los códigos de producto deben ser únicos</p>
+                                <p>• Formatos soportados: .xlsx, .xls (máximo 10MB)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulario de importación -->
+                <form wire:submit.prevent="procesarImportacion" class="space-y-6">
+                    <!-- Área de carga de archivo -->
+                    <div class="space-y-4">
+                        <div>
+                            <flux:label for="archivoExcel" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                Seleccionar archivo Excel
+                            </flux:label>
+                            <div class="mt-2">
+                                <div class="flex justify-center px-6 pt-5 pb-6 border-2 border-zinc-300 dark:border-zinc-600 border-dashed rounded-lg hover:border-blue-400 dark:hover:border-blue-500 transition-colors">
+                                    <div class="space-y-2 text-center">
+                                        <flux:icon name="document-arrow-up" class="mx-auto h-12 w-12 text-zinc-400 dark:text-zinc-500" />
+                                        <div class="flex text-sm text-zinc-600 dark:text-zinc-400">
+                                            <label for="archivoExcel" class="relative cursor-pointer bg-white dark:bg-zinc-800 rounded-md font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
+                                                <span>Subir archivo</span>
+                                                <flux:input
+                                                    id="archivoExcel"
+                                                    wire:model="archivoExcel"
+                                                    type="file"
+                                                    accept=".xlsx,.xls"
+                                                    class="sr-only"
+                                                />
+                                            </label>
+                                            <p class="pl-1">o arrastrar y soltar</p>
+                                        </div>
+                                        <p class="text-xs text-zinc-500 dark:text-zinc-400">
+                                            Excel (.xlsx, .xls) hasta 10MB
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            @error('archivoExcel')
+                                <div class="mt-2 flex items-center gap-2 text-red-600 dark:text-red-400 text-sm">
+                                    <flux:icon name="exclamation-triangle" class="w-4 h-4" />
+                                    <span>{{ $message }}</span>
+                                </div>
+                            @enderror
+                        </div>
+
+                        <!-- Vista previa del archivo -->
+                        @if($archivoExcel)
+                            <div class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
+                                <div class="flex items-center gap-3">
+                                    <flux:icon name="check-circle" class="w-5 h-5 text-green-600 dark:text-green-400" />
+                                    <div>
+                                        <p class="text-sm font-medium text-green-900 dark:text-green-100">
+                                            Archivo seleccionado: {{ $archivoExcel->getClientOriginalName() }}
+                                        </p>
+                                        <p class="text-xs text-green-700 dark:text-green-300">
+                                            Tamaño: {{ number_format($archivoExcel->getSize() / 1024, 2) }} KB
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Botones de acción -->
+                    <div class="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                        <flux:button
+                            wire:click="cancelarImportacion"
+                            variant="outline"
+                            icon="x-circle"
+                            class="px-4 py-2"
+                        >
+                            Cancelar
+                        </flux:button>
+                        <flux:button
+                            type="submit"
+                            variant="primary"
+                            icon="arrow-up-tray"
+                            class="px-4 py-2"
+                            :disabled="!$archivoExcel"
+                        >
+                            <span wire:loading.remove wire:target="procesarImportacion">
+                                Importar Productos
+                            </span>
+                            <span wire:loading wire:target="procesarImportacion" class="flex items-center gap-2">
+                                <flux:icon name="arrow-path" class="w-4 h-4 animate-spin" />
+                                Procesando...
+                            </span>
+                        </flux:button>
+                    </div>
+                </form>
+            @else
+                <!-- Resultados de la importación -->
+                <div class="space-y-6">
+                    <!-- Resumen de estadísticas -->
+                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                        <flux:heading size="md" class="mb-4">Resumen de Importación</flux:heading>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                    {{ $importacionStats['total_rows'] ?? 0 }}
+                                </div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Total Filas</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+                                    {{ $importacionStats['imported'] ?? 0 }}
+                                </div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Importados</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                                    {{ $importacionStats['skipped'] ?? 0 }}
+                                </div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Omitidos</div>
+                            </div>
+                            <div class="text-center">
+                                <div class="text-2xl font-bold text-red-600 dark:text-red-400">
+                                    {{ count($importacionErrores) }}
+                                </div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Errores</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Errores detallados -->
+                    @if(!empty($importacionErrores))
+                        <div class="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-800">
+                            <div class="flex items-center gap-2 mb-3">
+                                <flux:icon name="exclamation-triangle" class="w-5 h-5 text-red-600 dark:text-red-400" />
+                                <flux:heading size="sm" class="text-red-900 dark:text-red-100">Errores Encontrados</flux:heading>
+                            </div>
+                            <div class="max-h-40 overflow-y-auto space-y-2">
+                                @foreach($importacionErrores as $error)
+                                    <div class="text-sm text-red-800 dark:text-red-200 bg-red-100 dark:bg-red-800/50 rounded p-2">
+                                        {{ $error }}
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+
+                    <!-- Botones de acción -->
+                    <div class="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                        <flux:button
+                            wire:click="cerrarModalImportacion"
+                            variant="primary"
+                            class="px-4 py-2"
+                        >
+                            Cerrar
+                        </flux:button>
+                    </div>
+                </div>
+            @endif
+        </div>
+    </flux:modal>
 </div>

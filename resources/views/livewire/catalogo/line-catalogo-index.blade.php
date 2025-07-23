@@ -192,14 +192,14 @@
                             @error('name')
                                 <flux:text class="text-xs text-red-500 mt-1">{{ $message }}</flux:text>
                             @enderror
-                            @if(!$linea_id)
-                                <flux:text class="text-xs text-zinc-500 mt-1">El código se generará automáticamente basado en este nombre</flux:text>
-                            @endif
                         </div>
                         <div>
-                            <flux:label>Código (Generado automáticamente)</flux:label>
-                            <flux:input type="text" wire:model="code" placeholder="Se generará automáticamente" readonly />
-                            <flux:text class="text-xs text-zinc-500 mt-1">El código se genera automáticamente basado en el nombre</flux:text>
+                            <flux:label>Código</flux:label>
+                            <flux:input type="text" wire:model.live="code" placeholder="Ej: linea-001" />
+                            @error('code')
+                                <flux:text class="text-xs text-red-500 mt-1">{{ $message }}</flux:text>
+                            @enderror
+                            <flux:text class="text-xs text-zinc-500 mt-1">Ingrese un código único para la línea. Ejemplo: linea-001</flux:text>
                         </div>
                     </div>
                 </div>
