@@ -6,7 +6,6 @@ use Livewire\Component;
 use App\Models\Catalogo\ProductoCatalogo;
 use App\Models\Catalogo\BrandCatalogo;
 use App\Models\Catalogo\CategoryCatalogo;
-use App\Models\Catalogo\LineCatalogo;
 use App\Models\Almacen\ProductoAlmacen;
 use App\Models\Almacen\MovimientoAlmacen;
 use App\Models\Almacen\WarehouseAlmacen;
@@ -22,11 +21,15 @@ use Mary\Traits\Toast;
 class DashboardLive extends Component
 {
     use Toast;
-    // Propiedades públicas para los gráficos y estadísticas
-    public array $movimientosChart = [];
-    public array $categoriasChart = [];
-    public array $stockChart = [];
-    public array $oportunidadesChart = [];
+
+    public array $movimientosLabels = [];
+    public array $movimientosData = [];
+    public array $categoriasLabels = [];
+    public array $categoriasData = [];
+    public array $stockLabels = [];
+    public array $stockData = [];
+    public array $oportunidadesLabels = [];
+    public array $oportunidadesData = [];
     public array $estadisticasCatalogo = [];
     public array $estadisticasAlmacen = [];
     public array $estadisticasCrm = [];
@@ -36,7 +39,7 @@ class DashboardLive extends Component
         $this->estadisticasCatalogo = $this->obtenerEstadisticasCatalogo();
         $this->estadisticasAlmacen = $this->obtenerEstadisticasAlmacen();
         $this->estadisticasCrm = $this->obtenerEstadisticasCrm();
-        $this->inicializarGraficos();
+        $this->setGraficos();
     }
 
     public function render()
@@ -45,201 +48,63 @@ class DashboardLive extends Component
             'estadisticasCatalogo' => $this->estadisticasCatalogo,
             'estadisticasAlmacen' => $this->estadisticasAlmacen,
             'estadisticasCrm' => $this->estadisticasCrm,
-            'movimientosChart' => $this->movimientosChart,
-            'categoriasChart' => $this->categoriasChart,
-            'stockChart' => $this->stockChart,
-            'oportunidadesChart' => $this->oportunidadesChart,
+            'movimientosLabels' => $this->movimientosLabels,
+            'movimientosData' => $this->movimientosData,
+            'categoriasLabels' => $this->categoriasLabels,
+            'categoriasData' => $this->categoriasData,
+            'stockLabels' => $this->stockLabels,
+            'stockData' => $this->stockData,
+            'oportunidadesLabels' => $this->oportunidadesLabels,
+            'oportunidadesData' => $this->oportunidadesData,
         ]);
     }
 
-    // Inicializa los datos de los gráficos solo una vez
-    private function inicializarGraficos()
+    private function setGraficos()
     {
-        // Gráfico de Movimientos por Mes
+        // Movimientos por Mes (últimos 6 meses, usando formato seguro)
         $meses = collect();
         for ($i = 5; $i >= 0; $i--) {
-            $meses->push(Carbon::now()->subMonths($i)->format('M Y'));
+            $fecha = Carbon::now()->subMonths($i);
+            $meses->push([
+                'label' => $fecha->translatedFormat('M Y'),
+                'year' => $fecha->year,
+                'month' => $fecha->month,
+            ]);
         }
-        $movimientosPorMes = collect();
+        $movimientos = collect();
         foreach ($meses as $mes) {
-            $fecha = Carbon::createFromFormat('M Y', $mes);
-            $count = MovimientoAlmacen::whereYear('fecha_movimiento', $fecha->year)
-                ->whereMonth('fecha_movimiento', $fecha->month)
-                ->count();
-            $movimientosPorMes->push($count);
+            $movimientos->push(MovimientoAlmacen::whereYear('fecha_movimiento', $mes['year'])
+                ->whereMonth('fecha_movimiento', $mes['month'])
+                ->count());
         }
-        $this->movimientosChart = [
-            'type' => 'line',
-            'data' => [
-                'labels' => $meses->toArray(),
-                'datasets' => [
-                    [
-                        'label' => 'Movimientos',
-                        'data' => $movimientosPorMes->toArray(),
-                        'borderColor' => 'rgb(59, 130, 246)',
-                        'backgroundColor' => 'rgba(59, 130, 246, 0.1)',
-                        'tension' => 0.4,
-                        'fill' => true
-                    ]
-                ]
-            ],
-            'options' => [
-                'responsive' => true,
-                'maintainAspectRatio' => false,
-                'plugins' => [
-                    'legend' => [
-                        'display' => false
-                    ]
-                ],
-                'scales' => [
-                    'y' => [
-                        'beginAtZero' => true,
-                        'grid' => [
-                            'color' => 'rgba(0, 0, 0, 0.1)'
-                        ]
-                    ],
-                    'x' => [
-                        'grid' => [
-                            'display' => false
-                        ]
-                    ]
-                ]
-            ]
-        ];
+        $this->movimientosLabels = $meses->pluck('label')->toArray();
+        $this->movimientosData = $movimientos->toArray();
 
-        // Gráfico de Productos por Categoría (ahora línea)
-        $productosPorCategoria = CategoryCatalogo::select('name')
+        // Productos por Categoría (top 5)
+        $categorias = CategoryCatalogo::select('name')
             ->selectRaw('(SELECT COUNT(*) FROM producto_catalogos WHERE producto_catalogos.category_id = category_catalogos.id AND producto_catalogos.isActive = 1) as products_count')
             ->where('isActive', true)
             ->orderByDesc('products_count')
             ->limit(5)
             ->get();
-        $this->categoriasChart = [
-            'type' => 'line',
-            'data' => [
-                'labels' => $productosPorCategoria->pluck('name')->toArray(),
-                'datasets' => [
-                    [
-                        'label' => 'Productos',
-                        'data' => $productosPorCategoria->pluck('products_count')->toArray(),
-                        'borderColor' => 'rgb(147, 51, 234)',
-                        'backgroundColor' => 'rgba(147, 51, 234, 0.1)',
-                        'tension' => 0.4,
-                        'fill' => true
-                    ]
-                ]
-            ],
-            'options' => [
-                'responsive' => true,
-                'maintainAspectRatio' => false,
-                'plugins' => [
-                    'legend' => [
-                        'display' => false
-                    ]
-                ],
-                'scales' => [
-                    'y' => [
-                        'beginAtZero' => true,
-                        'grid' => [
-                            'color' => 'rgba(0, 0, 0, 0.1)'
-                        ]
-                    ],
-                    'x' => [
-                        'grid' => [
-                            'display' => false
-                        ]
-                    ]
-                ]
-            ]
-        ];
+        $this->categoriasLabels = $categorias->pluck('name')->toArray();
+        $this->categoriasData = $categorias->pluck('products_count')->toArray();
 
-        // Gráfico de Stock por Almacén (ahora línea)
-        $stockPorAlmacen = WarehouseAlmacen::select('nombre')
+        // Stock por Almacén
+        $almacenes = WarehouseAlmacen::select('nombre')
             ->selectRaw('(SELECT SUM(stock_actual) FROM productos_almacen WHERE productos_almacen.almacen_id = almacenes.id AND productos_almacen.estado = 1) as productos_sum_stock_actual')
             ->where('estado', true)
             ->get();
-        $this->stockChart = [
-            'type' => 'line',
-            'data' => [
-                'labels' => $stockPorAlmacen->pluck('nombre')->toArray(),
-                'datasets' => [
-                    [
-                        'label' => 'Stock',
-                        'data' => $stockPorAlmacen->pluck('productos_sum_stock_actual')->toArray(),
-                        'borderColor' => 'rgb(34, 197, 94)',
-                        'backgroundColor' => 'rgba(34, 197, 94, 0.1)',
-                        'tension' => 0.4,
-                        'fill' => true
-                    ]
-                ]
-            ],
-            'options' => [
-                'responsive' => true,
-                'maintainAspectRatio' => false,
-                'plugins' => [
-                    'legend' => [
-                        'display' => false
-                    ]
-                ],
-                'scales' => [
-                    'y' => [
-                        'beginAtZero' => true,
-                        'grid' => [
-                            'color' => 'rgba(0, 0, 0, 0.1)'
-                        ]
-                    ],
-                    'x' => [
-                        'grid' => [
-                            'display' => false
-                        ]
-                    ]
-                ]
-            ]
-        ];
+        $this->stockLabels = $almacenes->pluck('nombre')->toArray();
+        $this->stockData = $almacenes->pluck('productos_sum_stock_actual')->toArray();
 
-        // Gráfico de Oportunidades por Etapa (ahora línea)
-        $oportunidadesPorEtapa = OpportunityCrm::select('etapa', DB::raw('count(*) as total'))
+        // Oportunidades por Etapa
+        $etapas = OpportunityCrm::select('etapa', DB::raw('count(*) as total'))
             ->groupBy('etapa')
             ->orderBy('total', 'desc')
             ->get();
-        $this->oportunidadesChart = [
-            'type' => 'line',
-            'data' => [
-                'labels' => $oportunidadesPorEtapa->pluck('etapa')->toArray(),
-                'datasets' => [
-                    [
-                        'label' => 'Oportunidades',
-                        'data' => $oportunidadesPorEtapa->pluck('total')->toArray(),
-                        'borderColor' => 'rgb(168, 85, 247)',
-                        'backgroundColor' => 'rgba(168, 85, 247, 0.1)',
-                        'tension' => 0.4,
-                        'fill' => true
-                    ]
-                ]
-            ],
-            'options' => [
-                'responsive' => true,
-                'maintainAspectRatio' => false,
-                'plugins' => [
-                    'legend' => [
-                        'display' => false
-                    ]
-                ],
-                'scales' => [
-                    'y' => [
-                        'beginAtZero' => true,
-                        'grid' => [
-                            'color' => 'rgba(0, 0, 0, 0.1)'
-                        ]
-                    ],
-                    'x' => [
-                        'grid' => [
-                            'display' => false
-                        ]
-                    ]
-                ]
-            ]
-        ];
+        $this->oportunidadesLabels = $etapas->pluck('etapa')->toArray();
+        $this->oportunidadesData = $etapas->pluck('total')->toArray();
     }
 
     // Métodos optimizados para obtener estadísticas
