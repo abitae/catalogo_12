@@ -108,7 +108,7 @@ class CotizacionCatalogoIndex extends Component
         $this->validez_dias = 15;
         $this->user_id = 1; // Usuario por defecto
 
-        
+
     }
 
     public function calcularFechaVencimiento()
@@ -133,8 +133,8 @@ class CotizacionCatalogoIndex extends Component
     {
         $totalConIgv = 0;
         foreach ($this->selectedProductos as $productoId) {
-            $cantidad = $this->cantidades[$productoId] ?? 0;
-            $precio = $this->precios[$productoId] ?? 0;
+            $cantidad = isset($this->cantidades[$productoId]) ? (float)$this->cantidades[$productoId] : 0;
+            $precio = isset($this->precios[$productoId]) ? (float)$this->precios[$productoId] : 0;
             $totalConIgv += $cantidad * $precio;
         }
 
@@ -147,8 +147,8 @@ class CotizacionCatalogoIndex extends Component
     {
         $totalConIgv = 0;
         foreach ($this->selectedProductos as $productoId) {
-            $cantidad = $this->cantidades[$productoId] ?? 0;
-            $precio = $this->precios[$productoId] ?? 0;
+            $cantidad = isset($this->cantidades[$productoId]) ? (float)$this->cantidades[$productoId] : 0;
+            $precio = isset($this->precios[$productoId]) ? (float)$this->precios[$productoId] : 0;
             $totalConIgv += $cantidad * $precio;
         }
 
@@ -159,8 +159,8 @@ class CotizacionCatalogoIndex extends Component
     {
         $total = 0;
         foreach ($this->selectedProductos as $productoId) {
-            $cantidad = $this->cantidades[$productoId] ?? 0;
-            $precio = $this->precios[$productoId] ?? 0;
+            $cantidad = isset($this->cantidades[$productoId]) ? (float)$this->cantidades[$productoId] : 0;
+            $precio = isset($this->precios[$productoId]) ? (float)$this->precios[$productoId] : 0;
             $total += $cantidad * $precio;
         }
 
@@ -189,7 +189,7 @@ class CotizacionCatalogoIndex extends Component
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('codigo_cotizacion', 'like', '%' . $this->search . '%')
-                      ->orWhere('cliente_nombre', 'like', '%' . $this->search . '%');
+                        ->orWhere('cliente_nombre', 'like', '%' . $this->search . '%');
                 });
             })
             ->when($this->estado, function ($query) {
@@ -214,7 +214,7 @@ class CotizacionCatalogoIndex extends Component
             ->when($this->searchProducto, function ($query) {
                 $query->where(function ($q) {
                     $q->where('code', 'like', '%' . $this->searchProducto . '%')
-                      ->orWhere('description', 'like', '%' . $this->searchProducto . '%');
+                        ->orWhere('description', 'like', '%' . $this->searchProducto . '%');
                 });
             })
             ->with(['brand', 'category', 'line'])
@@ -423,7 +423,7 @@ class CotizacionCatalogoIndex extends Component
         }
     }
 
-            public function cambiarEstado($id, $estado)
+    public function cambiarEstado($id, $estado)
     {
         $cotizacion = CotizacionCatalogo::with(['detalles'])->find($id);
 
@@ -526,11 +526,23 @@ class CotizacionCatalogoIndex extends Component
         $this->showProductosList = false;
         $this->modoVisualizacion = false;
         $this->reset([
-            'codigo_cotizacion', 'customer_id', 'cliente_nombre', 'cliente_email',
-            'cliente_telefono', 'observaciones_general', 'fecha_cotizacion',
-            'fecha_vencimiento', 'validez_dias', 'condiciones_pago',
-            'condiciones_entrega', 'user_id', 'estado_cotizacion',
-            'customer_filter', 'fecha_desde', 'fecha_hasta', 'line_id'
+            'codigo_cotizacion',
+            'customer_id',
+            'cliente_nombre',
+            'cliente_email',
+            'cliente_telefono',
+            'observaciones_general',
+            'fecha_cotizacion',
+            'fecha_vencimiento',
+            'validez_dias',
+            'condiciones_pago',
+            'condiciones_entrega',
+            'user_id',
+            'estado_cotizacion',
+            'customer_filter',
+            'fecha_desde',
+            'fecha_hasta',
+            'line_id'
         ]);
         $this->resetErrorBag();
     }
@@ -538,7 +550,9 @@ class CotizacionCatalogoIndex extends Component
     public function limpiarFiltros()
     {
         $this->reset([
-            'search', 'estado', 'customer_filter'
+            'search',
+            'estado',
+            'customer_filter'
         ]);
         $this->fecha_desde = Carbon::now()->subDays(15)->format('Y-m-d');
         $this->fecha_hasta = Carbon::now()->format('Y-m-d');

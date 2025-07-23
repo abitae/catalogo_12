@@ -454,6 +454,10 @@ class ProductoCatalogoIndex extends Component
             $messages['tempArchivo2.max'] = 'El archivo no debe exceder los 10MB';
 
             $data = $this->validate($rules, $messages);
+            // Conversión para evitar error SQL: si dias_entrega es string vacío, ponerlo en null
+            if (isset($data['dias_entrega']) && ($data['dias_entrega'] === '' || $data['dias_entrega'] === null)) {
+                $data['dias_entrega'] = null;
+            }
             // Procesar características como array asociativo
             $data['caracteristicas'] = [];
             if (is_array($this->caracteristicas)) {
@@ -656,7 +660,6 @@ class ProductoCatalogoIndex extends Component
                     'archivo' => $this->archivoExcel ? $this->archivoExcel->getClientOriginalName() : 'N/A'
                 ]);
             }
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->importacionResultado = 'error';
             $this->importacionErrores = [$e->getMessage()];
@@ -747,25 +750,37 @@ class ProductoCatalogoIndex extends Component
             $export = new class($datos) implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings {
                 private $datos;
 
-                public function __construct($datos) {
+                public function __construct($datos)
+                {
                     $this->datos = $datos;
                 }
 
-                public function array(): array {
+                public function array(): array
+                {
                     return $this->datos;
                 }
 
-                public function headings(): array {
+                public function headings(): array
+                {
                     return [
-                        'brand', 'category', 'line', 'code', 'code_fabrica', 'code_peru',
-                        'price_compra', 'price_venta', 'stock', 'dias_entrega',
-                        'description', 'garantia', 'observaciones'
+                        'brand',
+                        'category',
+                        'line',
+                        'code',
+                        'code_fabrica',
+                        'code_peru',
+                        'price_compra',
+                        'price_venta',
+                        'stock',
+                        'dias_entrega',
+                        'description',
+                        'garantia',
+                        'observaciones'
                     ];
                 }
             };
 
             return Excel::download($export, 'ejemplo_importacion_productos.xlsx');
-
         } catch (\Exception $e) {
             $this->error('Error al generar el archivo de ejemplo');
             Log::error('Error al generar archivo de ejemplo', [
@@ -815,6 +830,4 @@ class ProductoCatalogoIndex extends Component
         $path = $file->store($folder, 'public');
         return $path;
     }
-
-
 }

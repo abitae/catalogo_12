@@ -151,7 +151,19 @@ class CategoryCatalogoIndex extends Component
     public function guardarCategoria()
     {
         try {
-            $data = $this->validate();
+            $rules = [
+                'name' => 'required|min:3|max:255',
+                'isActive' => 'boolean',
+                'tempLogo' => 'nullable|image|max:20480',
+                'tempFondo' => 'nullable|image|max:20480',
+                'tempArchivo' => 'nullable|file|max:10240',
+            ];
+            $messages = [
+                'name.required' => 'El nombre es requerido',
+                'name.min' => 'El nombre debe tener al menos 3 caracteres',
+                'name.max' => 'El nombre debe tener menos de 255 caracteres',
+            ];
+            $data = $this->validate($rules, $messages);
 
             // Procesar archivos si se subieron
             if ($this->tempLogo) {
