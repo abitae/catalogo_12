@@ -4,7 +4,8 @@
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
             <div>
                 <flux:heading size="lg" class="text-zinc-900 dark:text-white">Gestión de Oportunidades</flux:heading>
-                <flux:text class="mt-2 text-zinc-600 dark:text-zinc-400">Administra las oportunidades de venta del CRM</flux:text>
+                <flux:text class="mt-2 text-zinc-600 dark:text-zinc-400">Administra las oportunidades de venta del CRM
+                </flux:text>
             </div>
             <div class="flex items-center gap-3">
                 <flux:button variant="primary" wire:click="nuevaOpportunity" icon="plus">
@@ -19,7 +20,8 @@
         <div class="p-6">
             <!-- Búsqueda -->
             <div class="mb-6">
-                <flux:input type="search" placeholder="Buscar oportunidades por nombre o descripción..." wire:model.live="search" icon="magnifying-glass" class="w-full" />
+                <flux:input type="search" placeholder="Buscar oportunidades por nombre o descripción..."
+                    wire:model.live="search" icon="magnifying-glass" class="w-full" />
             </div>
 
             <!-- Filtros -->
@@ -35,7 +37,8 @@
                 </div>
 
                 <div>
-                    <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Tipo de Negocio</flux:label>
+                    <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Tipo de Negocio
+                    </flux:label>
                     <flux:select wire:model.live="tipo_negocio_filter" class="w-full mt-1">
                         <option value="">Todos los tipos</option>
                         @foreach ($tipos_negocio as $tipo)
@@ -56,7 +59,9 @@
 
                 <div>
                     <flux:label class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Cliente</flux:label>
-                    <x-mary-choices-offline wire:model.live="customer_filter" id="customer_filter" class="w-full mt-1" :options="$customers" single clearable option-label="rznSocial" searchable placeholder="Todos los clientes" />
+                    <x-mary-choices-offline wire:model.live="customer_filter" id="customer_filter" class="w-full mt-1"
+                        :options="$customers" single clearable option-label="rznSocial" searchable
+                        placeholder="Todos los clientes" />
                 </div>
 
                 <div>
@@ -79,12 +84,14 @@
     </div>
 
     <!-- Tabla de Oportunidades -->
-    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 overflow-hidden">
+    <div
+        class="bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 overflow-hidden">
         <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-700/50">
             <div class="flex items-center justify-between">
                 <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Oportunidades</h3>
                 <div class="flex items-center gap-4">
-                    <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ $opportunities->count() }} oportunidades encontradas</span>
+                    <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ $opportunities->count() }} oportunidades
+                        encontradas</span>
                     <flux:select wire:model.live="perPage" class="w-32">
                         <option value="10">10 por página</option>
                         <option value="25">25 por página</option>
@@ -103,29 +110,42 @@
                             wire:click="sortBy('nombre')">
                             <div class="flex items-center space-x-2">
                                 <span>Oportunidad</span>
-                                <flux:icon name="{{ $sortField === 'nombre' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}" class="w-4 h-4" />
+                                <flux:icon
+                                    name="{{ $sortField === 'nombre' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}"
+                                    class="w-4 h-4" />
                             </div>
                         </th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                        <th
+                            class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Cliente
                         </th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                        <th
+                            class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                            Encargado
+                        </th>
+                        <th
+                            class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Etapa
                         </th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                        <th
+                            class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Valor
                         </th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                        <th
+                            class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Probabilidad
                         </th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors"
                             wire:click="sortBy('fecha_cierre_esperada')">
                             <div class="flex items-center space-x-2">
                                 <span>Cierre Esperado</span>
-                                <flux:icon name="{{ $sortField === 'fecha_cierre_esperada' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}" class="w-4 h-4" />
+                                <flux:icon
+                                    name="{{ $sortField === 'fecha_cierre_esperada' ? ($sortDirection === 'asc' ? 'arrow-up' : 'arrow-down') : 'arrows-up-down' }}"
+                                    class="w-4 h-4" />
                             </div>
                         </th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                        <th
+                            class="px-6 py-4 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Acciones
                         </th>
                     </tr>
@@ -150,6 +170,13 @@
                                         {{ $opportunity->cliente->nombreComercial }}</div>
                                 @else
                                     <span class="text-zinc-400">Sin cliente</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-white">
+                                @if ($opportunity->usuario)
+                                    <span class="text-sm font-medium">{{ $opportunity->usuario->name }}</span>
+                                @else
+                                    <span class="text-zinc-400">Sin encargado</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
@@ -194,7 +221,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-6 py-12 text-center text-zinc-500 dark:text-zinc-400">
+                            <td colspan="9" class="px-6 py-12 text-center text-zinc-500 dark:text-zinc-400">
                                 <div class="flex flex-col items-center">
                                     <div
                                         class="w-12 h-12 mb-4 bg-zinc-100 dark:bg-zinc-700 rounded-full flex items-center justify-center">
@@ -221,7 +248,7 @@
         </div>
     </div>
 
-        <!-- Modal Form Oportunidad Optimizado -->
+    <!-- Modal Form Oportunidad Optimizado -->
     <flux:modal wire:model="modal_form_opportunity" variant="flyout" class="w-full max-w-6xl">
         <form wire:submit.prevent="guardarOpportunity">
             <!-- Header Compacto -->
@@ -249,7 +276,8 @@
                         <div class="space-y-3">
                             <div>
                                 <flux:label class="text-xs font-medium">Nombre de la Oportunidad *</flux:label>
-                                <flux:input wire:model="nombre" type="text" placeholder="Ej: Implementación CRM Enterprise" size="sm" />
+                                <flux:input wire:model="nombre" type="text"
+                                    placeholder="Ej: Implementación CRM Enterprise" size="sm" />
                                 @error('nombre')
                                     <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
                                 @enderror
@@ -258,8 +286,10 @@
                                 <div>
                                     <flux:label class="text-xs font-medium">Valor Estimado *</flux:label>
                                     <div class="relative">
-                                        <flux:input wire:model="valor" type="number" step="0.01" placeholder="0.00" size="sm" class="pl-8" />
-                                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <flux:input wire:model="valor" type="number" step="0.01"
+                                            placeholder="0.00" size="sm" class="pl-8" />
+                                        <div
+                                            class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                             <span class="text-gray-500 text-sm">$</span>
                                         </div>
                                     </div>
@@ -270,8 +300,10 @@
                                 <div>
                                     <flux:label class="text-xs font-medium">Probabilidad (%)</flux:label>
                                     <div class="relative">
-                                        <flux:input wire:model="probabilidad" type="number" min="0" max="100" placeholder="0" size="sm" class="pr-8" />
-                                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                        <flux:input wire:model="probabilidad" type="number" min="0"
+                                            max="100" placeholder="0" size="sm" class="pr-8" />
+                                        <div
+                                            class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                                             <span class="text-gray-500 text-sm">%</span>
                                         </div>
                                     </div>
@@ -298,7 +330,8 @@
                                     <flux:select wire:model="fuente" size="sm">
                                         <option value="">Seleccionar fuente</option>
                                         @foreach ($fuentes as $fuente_option)
-                                            <option value="{{ $fuente_option }}">{{ ucfirst($fuente_option) }}</option>
+                                            <option value="{{ $fuente_option }}">{{ ucfirst($fuente_option) }}
+                                            </option>
                                         @endforeach
                                     </flux:select>
                                     @error('fuente')
@@ -316,7 +349,9 @@
                                 </div>
                                 <div>
                                     <flux:label class="text-xs font-medium">Encargado *</flux:label>
-                                    <x-mary-choices-offline wire:model="user_id" :options="$users" single clearable option-label="name" searchable placeholder="Seleccionar encargado" size="sm" />
+                                    <x-mary-choices-offline wire:model="user_id" :options="$users" single clearable
+                                        option-label="name" searchable placeholder="Seleccionar encargado"
+                                        size="sm" />
                                     @error('user_id')
                                         <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
                                     @enderror
@@ -335,9 +370,12 @@
                             <div>
                                 <div class="flex items-center justify-between">
                                     <flux:label class="text-xs font-medium">Cliente *</flux:label>
-                                    <flux:button type="button" size="xs" color="primary" icon="plus" class="!px-2 !py-1" wire:click="nuevoCliente">Nuevo</flux:button>
+                                    <flux:button type="button" size="xs" color="primary" icon="plus"
+                                        class="!px-2 !py-1" wire:click="nuevoCliente">Nuevo</flux:button>
                                 </div>
-                                <x-mary-choices-offline wire:model.live="customer_id" :options="$customers" single clearable option-label="rznSocial" searchable placeholder="Seleccionar cliente" size="sm" />
+                                <x-mary-choices-offline wire:model.live="customer_id" :options="$customers" single
+                                    clearable option-label="rznSocial" searchable placeholder="Seleccionar cliente"
+                                    size="sm" />
                                 @error('customer_id')
                                     <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
                                 @enderror
@@ -345,17 +383,23 @@
                             <div>
                                 <div class="flex items-center justify-between">
                                     <flux:label class="text-xs font-medium">Contacto *</flux:label>
-                                    @if($customer_id)
-                                        <flux:button type="button" size="xs" color="primary" icon="plus" class="!px-2 !py-1" wire:click="nuevoContacto">Nuevo</flux:button>
+                                    @if ($customer_id)
+                                        <flux:button type="button" size="xs" color="primary" icon="plus"
+                                            class="!px-2 !py-1" wire:click="nuevoContacto">Nuevo</flux:button>
                                     @endif
                                 </div>
-                                @if(!$customer_id)
-                                    <div class="p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700">
+                                @if (!$customer_id)
+                                    <div
+                                        class="p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-700">
                                         <flux:icon name="exclamation-triangle" class="w-3 h-3 inline mr-1" />
                                         Primero selecciona un cliente
                                     </div>
                                 @else
-                                    <x-mary-choices-offline wire:model="contact_id" :options="$customer_id ? \App\Models\Crm\ContactCrm::where('customer_id', $customer_id)->get() : []" single clearable option-label="nombre" searchable placeholder="Seleccionar contacto" size="sm" />
+                                    <x-mary-choices-offline wire:model="contact_id" :options="$customer_id
+                                        ? \App\Models\Crm\ContactCrm::where('customer_id', $customer_id)->get()
+                                        : []" single clearable
+                                        option-label="nombre" searchable placeholder="Seleccionar contacto"
+                                        size="sm" />
                                 @endif
                                 @error('contact_id')
                                     <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
@@ -375,7 +419,9 @@
                             </div>
                             <div>
                                 <flux:label class="text-xs font-medium">Marca *</flux:label>
-                                <x-mary-choices-offline wire:model="marca_id" :options="$marcas" single clearable option-label="nombre" searchable placeholder="Seleccionar marca" size="sm" />
+                                <x-mary-choices-offline wire:model="marca_id" :options="$marcas" single clearable
+                                    option-label="nombre" searchable placeholder="Seleccionar marca"
+                                    size="sm" />
                                 @error('marca_id')
                                     <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
                                 @enderror
@@ -392,14 +438,16 @@
                         <div class="space-y-3">
                             <div>
                                 <flux:label class="text-xs font-medium">Descripción</flux:label>
-                                <flux:textarea wire:model="descripcion" rows="3" placeholder="Describe los detalles de la oportunidad..." size="sm" />
+                                <flux:textarea wire:model="descripcion" rows="3"
+                                    placeholder="Describe los detalles de la oportunidad..." size="sm" />
                                 @error('descripcion')
                                     <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
                                 @enderror
                             </div>
                             <div>
                                 <flux:label class="text-xs font-medium">Notas Adicionales</flux:label>
-                                <flux:textarea wire:model="notas" rows="3" placeholder="Información adicional, observaciones..." size="sm" />
+                                <flux:textarea wire:model="notas" rows="3"
+                                    placeholder="Información adicional, observaciones..." size="sm" />
                                 @error('notas')
                                     <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
                                 @enderror
@@ -424,7 +472,8 @@
                         <!-- Imagen de la Oportunidad -->
                         <div class="mb-4">
                             <flux:label class="text-xs font-medium">Imagen de la Oportunidad</flux:label>
-                            <div class="mt-1 p-4 border-2 border-dashed border-gray-300 rounded-lg text-center hover:border-orange-400 transition-colors">
+                            <div
+                                class="mt-1 p-4 border-2 border-dashed border-gray-300 rounded-lg text-center hover:border-orange-400 transition-colors">
                                 <flux:input wire:model="tempImage" type="file" accept="image/*" class="w-full" />
                                 <p class="text-xs text-gray-500 mt-2">PNG, JPG, GIF hasta 20MB</p>
                             </div>
@@ -433,8 +482,10 @@
                             @enderror
                             @if ($imagePreview)
                                 <div class="mt-3 p-3 bg-gray-50 rounded-lg">
-                                    <img src="{{ $imagePreview }}" alt="Preview" class="w-24 h-24 object-cover rounded-lg mx-auto">
-                                    <flux:button wire:click="removeImage" size="sm" color="red" class="mt-2 w-full">
+                                    <img src="{{ $imagePreview }}" alt="Preview"
+                                        class="w-24 h-24 object-cover rounded-lg mx-auto">
+                                    <flux:button wire:click="removeImage" size="sm" color="red"
+                                        class="mt-2 w-full">
                                         <flux:icon name="trash" class="w-3 h-3 mr-1" />
                                         Remover Imagen
                                     </flux:button>
@@ -445,8 +496,10 @@
                         <!-- Documento Adjunto -->
                         <div class="mb-4">
                             <flux:label class="text-xs font-medium">Documento Adjunto</flux:label>
-                            <div class="mt-1 p-4 border-2 border-dashed border-gray-300 rounded-lg text-center hover:border-orange-400 transition-colors">
-                                <flux:input wire:model="tempArchivo" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" class="w-full" />
+                            <div
+                                class="mt-1 p-4 border-2 border-dashed border-gray-300 rounded-lg text-center hover:border-orange-400 transition-colors">
+                                <flux:input wire:model="tempArchivo" type="file"
+                                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" class="w-full" />
                                 <p class="text-xs text-gray-500 mt-2">PDF, DOC, XLS, PPT hasta 10MB</p>
                             </div>
                             @error('tempArchivo')
@@ -479,7 +532,8 @@
                         Complete todos los campos obligatorios para continuar
                     </div>
                     <div class="flex gap-3">
-                        <flux:button type="button" wire:click="cerrarModalOpportunity" variant="outline" size="sm">
+                        <flux:button type="button" wire:click="cerrarModalOpportunity" variant="outline"
+                            size="sm">
 
                             Cancelar
                         </flux:button>
@@ -906,7 +960,8 @@
                     </div>
 
                     <div>
-                        <flux:label for="tipoDoc" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Tipo de Documento *</flux:label>
+                        <flux:label for="tipoDoc" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Tipo
+                            de Documento *</flux:label>
                         <flux:select wire:model="tipoDoc" id="tipoDoc" class="w-full mt-1">
                             <option value="">Seleccione tipo</option>
                             <option value="DNI">DNI</option>
@@ -914,65 +969,99 @@
                             <option value="CE">CE</option>
                             <option value="PAS">PAS</option>
                         </flux:select>
-                        @error('tipoDoc') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        @error('tipoDoc')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div>
-                        <flux:label for="numDoc" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Número de Documento *</flux:label>
-                        <flux:input wire:model="numDoc" id="numDoc" type="text" placeholder="Ingrese el número" class="w-full mt-1" />
-                        @error('numDoc') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <flux:label for="numDoc" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Número
+                            de Documento *</flux:label>
+                        <flux:input wire:model="numDoc" id="numDoc" type="text"
+                            placeholder="Ingrese el número" class="w-full mt-1" />
+                        @error('numDoc')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div>
-                        <flux:label for="rznSocial" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Razón Social *</flux:label>
-                        <flux:input wire:model="rznSocial" id="rznSocial" type="text" placeholder="Ingrese la razón social" class="w-full mt-1" />
-                        @error('rznSocial') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <flux:label for="rznSocial" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Razón
+                            Social *</flux:label>
+                        <flux:input wire:model="rznSocial" id="rznSocial" type="text"
+                            placeholder="Ingrese la razón social" class="w-full mt-1" />
+                        @error('rznSocial')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div>
-                        <flux:label for="nombreComercial" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Nombre Comercial</flux:label>
-                        <flux:input wire:model="nombreComercial" id="nombreComercial" type="text" placeholder="Ingrese el nombre comercial" class="w-full mt-1" />
-                        @error('nombreComercial') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <flux:label for="nombreComercial"
+                            class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Nombre Comercial</flux:label>
+                        <flux:input wire:model="nombreComercial" id="nombreComercial" type="text"
+                            placeholder="Ingrese el nombre comercial" class="w-full mt-1" />
+                        @error('nombreComercial')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div>
-                        <flux:label for="tipo_customer_id" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Tipo de Cliente</flux:label>
+                        <flux:label for="tipo_customer_id"
+                            class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Tipo de Cliente</flux:label>
                         <flux:select wire:model="tipo_customer_id" id="tipo_customer_id" class="w-full mt-1">
                             <option value="">Seleccione tipo</option>
-                            @foreach($tipos_customer as $tipo)
+                            @foreach ($tipos_customer as $tipo)
                                 <option value="{{ $tipo->id }}">{{ $tipo->nombre }}</option>
                             @endforeach
                         </flux:select>
-                        @error('tipo_customer_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        @error('tipo_customer_id')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <!-- Información de Contacto -->
                     <div class="md:col-span-2">
-                        <h4 class="text-md font-semibold text-zinc-900 dark:text-white mb-4">Información de Contacto</h4>
+                        <h4 class="text-md font-semibold text-zinc-900 dark:text-white mb-4">Información de Contacto
+                        </h4>
                     </div>
 
                     <div>
-                        <flux:label for="email" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Email</flux:label>
-                        <flux:input wire:model="email" id="email" type="email" placeholder="Ingrese el email" class="w-full mt-1" />
-                        @error('email') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <flux:label for="email" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Email
+                        </flux:label>
+                        <flux:input wire:model="email" id="email" type="email" placeholder="Ingrese el email"
+                            class="w-full mt-1" />
+                        @error('email')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div>
-                        <flux:label for="telefono" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Teléfono</flux:label>
-                        <flux:input wire:model="telefono" id="telefono" type="text" placeholder="Ingrese el teléfono" class="w-full mt-1" />
-                        @error('telefono') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <flux:label for="telefono" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                            Teléfono</flux:label>
+                        <flux:input wire:model="telefono" id="telefono" type="text"
+                            placeholder="Ingrese el teléfono" class="w-full mt-1" />
+                        @error('telefono')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div>
-                        <flux:label for="direccion" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Dirección</flux:label>
-                        <flux:input wire:model="direccion" id="direccion" type="text" placeholder="Ingrese la dirección" class="w-full mt-1" />
-                        @error('direccion') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <flux:label for="direccion" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                            Dirección</flux:label>
+                        <flux:input wire:model="direccion" id="direccion" type="text"
+                            placeholder="Ingrese la dirección" class="w-full mt-1" />
+                        @error('direccion')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div>
-                        <flux:label for="codigoPostal" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Código Postal</flux:label>
-                        <flux:input wire:model="codigoPostal" id="codigoPostal" type="text" placeholder="Ingrese el código postal" class="w-full mt-1" />
-                        @error('codigoPostal') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <flux:label for="codigoPostal" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                            Código Postal</flux:label>
+                        <flux:input wire:model="codigoPostal" id="codigoPostal" type="text"
+                            placeholder="Ingrese el código postal" class="w-full mt-1" />
+                        @error('codigoPostal')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <!-- Archivos -->
@@ -981,35 +1070,50 @@
                     </div>
 
                     <div>
-                        <flux:label for="tempImageCustomer" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Imagen</flux:label>
-                        <flux:input wire:model="tempImageCustomer" id="tempImageCustomer" type="file" accept="image/*" class="w-full mt-1" />
-                        @error('tempImageCustomer') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <flux:label for="tempImageCustomer"
+                            class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Imagen</flux:label>
+                        <flux:input wire:model="tempImageCustomer" id="tempImageCustomer" type="file"
+                            accept="image/*" class="w-full mt-1" />
+                        @error('tempImageCustomer')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
 
-                        @if($imagePreviewCustomer)
+                        @if ($imagePreviewCustomer)
                             <div class="mt-2">
-                                <img src="{{ $imagePreviewCustomer }}" alt="Preview" class="w-20 h-20 object-cover rounded-lg">
-                                <flux:button wire:click="removeImageCustomer" size="sm" color="red" class="mt-2">Eliminar</flux:button>
+                                <img src="{{ $imagePreviewCustomer }}" alt="Preview"
+                                    class="w-20 h-20 object-cover rounded-lg">
+                                <flux:button wire:click="removeImageCustomer" size="sm" color="red"
+                                    class="mt-2">Eliminar</flux:button>
                             </div>
                         @endif
                     </div>
 
                     <div>
-                        <flux:label for="tempArchivoCustomer" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Archivo</flux:label>
-                        <flux:input wire:model="tempArchivoCustomer" id="tempArchivoCustomer" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" class="w-full mt-1" />
-                        @error('tempArchivoCustomer') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <flux:label for="tempArchivoCustomer"
+                            class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Archivo</flux:label>
+                        <flux:input wire:model="tempArchivoCustomer" id="tempArchivoCustomer" type="file"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" class="w-full mt-1" />
+                        @error('tempArchivoCustomer')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <!-- Notas -->
                     <div class="md:col-span-2">
-                        <flux:label for="notas_cliente" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Notas</flux:label>
-                        <flux:textarea wire:model="notas_cliente" id="notas_cliente" rows="3" placeholder="Ingrese notas adicionales" class="w-full mt-1" />
-                        @error('notas_cliente') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <flux:label for="notas_cliente" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                            Notas</flux:label>
+                        <flux:textarea wire:model="notas_cliente" id="notas_cliente" rows="3"
+                            placeholder="Ingrese notas adicionales" class="w-full mt-1" />
+                        @error('notas_cliente')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
                 </div>
             </div>
 
             <!-- Footer -->
-            <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-700/50 rounded-b-lg">
+            <div
+                class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-700/50 rounded-b-lg">
                 <div class="flex justify-end gap-3">
                     <flux:button wire:click="cerrarModalCustomer" color="gray">
                         Cancelar
@@ -1036,56 +1140,87 @@
             <div class="px-6 py-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <flux:label for="nombre_contacto" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Nombre *</flux:label>
-                        <flux:input wire:model="nombre_contacto" id="nombre_contacto" type="text" placeholder="Ingrese el nombre" class="w-full mt-1" />
-                        @error('nombre_contacto') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <flux:label for="nombre_contacto"
+                            class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Nombre *</flux:label>
+                        <flux:input wire:model="nombre_contacto" id="nombre_contacto" type="text"
+                            placeholder="Ingrese el nombre" class="w-full mt-1" />
+                        @error('nombre_contacto')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div>
-                        <flux:label for="apellido_contacto" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Apellido *</flux:label>
-                        <flux:input wire:model="apellido_contacto" id="apellido_contacto" type="text" placeholder="Ingrese el apellido" class="w-full mt-1" />
-                        @error('apellido_contacto') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <flux:label for="apellido_contacto"
+                            class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Apellido *</flux:label>
+                        <flux:input wire:model="apellido_contacto" id="apellido_contacto" type="text"
+                            placeholder="Ingrese el apellido" class="w-full mt-1" />
+                        @error('apellido_contacto')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div>
-                        <flux:label for="correo_contacto" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Correo *</flux:label>
-                        <flux:input wire:model="correo_contacto" id="correo_contacto" type="email" placeholder="correo@ejemplo.com" class="w-full mt-1" />
-                        @error('correo_contacto') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <flux:label for="correo_contacto"
+                            class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Correo *</flux:label>
+                        <flux:input wire:model="correo_contacto" id="correo_contacto" type="email"
+                            placeholder="correo@ejemplo.com" class="w-full mt-1" />
+                        @error('correo_contacto')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div>
-                        <flux:label for="telefono_contacto" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Teléfono</flux:label>
-                        <flux:input wire:model="telefono_contacto" id="telefono_contacto" type="text" placeholder="Ingrese el teléfono" class="w-full mt-1" />
-                        @error('telefono_contacto') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <flux:label for="telefono_contacto"
+                            class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Teléfono</flux:label>
+                        <flux:input wire:model="telefono_contacto" id="telefono_contacto" type="text"
+                            placeholder="Ingrese el teléfono" class="w-full mt-1" />
+                        @error('telefono_contacto')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div>
-                        <flux:label for="cargo_contacto" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Cargo</flux:label>
-                        <flux:input wire:model="cargo_contacto" id="cargo_contacto" type="text" placeholder="Ingrese el cargo" class="w-full mt-1" />
-                        @error('cargo_contacto') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <flux:label for="cargo_contacto" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                            Cargo</flux:label>
+                        <flux:input wire:model="cargo_contacto" id="cargo_contacto" type="text"
+                            placeholder="Ingrese el cargo" class="w-full mt-1" />
+                        @error('cargo_contacto')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div>
-                        <flux:label for="empresa_contacto" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Empresa</flux:label>
-                        <flux:input wire:model="empresa_contacto" id="empresa_contacto" type="text" placeholder="Ingrese la empresa" class="w-full mt-1" />
-                        @error('empresa_contacto') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <flux:label for="empresa_contacto"
+                            class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Empresa</flux:label>
+                        <flux:input wire:model="empresa_contacto" id="empresa_contacto" type="text"
+                            placeholder="Ingrese la empresa" class="w-full mt-1" />
+                        @error('empresa_contacto')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div class="flex items-center">
                         <flux:checkbox wire:model="es_principal_contacto" id="es_principal_contacto" />
-                        <flux:label for="es_principal_contacto" class="ml-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">Contacto principal</flux:label>
+                        <flux:label for="es_principal_contacto"
+                            class="ml-2 text-sm font-medium text-zinc-700 dark:text-zinc-300">Contacto principal
+                        </flux:label>
                     </div>
 
                     <div class="md:col-span-2">
-                        <flux:label for="notas_contacto" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">Notas</flux:label>
-                        <flux:textarea wire:model="notas_contacto" id="notas_contacto" rows="3" placeholder="Ingrese notas adicionales" class="w-full mt-1" />
-                        @error('notas_contacto') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        <flux:label for="notas_contacto" class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                            Notas</flux:label>
+                        <flux:textarea wire:model="notas_contacto" id="notas_contacto" rows="3"
+                            placeholder="Ingrese notas adicionales" class="w-full mt-1" />
+                        @error('notas_contacto')
+                            <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
                 </div>
             </div>
 
             <!-- Footer -->
-            <div class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-700/50 rounded-b-lg">
+            <div
+                class="px-6 py-4 border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-700/50 rounded-b-lg">
                 <div class="flex justify-end gap-3">
                     <flux:button wire:click="cerrarModalContacto" color="gray">
                         Cancelar

@@ -17,6 +17,7 @@ use App\Models\Shared\Customer;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Mary\Traits\Toast;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardLive extends Component
 {
@@ -110,107 +111,113 @@ class DashboardLive extends Component
     // Métodos optimizados para obtener estadísticas
     private function obtenerEstadisticasCatalogo()
     {
-        $totalProductos = ProductoCatalogo::count();
-        $productosActivos = ProductoCatalogo::where('isActive', true)->count();
-        $productosInactivos = $totalProductos - $productosActivos;
-        $productosSinStock = ProductoCatalogo::where('stock', 0)->count();
-        $productosStockBajo = ProductoCatalogo::where('stock', '<=', 5)->where('stock', '>', 0)->count();
-        $valorTotalInventario = ProductoCatalogo::where('isActive', true)
-            ->select(DB::raw('SUM(stock * price_venta) as total'))
-            ->value('total') ?? 0;
-        $productosPorCategoria = CategoryCatalogo::select('name')
-            ->selectRaw('(SELECT COUNT(*) FROM producto_catalogos WHERE producto_catalogos.category_id = category_catalogos.id AND producto_catalogos.isActive = 1) as products_count')
-            ->where('isActive', true)
-            ->orderByDesc('products_count')
-            ->limit(5)
-            ->get();
-        $productosPorMarca = BrandCatalogo::select('name')
-            ->selectRaw('(SELECT COUNT(*) FROM producto_catalogos WHERE producto_catalogos.brand_id = brand_catalogos.id AND producto_catalogos.isActive = 1) as products_count')
-            ->where('isActive', true)
-            ->orderByDesc('products_count')
-            ->limit(5)
-            ->get();
-        return [
-            'total_productos' => $totalProductos,
-            'productos_activos' => $productosActivos,
-            'productos_inactivos' => $productosInactivos,
-            'productos_sin_stock' => $productosSinStock,
-            'productos_stock_bajo' => $productosStockBajo,
-            'valor_total_inventario' => $valorTotalInventario,
-            'productos_por_categoria' => $productosPorCategoria,
-            'productos_por_marca' => $productosPorMarca,
-        ];
+        return Cache::remember('dashboard_estadisticas_catalogo', 60, function () {
+            $totalProductos = ProductoCatalogo::count();
+            $productosActivos = ProductoCatalogo::where('isActive', true)->count();
+            $productosInactivos = $totalProductos - $productosActivos;
+            $productosSinStock = ProductoCatalogo::where('stock', 0)->count();
+            $productosStockBajo = ProductoCatalogo::where('stock', '<=', 5)->where('stock', '>', 0)->count();
+            $valorTotalInventario = ProductoCatalogo::where('isActive', true)
+                ->select(DB::raw('SUM(stock * price_venta) as total'))
+                ->value('total') ?? 0;
+            $productosPorCategoria = CategoryCatalogo::select('name')
+                ->selectRaw('(SELECT COUNT(*) FROM producto_catalogos WHERE producto_catalogos.category_id = category_catalogos.id AND producto_catalogos.isActive = 1) as products_count')
+                ->where('isActive', true)
+                ->orderByDesc('products_count')
+                ->limit(5)
+                ->get();
+            $productosPorMarca = BrandCatalogo::select('name')
+                ->selectRaw('(SELECT COUNT(*) FROM producto_catalogos WHERE producto_catalogos.brand_id = brand_catalogos.id AND producto_catalogos.isActive = 1) as products_count')
+                ->where('isActive', true)
+                ->orderByDesc('products_count')
+                ->limit(5)
+                ->get();
+            return [
+                'total_productos' => $totalProductos,
+                'productos_activos' => $productosActivos,
+                'productos_inactivos' => $productosInactivos,
+                'productos_sin_stock' => $productosSinStock,
+                'productos_stock_bajo' => $productosStockBajo,
+                'valor_total_inventario' => $valorTotalInventario,
+                'productos_por_categoria' => $productosPorCategoria,
+                'productos_por_marca' => $productosPorMarca,
+            ];
+        });
     }
 
     private function obtenerEstadisticasAlmacen()
     {
-        $totalProductos = ProductoAlmacen::count();
-        $productosActivos = ProductoAlmacen::where('estado', true)->count();
-        $productosConStock = ProductoAlmacen::where('stock_actual', '>', 0)->count();
-        $productosStockBajo = ProductoAlmacen::whereRaw('stock_actual <= stock_minimo')->count();
-        $productosAgotados = ProductoAlmacen::where('stock_actual', 0)->count();
-        $valorTotalInventario = ProductoAlmacen::select(DB::raw('SUM(stock_actual * precio_unitario) as total'))->value('total') ?? 0;
-        $totalAlmacenes = WarehouseAlmacen::count();
-        $almacenesActivos = WarehouseAlmacen::where('estado', true)->count();
-        $movimientosRecientes = MovimientoAlmacen::with(['producto', 'almacen'])
-            ->orderBy('fecha_movimiento', 'desc')
-            ->limit(10)
-            ->get();
-        $productosPorAlmacen = WarehouseAlmacen::select('nombre')
-            ->selectRaw('(SELECT COUNT(*) FROM productos_almacen WHERE productos_almacen.almacen_id = almacenes.id AND productos_almacen.estado = 1) as productos_count')
-            ->where('estado', true)
-            ->orderByDesc('productos_count')
-            ->get();
-        return [
-            'total_productos' => $totalProductos,
-            'productos_activos' => $productosActivos,
-            'productos_con_stock' => $productosConStock,
-            'productos_stock_bajo' => $productosStockBajo,
-            'productos_agotados' => $productosAgotados,
-            'valor_total_inventario' => $valorTotalInventario,
-            'total_almacenes' => $totalAlmacenes,
-            'almacenes_activos' => $almacenesActivos,
-            'movimientos_recientes' => $movimientosRecientes,
-            'productos_por_almacen' => $productosPorAlmacen,
-        ];
+        return Cache::remember('dashboard_estadisticas_almacen', 60, function () {
+            $totalProductos = ProductoAlmacen::count();
+            $productosActivos = ProductoAlmacen::where('estado', true)->count();
+            $productosConStock = ProductoAlmacen::where('stock_actual', '>', 0)->count();
+            $productosStockBajo = ProductoAlmacen::whereRaw('stock_actual <= stock_minimo')->count();
+            $productosAgotados = ProductoAlmacen::where('stock_actual', 0)->count();
+            $valorTotalInventario = ProductoAlmacen::select(DB::raw('SUM(stock_actual * precio_unitario) as total'))->value('total') ?? 0;
+            $totalAlmacenes = WarehouseAlmacen::count();
+            $almacenesActivos = WarehouseAlmacen::where('estado', true)->count();
+            $movimientosRecientes = MovimientoAlmacen::with(['producto', 'almacen'])
+                ->orderBy('fecha_movimiento', 'desc')
+                ->limit(10)
+                ->get();
+            $productosPorAlmacen = WarehouseAlmacen::select('nombre')
+                ->selectRaw('(SELECT COUNT(*) FROM productos_almacen WHERE productos_almacen.almacen_id = almacenes.id AND productos_almacen.estado = 1) as productos_count')
+                ->where('estado', true)
+                ->orderByDesc('productos_count')
+                ->get();
+            return [
+                'total_productos' => $totalProductos,
+                'productos_activos' => $productosActivos,
+                'productos_con_stock' => $productosConStock,
+                'productos_stock_bajo' => $productosStockBajo,
+                'productos_agotados' => $productosAgotados,
+                'valor_total_inventario' => $valorTotalInventario,
+                'total_almacenes' => $totalAlmacenes,
+                'almacenes_activos' => $almacenesActivos,
+                'movimientos_recientes' => $movimientosRecientes,
+                'productos_por_almacen' => $productosPorAlmacen,
+            ];
+        });
     }
 
     private function obtenerEstadisticasCrm()
     {
-        $totalOportunidades = OpportunityCrm::count();
-        $oportunidadesAbiertas = OpportunityCrm::where('estado', 'abierta')->count();
-        $oportunidadesCerradas = OpportunityCrm::where('estado', 'cerrada')->count();
-        $valorTotalOportunidades = OpportunityCrm::select(DB::raw('SUM(valor) as total'))->value('total') ?? 0;
-        $valorOportunidadesAbiertas = OpportunityCrm::where('estado', 'abierta')->select(DB::raw('SUM(valor) as total'))->value('total') ?? 0;
-        $totalContactos = ContactCrm::count();
-        $totalClientes = Customer::count();
-        $totalActividades = ActivityCrm::count();
-        $oportunidadesPorEtapa = OpportunityCrm::select('etapa', DB::raw('count(*) as total'))
-            ->groupBy('etapa')
-            ->orderBy('total', 'desc')
-            ->get();
-        $oportunidadesPorMarca = MarcaCrm::select('nombre')
-            ->selectRaw('(SELECT COUNT(*) FROM opportunities_crm WHERE opportunities_crm.marca_id = marcas_crm.id) as oportunidades_count')
-            ->where('activo', true)
-            ->orderByDesc('oportunidades_count')
-            ->limit(5)
-            ->get();
-        $actividadesRecientes = ActivityCrm::with(['contacto', 'oportunidad'])
-            ->orderBy('created_at', 'desc')
-            ->limit(10)
-            ->get();
-        return [
-            'total_oportunidades' => $totalOportunidades,
-            'oportunidades_abiertas' => $oportunidadesAbiertas,
-            'oportunidades_cerradas' => $oportunidadesCerradas,
-            'valor_total_oportunidades' => $valorTotalOportunidades,
-            'valor_oportunidades_abiertas' => $valorOportunidadesAbiertas,
-            'total_contactos' => $totalContactos,
-            'total_clientes' => $totalClientes,
-            'total_actividades' => $totalActividades,
-            'oportunidades_por_etapa' => $oportunidadesPorEtapa,
-            'oportunidades_por_marca' => $oportunidadesPorMarca,
-            'actividades_recientes' => $actividadesRecientes,
-        ];
+        return Cache::remember('dashboard_estadisticas_crm', 60, function () {
+            $totalOportunidades = OpportunityCrm::count();
+            $oportunidadesAbiertas = OpportunityCrm::where('estado', 'abierta')->count();
+            $oportunidadesCerradas = OpportunityCrm::where('estado', 'cerrada')->count();
+            $valorTotalOportunidades = OpportunityCrm::select(DB::raw('SUM(valor) as total'))->value('total') ?? 0;
+            $valorOportunidadesAbiertas = OpportunityCrm::where('estado', 'abierta')->select(DB::raw('SUM(valor) as total'))->value('total') ?? 0;
+            $totalContactos = ContactCrm::count();
+            $totalClientes = Customer::count();
+            $totalActividades = ActivityCrm::count();
+            $oportunidadesPorEtapa = OpportunityCrm::select('etapa', DB::raw('count(*) as total'))
+                ->groupBy('etapa')
+                ->orderBy('total', 'desc')
+                ->get();
+            $oportunidadesPorMarca = MarcaCrm::select('nombre')
+                ->selectRaw('(SELECT COUNT(*) FROM opportunities_crm WHERE opportunities_crm.marca_id = marcas_crm.id) as oportunidades_count')
+                ->where('activo', true)
+                ->orderByDesc('oportunidades_count')
+                ->limit(5)
+                ->get();
+            $actividadesRecientes = ActivityCrm::with(['contacto', 'oportunidad'])
+                ->orderBy('created_at', 'desc')
+                ->limit(10)
+                ->get();
+            return [
+                'total_oportunidades' => $totalOportunidades,
+                'oportunidades_abiertas' => $oportunidadesAbiertas,
+                'oportunidades_cerradas' => $oportunidadesCerradas,
+                'valor_total_oportunidades' => $valorTotalOportunidades,
+                'valor_oportunidades_abiertas' => $valorOportunidadesAbiertas,
+                'total_contactos' => $totalContactos,
+                'total_clientes' => $totalClientes,
+                'total_actividades' => $totalActividades,
+                'oportunidades_por_etapa' => $oportunidadesPorEtapa,
+                'oportunidades_por_marca' => $oportunidadesPorMarca,
+                'actividades_recientes' => $actividadesRecientes,
+            ];
+        });
     }
 }
