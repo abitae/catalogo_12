@@ -85,6 +85,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('crm/marcas', MarcaCrmIndex::class)->name('crm.marcas');
     Route::get('crm/tipos-negocio', TipoNegocioCrmIndex::class)->name('crm.tipos-negocio');
 
+    // Rutas de Facturación
+    Route::get('facturacion/companias', \App\Livewire\Facturacion\CompanyFacturacionIndex::class)->name('facturacion.companias');
+    Route::get('facturacion/sucursales', \App\Livewire\Facturacion\SucursalFacturacionIndex::class)->name('facturacion.sucursales');
+    Route::get('facturacion/clientes', \App\Livewire\Facturacion\ClientFacturacionIndex::class)->name('facturacion.clientes');
+
     // Rutas de Configuración
     Route::get('configuracion/usuarios', UserIndex::class)->name('configuracion.usuarios');
     Route::get('configuracion/roles', RoleIndex::class)->name('configuracion.roles');
@@ -112,4 +117,4 @@ Route::get('pdfs/temp/{filename}', function ($filename) {
     return response(Storage::get($path), 200)->header('Content-Type', $mime);
 })->where('filename', '.*');
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

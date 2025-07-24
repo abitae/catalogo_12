@@ -104,6 +104,17 @@
                     :current="request()->routeIs('pc.productos-acuerdo-marco')" wire:navigate>
                     {{ __('Productos Acuerdo Marco') }}</flux:navlist.item>
             </flux:navlist.group>
+            <flux:navlist.group :expanded="request()->routeIs('facturacion.*')" expandable heading="Facturación">
+                <flux:navlist.item icon="building-office" :href="route('facturacion.companias')"
+                    :current="request()->routeIs('facturacion.companias')" wire:navigate>{{ __('Compañías') }}
+                </flux:navlist.item>
+                <flux:navlist.item icon="user" :href="route('facturacion.clientes')"
+                    :current="request()->routeIs('facturacion.clientes')" wire:navigate>{{ __('Clientes') }}
+                </flux:navlist.item>
+                <flux:navlist.item icon="building-storefront" :href="route('facturacion.sucursales')"
+                    :current="request()->routeIs('facturacion.sucursales')" wire:navigate>{{ __('Sucursales') }}
+                </flux:navlist.item>
+            </flux:navlist.group>
         </flux:navlist>
 
         <flux:spacer />

@@ -34,5 +34,14 @@ class DatabaseSeeder extends Seeder
 
         // Agregar el seeder de acuerdos marco
         $this->call(AcuerdoMarcoSeeder::class);
+
+        // Agregar el seeder de direcciones de facturación
+        $this->call(AddressSeeder::class);
+        // Agregar el seeder de compañías de facturación
+        $this->call(CompanySeeder::class);
+        // Agregar el seeder de sucursales de facturación
+        $this->call(SucursalSeeder::class);
+        // Agregar el seeder de clientes
+        $this->call(ClientSeeder::class);
     }
 }
