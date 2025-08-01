@@ -11,6 +11,9 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Agregar el seeder de ubigeo
+        $this->call(SqlFileSeeder::class,);
+
         // Agregar el seeder de roles y permisos
         $this->call(RolesAndPermissionsSeeder::class);
 
@@ -43,5 +46,9 @@ class DatabaseSeeder extends Seeder
         $this->call(SucursalSeeder::class);
         // Agregar el seeder de clientes
         $this->call(ClientSeeder::class);
+        // Agregar el seeder de facturas
+        $this->call(InvoiceSeeder::class);
+        // Agregar el seeder de detalles de facturas
+        $this->call(InvoiceDetailSeeder::class);
     }
 }

@@ -11,6 +11,7 @@ class Sucursal extends Model
     use HasFactory;
     protected $table = 'sucursals';
     protected $fillable = [
+        'name',
         'ruc',
         'razonSocial',
         'nombreComercial',
@@ -18,6 +19,9 @@ class Sucursal extends Model
         'telephone',
         'address_id',
         'company_id',
+        'isActive',
+        'logo_path',
+        'series_suffix',
     ];
     public function address()
     {

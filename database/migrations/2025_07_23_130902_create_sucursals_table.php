@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('sucursals', function (Blueprint $table) {
             $table->id();
+            $table->string('name');
             $table->string('ruc');
             $table->string('razonSocial');
             $table->string('nombreComercial');
@@ -20,6 +21,10 @@ return new class extends Migration
             $table->string('telephone');
             $table->foreignId('address_id')->constrained('addresses');
             $table->foreignId('company_id')->constrained('companies');
+            $table->string('logo_path')->nullable(); // path de la imagen de la sucursal
+            $table->string('series_suffix')->nullable(); // sufijo de la serie de documentos ejemplo F001, F002, B001, B002, T001, T002, NC001, NC002, ND001, ND002, etc.
+            $table->boolean('isActive')->default(true);
+            $table->softDeletes();
             $table->timestamps();
         });
     }

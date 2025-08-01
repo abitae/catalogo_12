@@ -16,6 +16,10 @@ use App\Livewire\Crm\OpportunityCrmIndex;
 use App\Livewire\Crm\ActivityCrmIndex;
 use App\Livewire\Crm\MarcaCrmIndex;
 use App\Livewire\Crm\TipoNegocioCrmIndex;
+use App\Livewire\Facturacion\ClientFacturacionIndex;
+use App\Livewire\Facturacion\CompanyFacturacionIndex;
+use App\Livewire\Facturacion\InvoiceCreateIndex;
+use App\Livewire\Facturacion\SucursalFacturacionIndex;
 use App\Livewire\Pc\AcuerdoMarcoIndex;
 use App\Livewire\Pc\ProductoAcuerdoMarcoIndex;
 use App\Livewire\Shared\DashboardLive;
@@ -86,9 +90,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('crm/tipos-negocio', TipoNegocioCrmIndex::class)->name('crm.tipos-negocio');
 
     // Rutas de Facturación
-    Route::get('facturacion/companias', \App\Livewire\Facturacion\CompanyFacturacionIndex::class)->name('facturacion.companias');
-    Route::get('facturacion/sucursales', \App\Livewire\Facturacion\SucursalFacturacionIndex::class)->name('facturacion.sucursales');
-    Route::get('facturacion/clientes', \App\Livewire\Facturacion\ClientFacturacionIndex::class)->name('facturacion.clientes');
+    Route::get('facturacion/companias', CompanyFacturacionIndex::class)->name('facturacion.companias');
+    Route::get('facturacion/sucursales', SucursalFacturacionIndex::class)->name('facturacion.sucursales');
+    Route::get('facturacion/clientes', ClientFacturacionIndex::class)->name('facturacion.clientes');
+    Route::get('facturacion/facturas/create', InvoiceCreateIndex::class)->name('facturacion.facturas.create');
 
     // Rutas de Configuración
     Route::get('configuracion/usuarios', UserIndex::class)->name('configuracion.usuarios');
