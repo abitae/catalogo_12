@@ -13,32 +13,73 @@ return new class extends Migration
     {
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
+
+            // Información del Emisor
             $table->foreignId('company_id')->constrained('companies');
             $table->foreignId('sucursal_id')->constrained('sucursals');
+
+            // Información del Cliente
             $table->foreignId('client_id')->constrained('clients');
-            $table->string('tipoDoc');
-            $table->string('tipoOperacion');
-            $table->string('serie');
-            $table->string('correlativo');
-            $table->string('fechaEmision');
-            $table->string('formaPago_moneda');
-            $table->string('formaPago_tipo');
-            $table->string('tipoMoneda');
-            $table->decimal('mtoOperGravadas', 8, 2);
-            $table->decimal('mtoIGV', 8, 2);
-            $table->decimal('totalImpuestos', 8, 2);
-            $table->decimal('valorVenta', 8, 2);
-            $table->decimal('subTotal', 8, 2);
-            $table->decimal('mtoImpVenta', 8, 2);
-            $table->string('monto_letras');//monto en letras
-            $table->string('codBienDetraccion')->nullable();//catalogo 54
-            $table->string('codMedioPago')->nullable();//catalogo 59
-            $table->string('ctaBanco')->nullable();//numero de cuenta
-            $table->decimal('setPercent', 8, 2)->nullable();//porcentaje detraccion
-            $table->decimal('setMount', 8, 2)->nullable();//monto detraccion
-            $table->string('observacion')->nullable();
-            $table->json('legends')->nullable();
-            $table->string('note_reference')->nullable();
+
+            // Datos del Documento
+            $table->string('tipoDoc', 2); // 01-Factura, 03-Boleta
+            $table->string('tipoOperacion', 4); // Catálogo 51
+            $table->string('serie', 4);
+            $table->string('correlativo', 8);
+            $table->date('fechaEmision');
+            $table->string('formaPago_moneda', 3)->default('PEN');
+            $table->string('formaPago_tipo', 2); // Catálogo 59
+            $table->string('tipoMoneda', 3)->default('PEN');
+
+            // Totales
+            $table->decimal('mtoOperGravadas', 12, 2)->default(0); // Operaciones gravadas
+            $table->decimal('mtoOperInafectas', 12, 2)->default(0); // Operaciones inafectas
+            $table->decimal('mtoOperExoneradas', 12, 2)->default(0); // Operaciones exoneradas
+            $table->decimal('mtoOperGratuitas', 12, 2)->default(0); // Operaciones gratuitas
+            $table->decimal('mtoIGV', 12, 2)->default(0); // IGV
+            $table->decimal('mtoIGVGratuitas', 12, 2)->default(0); // IGV de operaciones gratuitas
+            $table->decimal('totalImpuestos', 12, 2)->default(0); // Total impuestos
+            $table->decimal('valorVenta', 12, 2)->default(0); // Valor venta
+            $table->decimal('subTotal', 12, 2)->default(0); // Subtotal
+            $table->decimal('mtoImpVenta', 12, 2)->default(0); // Monto impuesto venta
+            $table->string('monto_letras', 500); // Monto en letras
+
+            // Detracción
+            $table->string('codBienDetraccion', 3)->nullable(); // Catálogo 54
+            $table->string('codMedioPago', 2)->nullable(); // Catálogo 59
+            $table->string('ctaBanco', 20)->nullable(); // Número de cuenta
+            $table->decimal('setPercent', 5, 2)->nullable(); // Porcentaje detracción
+            $table->decimal('setMount', 12, 2)->nullable(); // Monto detracción
+
+            // Percepción
+            $table->decimal('perception_mtoBase', 12, 2)->nullable(); // Base percepción
+            $table->decimal('perception_mto', 12, 2)->nullable(); // Monto percepción
+            $table->decimal('perception_mtoTotal', 12, 2)->nullable(); // Total percepción
+
+            // Descuentos Globales
+            $table->decimal('descuentos_mtoBase', 12, 2)->nullable(); // Base descuentos
+            $table->decimal('descuentos_mto', 12, 2)->nullable(); // Monto descuentos
+
+            // Cargos
+            $table->decimal('cargos_mtoBase', 12, 2)->nullable(); // Base cargos
+            $table->decimal('cargos_mto', 12, 2)->nullable(); // Monto cargos
+
+            // Anticipos
+            $table->decimal('anticipos_mtoBase', 12, 2)->nullable(); // Base anticipos
+            $table->decimal('anticipos_mto', 12, 2)->nullable(); // Monto anticipos
+
+            // Otros campos
+            $table->text('observacion')->nullable();
+            $table->json('legends')->nullable(); // Leyendas (Catálogo 52)
+            $table->json('guias')->nullable(); // Guías de remisión relacionadas
+            $table->json('relDocs')->nullable(); // Documentos relacionados
+            $table->json('anticipos')->nullable(); // Anticipos
+            $table->json('descuentos')->nullable(); // Descuentos globales
+            $table->json('cargos')->nullable(); // Cargos
+            $table->json('tributos')->nullable(); // Tributos adicionales
+            $table->string('note_reference', 100)->nullable();
+
+            // Campos de SUNAT
             $table->string('xml_path')->nullable();
             $table->string('xml_hash')->nullable();
             $table->string('cdr_description')->nullable();
@@ -47,6 +88,10 @@ return new class extends Migration
             $table->string('cdr_path')->nullable();
             $table->string('errorCode')->nullable();
             $table->text('errorMessage')->nullable();
+
+            // Campos de exportación
+            $table->json('exportacion')->nullable();
+
             $table->timestamps();
         });
     }

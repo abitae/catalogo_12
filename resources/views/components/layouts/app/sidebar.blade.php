@@ -117,6 +117,12 @@
                 <flux:navlist.item icon="building-storefront" :href="route('facturacion.facturas.create')"
                     :current="request()->routeIs('facturacion.facturas.create')" wire:navigate>{{ __('Facturas') }}
                 </flux:navlist.item>
+                <flux:navlist.item icon="building-storefront" :href="route('facturacion.notas.create')"
+                    :current="request()->routeIs('facturacion.notas.create')" wire:navigate>{{ __('Notas') }}
+                </flux:navlist.item>
+                <flux:navlist.item icon="building-storefront" :href="route('facturacion.guias.create')"
+                    :current="request()->routeIs('facturacion.guias.create')" wire:navigate>{{ __('Guías') }}
+                </flux:navlist.item>
             </flux:navlist.group>
         </flux:navlist>
 

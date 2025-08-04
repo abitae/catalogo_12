@@ -11,8 +11,14 @@ use App\Models\Facturacion\InvoiceDetail;
 use App\Models\Catalogo\ProductoCatalogo;
 use App\Models\Shared\Customer;
 use App\Models\Configuration\SunatUnidadMedida;
+use App\Models\Configuration\SunatTipoOperacion;
+use App\Models\Configuration\SunatTipoAfectacionIgv;
+use App\Models\Configuration\SunatBienDetraccion;
+use App\Models\Configuration\SunatMedioPago;
+use App\Models\Configuration\SunatLeyenda;
 use Illuminate\Support\Facades\DB;
 use App\Traits\SearchDocument;
+use Carbon\Carbon;
 
 class InvoiceCreateIndex extends Component
 {
@@ -74,9 +80,66 @@ class InvoiceCreateIndex extends Component
     public $igv = 0;
     public $total = 0;
 
+    // Tipos de operación
+    public $tiposOperacion = [];
+
+    // Campos adicionales para GREENTER
+    public $tipAfeIgv = '10'; // Tipo de afectación IGV (10-Gravado por defecto)
+    public $tiposAfectacionIgv = [];
+    public $bienesDetraccion = [];
+    public $mediosPago = [];
+    public $leyendas = [];
+    public $leyendasSeleccionadas = [];
+
+    // Detracción
+    public $codBienDetraccion = null;
+    public $codMedioPago = null;
+    public $ctaBanco = null;
+    public $setPercent = null;
+    public $setMount = null;
+
+    // Percepción
+    public $perception_mtoBase = 0;
+    public $perception_mto = 0;
+    public $perception_mtoTotal = 0;
+
+    // Descuentos Globales
+    public $descuentos_mtoBase = 0;
+    public $descuentos_mto = 0;
+
+    // Cargos
+    public $cargos_mtoBase = 0;
+    public $cargos_mto = 0;
+
+    // Anticipos
+    public $anticipos_mtoBase = 0;
+    public $anticipos_mto = 0;
+
+    // Guías de Remisión
+    public $guias = [];
+
+    // Documentos Relacionados
+    public $relDocs = [];
+
+    // Anticipos Array
+    public $anticiposArray = [];
+
+    // Descuentos Array
+    public $descuentosArray = [];
+
+    // Cargos Array
+    public $cargosArray = [];
+
+    // Tributos Array
+    public $tributosArray = [];
+
     public function mount()
     {
-        $this->fechaEmision = now()->format('Y-m-d');
+        $this->fechaEmision = date('Y-m-d');
+
+        // Cargar catálogos SUNAT
+        $this->cargarTiposOperacion();
+        $this->cargarCatalogosSunat();
 
         // Inicializar con la primera empresa disponible
         $primeraEmpresa = Company::where('isActive', true)
@@ -222,6 +285,7 @@ class InvoiceCreateIndex extends Component
     public function updatedTipoDoc()
     {
         $this->generarSerieYCorrelativo();
+        $this->cargarTiposOperacion();
     }
 
     public function updatedBusquedaProducto()
@@ -254,6 +318,32 @@ class InvoiceCreateIndex extends Component
         } else {
             $this->client_id = null;
         }
+    }
+
+    private function cargarTiposOperacion()
+    {
+        $this->tiposOperacion = SunatTipoOperacion::getByTipoComprobante($this->tipoDoc);
+
+        // Si el tipo de operación actual no está en la lista, usar el primero disponible
+        $tipoOperacionExiste = $this->tiposOperacion->contains('codigo', $this->tipoOperacion);
+        if (!$tipoOperacionExiste && $this->tiposOperacion->count() > 0) {
+            $this->tipoOperacion = $this->tiposOperacion->first()->codigo;
+        }
+    }
+
+    private function cargarCatalogosSunat()
+    {
+        // Cargar tipos de afectación IGV
+        $this->tiposAfectacionIgv = SunatTipoAfectacionIgv::getAll();
+
+        // Cargar bienes de detracción
+        $this->bienesDetraccion = SunatBienDetraccion::getAll();
+
+        // Cargar medios de pago
+        $this->mediosPago = SunatMedioPago::getAll();
+
+        // Cargar leyendas
+        $this->leyendas = SunatLeyenda::getAll();
     }
 
     private function generarSerieYCorrelativo()
@@ -487,6 +577,161 @@ class InvoiceCreateIndex extends Component
 
         // El total es la suma de todos los valores con IGV
         $this->total = $total_con_igv;
+
+        // Aplicar descuentos globales
+        if ($this->descuentos_mto > 0) {
+            $this->total -= $this->descuentos_mto;
+        }
+
+        // Aplicar cargos
+        if ($this->cargos_mto > 0) {
+            $this->total += $this->cargos_mto;
+        }
+
+        // Aplicar detracción
+        if ($this->setMount > 0) {
+            $this->total -= $this->setMount;
+        }
+
+        // Aplicar percepción
+        if ($this->perception_mtoTotal > 0) {
+            $this->total += $this->perception_mtoTotal;
+        }
+
+        // Actualizar el IGV de cada producto individual
+        foreach ($this->productos as $index => $producto) {
+            $valor_sin_igv = $producto['valor_venta'] / 1.18;
+            $igv_producto = $producto['valor_venta'] - $valor_sin_igv;
+            $this->productos[$index]['igv'] = $igv_producto;
+        }
+    }
+
+    // Métodos para manejar detracción
+    public function updatedCodBienDetraccion()
+    {
+        if ($this->codBienDetraccion) {
+            $bien = $this->bienesDetraccion->firstWhere('codigo', $this->codBienDetraccion);
+            if ($bien) {
+                $this->setPercent = $bien->porcentaje;
+                $this->calcularDetraccion();
+            }
+        }
+    }
+
+    public function calcularDetraccion()
+    {
+        if ($this->setPercent && $this->subtotal > 0) {
+            $this->setMount = round($this->subtotal * ($this->setPercent / 100), 2);
+        }
+        $this->calcularTotales();
+    }
+
+    // Métodos para manejar descuentos globales
+    public function calcularDescuentos()
+    {
+        if ($this->descuentos_mtoBase > 0 && $this->descuentos_mto > 0) {
+            $this->calcularTotales();
+        }
+    }
+
+    // Métodos para manejar cargos
+    public function calcularCargos()
+    {
+        if ($this->cargos_mtoBase > 0 && $this->cargos_mto > 0) {
+            $this->calcularTotales();
+        }
+    }
+
+    // Métodos para manejar percepción
+    public function calcularPercepcion()
+    {
+        if ($this->perception_mtoBase > 0 && $this->perception_mto > 0) {
+            $this->perception_mtoTotal = $this->perception_mtoBase + $this->perception_mto;
+            $this->calcularTotales();
+        }
+    }
+
+    // Métodos para manejar guías de remisión
+    public function agregarGuia()
+    {
+        $this->guias[] = [
+            'tipoDoc' => '09',
+            'serie' => '',
+            'correlativo' => '',
+        ];
+    }
+
+    public function eliminarGuia($index)
+    {
+        unset($this->guias[$index]);
+        $this->guias = array_values($this->guias);
+    }
+
+    // Métodos para manejar documentos relacionados
+    public function agregarDocumentoRelacionado()
+    {
+        $this->relDocs[] = [
+            'tipoDoc' => '01',
+            'serie' => '',
+            'correlativo' => '',
+            'fechaEmision' => '',
+        ];
+    }
+
+    public function eliminarDocumentoRelacionado($index)
+    {
+        unset($this->relDocs[$index]);
+        $this->relDocs = array_values($this->relDocs);
+    }
+
+    // Métodos para manejar anticipos
+    public function agregarAnticipo()
+    {
+        $this->anticiposArray[] = [
+            'tipoDoc' => '02',
+            'serie' => '',
+            'correlativo' => '',
+            'fechaEmision' => '',
+            'monto' => 0,
+        ];
+    }
+
+    public function eliminarAnticipo($index)
+    {
+        unset($this->anticiposArray[$index]);
+        $this->anticiposArray = array_values($this->anticiposArray);
+    }
+
+    // Métodos para manejar descuentos array
+    public function agregarDescuento()
+    {
+        $this->descuentosArray[] = [
+            'codigo' => '00',
+            'descripcion' => '',
+            'monto' => 0,
+        ];
+    }
+
+    public function eliminarDescuento($index)
+    {
+        unset($this->descuentosArray[$index]);
+        $this->descuentosArray = array_values($this->descuentosArray);
+    }
+
+    // Métodos para manejar cargos array
+    public function agregarCargo()
+    {
+        $this->cargosArray[] = [
+            'codigo' => '00',
+            'descripcion' => '',
+            'monto' => 0,
+        ];
+    }
+
+    public function eliminarCargo($index)
+    {
+        unset($this->cargosArray[$index]);
+        $this->cargosArray = array_values($this->cargosArray);
     }
 
     public function crearFactura()
@@ -496,7 +741,7 @@ class InvoiceCreateIndex extends Component
             'sucursal_id' => 'required|exists:sucursals,id',
             'client_id' => 'required|exists:customers,id',
             'tipoDoc' => 'required|in:01,03,07,08',
-            'tipoOperacion' => 'required|in:0101,0102,0103',
+            'tipoOperacion' => 'required|exists:sunat_51,codigo',
             'serie' => 'required|string|max:10',
             'correlativo' => 'required|string|max:10',
             'fechaEmision' => 'required|date',
@@ -523,7 +768,7 @@ class InvoiceCreateIndex extends Component
             'tipoDoc.required' => 'Debe seleccionar el tipo de documento',
             'tipoDoc.in' => 'El tipo de documento seleccionado no es válido',
             'tipoOperacion.required' => 'Debe seleccionar el tipo de operación',
-            'tipoOperacion.in' => 'El tipo de operación seleccionado no es válido',
+            'tipoOperacion.exists' => 'El tipo de operación seleccionado no es válido',
             'serie.required' => 'La serie es obligatoria',
             'serie.string' => 'La serie debe ser un texto',
             'serie.max' => 'La serie no puede exceder 10 caracteres',
@@ -578,13 +823,38 @@ class InvoiceCreateIndex extends Component
                 'formaPago_tipo' => $this->formaPago_tipo,
                 'tipoMoneda' => $this->tipoMoneda,
                 'mtoOperGravadas' => $this->subtotal, // Valor sin IGV
+                'mtoOperInafectas' => 0, // Operaciones inafectas
+                'mtoOperExoneradas' => 0, // Operaciones exoneradas
+                'mtoOperGratuitas' => 0, // Operaciones gratuitas
                 'mtoIGV' => $this->igv,
+                'mtoIGVGratuitas' => 0, // IGV de operaciones gratuitas
                 'totalImpuestos' => $this->igv,
                 'valorVenta' => $this->subtotal, // Valor sin IGV
                 'subTotal' => $this->total, // Total con IGV
                 'mtoImpVenta' => $this->total, // Total con IGV
                 'monto_letras' => $this->numeroALetras($this->total),
+                'codBienDetraccion' => $this->codBienDetraccion,
+                'codMedioPago' => $this->codMedioPago,
+                'ctaBanco' => $this->ctaBanco,
+                'setPercent' => $this->setPercent,
+                'setMount' => $this->setMount,
+                'perception_mtoBase' => $this->perception_mtoBase,
+                'perception_mto' => $this->perception_mto,
+                'perception_mtoTotal' => $this->perception_mtoTotal,
+                'descuentos_mtoBase' => $this->descuentos_mtoBase,
+                'descuentos_mto' => $this->descuentos_mto,
+                'cargos_mtoBase' => $this->cargos_mtoBase,
+                'cargos_mto' => $this->cargos_mto,
+                'anticipos_mtoBase' => $this->anticipos_mtoBase,
+                'anticipos_mto' => $this->anticipos_mto,
                 'observacion' => $this->observacion,
+                'legends' => $this->leyendasSeleccionadas,
+                'guias' => $this->guias,
+                'relDocs' => $this->relDocs,
+                'anticipos' => $this->anticiposArray,
+                'descuentos' => $this->descuentosArray,
+                'cargos' => $this->cargosArray,
+                'tributos' => $this->tributosArray,
                 'note_reference' => $this->note_reference,
             ]);
 
@@ -680,6 +950,12 @@ class InvoiceCreateIndex extends Component
         // Obtener unidades de medida desde la tabla sunat_03
         $unidades = SunatUnidadMedida::getUnidadesForSelect();
 
-        return view('livewire.facturacion.invoice-create-index', compact('companies', 'sucursales', 'clients', 'productos', 'unidades'));
+        return view('livewire.facturacion.invoice-create-index', compact(
+            'companies',
+            'sucursales',
+            'clients',
+            'productos',
+            'unidades'
+        ));
     }
 }

@@ -26,6 +26,20 @@ class InvoiceDetail extends Model
         'porcentajeIgv',
         'igv',
         'mtoPrecioUnitario',
+        'mtoOperGratuitas',
+        'mtoIGVGratuitas',
+        'mtoOperInafectas',
+        'mtoOperExoneradas',
+        'anticipo_mtoBase',
+        'anticipo_mto',
+        'tributos',
+        'codBienDetraccion',
+        'codMedioPago',
+        'ctaBanco',
+    ];
+
+    protected $casts = [
+        'tributos' => 'array',
     ];
     public function invoice()
     {

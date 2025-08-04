@@ -50,5 +50,15 @@ class DatabaseSeeder extends Seeder
         $this->call(InvoiceSeeder::class);
         // Agregar el seeder de detalles de facturas
         $this->call(InvoiceDetailSeeder::class);
+
+        // Agregar el seeder de notas (crédito y débito)
+        $this->call(NoteSeeder::class);
+        // Agregar el seeder de detalles de notas
+        $this->call(NoteDetailSeeder::class);
+
+        // Agregar el seeder de guías de remisión
+        $this->call(DespatchSeeder::class);
+        // Agregar el seeder de detalles de guías de remisión
+        $this->call(DespatchDetailSeeder::class);
     }
 }

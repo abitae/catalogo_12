@@ -13,22 +13,49 @@ return new class extends Migration
     {
         Schema::create('invoice_details', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('invoice_id')->constrained('invoices');
-            $table->string('unidad');
-            $table->decimal('cantidad', 8, 2)->default(0);// 2
-            $table->string('codProducto')->nullable();
-            $table->string('codProdSunat')->nullable();
-            $table->string('codProdGS1')->nullable();
-            $table->string('descripcion');
-            $table->string('tipAfeIgv');
-            $table->decimal('mtoValorUnitario', 8, 2)->default(0);// 100
-            $table->decimal('mtoValorVenta', 8, 2)->default(0);// 200
-            $table->decimal('descuento', 8, 2)->default(0);// 0
-            $table->decimal('mtoBaseIgv', 8, 2)->default(0);// 200
-            $table->decimal('totalImpuestos', 8, 2)->default(0);// 36
-            $table->decimal('porcentajeIgv', 8, 2)->default(0);// 18
-            $table->decimal('igv', 8, 2)->default(0);// 36
-            $table->decimal('mtoPrecioUnitario', 8, 2)->default(0);// 100
+            $table->foreignId('invoice_id')->constrained('invoices')->onDelete('cascade');
+
+            // Información del Producto
+            $table->string('unidad', 3); // Unidad de medida (Catálogo 03)
+            $table->decimal('cantidad', 12, 3)->default(0); // Cantidad
+            $table->string('codProducto', 30)->nullable(); // Código del producto
+            $table->string('codProdSunat', 30)->nullable(); // Código SUNAT del producto
+            $table->string('codProdGS1', 30)->nullable(); // Código GS1 del producto
+            $table->text('descripcion'); // Descripción del producto
+
+            // Tipo de Afectación IGV
+            $table->string('tipAfeIgv', 2); // Catálogo 07: 10-Gravado, 20-Exonerado, 30-Inafecto, 40-Exportación
+
+            // Valores
+            $table->decimal('mtoValorUnitario', 12, 2)->default(0); // Valor unitario sin impuestos
+            $table->decimal('mtoValorVenta', 12, 2)->default(0); // Valor de venta sin impuestos
+            $table->decimal('descuento', 12, 2)->default(0); // Descuento
+            $table->decimal('mtoBaseIgv', 12, 2)->default(0); // Base imponible IGV
+            $table->decimal('totalImpuestos', 12, 2)->default(0); // Total impuestos
+            $table->decimal('porcentajeIgv', 5, 2)->default(18.00); // Porcentaje IGV
+            $table->decimal('igv', 12, 2)->default(0); // IGV
+
+            // Precios
+            $table->decimal('mtoPrecioUnitario', 12, 2)->default(0); // Precio unitario sin impuestos
+
+            // Campos adicionales para GREENTER
+            $table->decimal('mtoOperGratuitas', 12, 2)->default(0); // Operaciones gratuitas
+            $table->decimal('mtoIGVGratuitas', 12, 2)->default(0); // IGV de operaciones gratuitas
+            $table->decimal('mtoOperInafectas', 12, 2)->default(0); // Operaciones inafectas
+            $table->decimal('mtoOperExoneradas', 12, 2)->default(0); // Operaciones exoneradas
+
+            // Anticipos
+            $table->decimal('anticipo_mtoBase', 12, 2)->nullable(); // Base anticipo
+            $table->decimal('anticipo_mto', 12, 2)->nullable(); // Monto anticipo
+
+            // Tributos adicionales
+            $table->json('tributos')->nullable(); // Tributos adicionales
+
+            // Información adicional
+            $table->string('codBienDetraccion', 3)->nullable(); // Catálogo 54
+            $table->string('codMedioPago', 2)->nullable(); // Catálogo 59
+            $table->string('ctaBanco', 20)->nullable(); // Número de cuenta
+
             $table->timestamps();
         });
     }
