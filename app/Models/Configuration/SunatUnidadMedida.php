@@ -34,8 +34,6 @@ class SunatUnidadMedida extends Model
      */
     public static function getUnidadesForSelect()
     {
-        return self::orderBy('descripcion')
-            ->pluck('descripcion', 'codigo')
-            ->toArray();
+        return self::orderBy('descripcion')->get();
     }
 }

@@ -81,14 +81,14 @@ class InvoiceCreateIndex extends Component
     public $total = 0;
 
     // Tipos de operación
-    public $tiposOperacion = [];
+    public $tiposOperacion;
 
     // Campos adicionales para GREENTER
     public $tipAfeIgv = '10'; // Tipo de afectación IGV (10-Gravado por defecto)
-    public $tiposAfectacionIgv = [];
-    public $bienesDetraccion = [];
-    public $mediosPago = [];
-    public $leyendas = [];
+    public $tiposAfectacionIgv;
+    public $bienesDetraccion;
+    public $mediosPago;
+    public $leyendas;
     public $leyendasSeleccionadas = [];
 
     // Detracción
@@ -133,9 +133,25 @@ class InvoiceCreateIndex extends Component
     // Tributos Array
     public $tributosArray = [];
 
+    // Propiedad computada para el monto en letras
+    public function getMontoEnLetrasProperty()
+    {
+        return $this->numeroALetras($this->total);
+    }
+
     public function mount()
     {
         $this->fechaEmision = date('Y-m-d');
+
+        // Inicializar propiedades
+        $this->tiposOperacion = collect();
+        $this->tiposAfectacionIgv = collect();
+        $this->bienesDetraccion = collect();
+        $this->mediosPago = collect();
+        $this->leyendas = collect();
+
+        // Inicializar tipo de documento del cliente
+        $this->typeCodeCliente = 'DNI';
 
         // Cargar catálogos SUNAT
         $this->cargarTiposOperacion();
@@ -324,10 +340,15 @@ class InvoiceCreateIndex extends Component
     {
         $this->tiposOperacion = SunatTipoOperacion::getByTipoComprobante($this->tipoDoc);
 
-        // Si el tipo de operación actual no está en la lista, usar el primero disponible
-        $tipoOperacionExiste = $this->tiposOperacion->contains('codigo', $this->tipoOperacion);
-        if (!$tipoOperacionExiste && $this->tiposOperacion->count() > 0) {
-            $this->tipoOperacion = $this->tiposOperacion->first()->codigo;
+        // Verificar que la colección no esté vacía y que el tipo de operación actual no esté en la lista
+        if ($this->tiposOperacion && $this->tiposOperacion->count() > 0) {
+            $tipoOperacionExiste = $this->tiposOperacion->contains('codigo', $this->tipoOperacion);
+            if (!$tipoOperacionExiste) {
+                $primerTipo = $this->tiposOperacion->first();
+                if ($primerTipo) {
+                    $this->tipoOperacion = $primerTipo->codigo;
+                }
+            }
         }
     }
 
@@ -609,7 +630,7 @@ class InvoiceCreateIndex extends Component
     // Métodos para manejar detracción
     public function updatedCodBienDetraccion()
     {
-        if ($this->codBienDetraccion) {
+        if ($this->codBienDetraccion && $this->bienesDetraccion) {
             $bien = $this->bienesDetraccion->firstWhere('codigo', $this->codBienDetraccion);
             if ($bien) {
                 $this->setPercent = $bien->porcentaje;
@@ -892,7 +913,7 @@ class InvoiceCreateIndex extends Component
         }
     }
 
-    private function numeroALetras($numero)
+    public function numeroALetras($numero)
     {
         // Función simple para convertir números a letras
         $unidades = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];

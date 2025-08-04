@@ -6,7 +6,7 @@
                 <div class="flex items-center space-x-4">
                     <div class="flex items-center space-x-3">
                         <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-                            <flux:icon name="receipt" class="w-5 h-5 text-white" />
+                            <flux:icon name="document-text" class="w-5 h-5 text-white" />
                         </div>
                         <div>
                             <h1 class="text-xl font-bold text-slate-900 dark:text-white">Facturación Electrónica</h1>
@@ -101,7 +101,7 @@
                         <div class="flex-1">
                             <div class="flex items-center space-x-3 mb-4">
                                 <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                                    <flux:icon name="receipt" class="w-6 h-6" />
+                                    <flux:icon name="document-text" class="w-6 h-6" />
                                 </div>
                                 <div>
                                     <h1 class="text-3xl font-bold mb-1">
@@ -124,7 +124,7 @@
                         <div class="text-right">
                             <div class="bg-white/20 rounded-2xl p-6 backdrop-blur-sm border border-white/30">
                                 <div class="flex items-center space-x-2 mb-2">
-                                    <flux:icon name="building" class="w-4 h-4 text-blue-200" />
+                                    <flux:icon name="building-office" class="w-4 h-4 text-blue-200" />
                                     <p class="text-xs text-blue-200 font-medium">R.U.C.</p>
                                 </div>
                                 <p class="font-mono text-2xl font-bold tracking-wider">{{ $ruc ?? '00000000000' }}</p>
@@ -141,7 +141,7 @@
                 <div class="p-8 border-b border-slate-200 dark:border-slate-700">
                     <div class="flex items-center space-x-3 mb-6">
                         <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
-                            <flux:icon name="building" class="w-5 h-5 text-white" />
+                            <flux:icon name="building-office" class="w-5 h-5 text-white" />
                         </div>
                         <div>
                             <flux:heading size="lg" class="text-slate-900 dark:text-white">Información del Emisor</flux:heading>
@@ -179,7 +179,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div class="space-y-2">
                                     <div class="flex items-center space-x-2">
-                                        <flux:icon name="building" class="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                        <flux:icon name="building-office" class="w-4 h-4 text-blue-600 dark:text-blue-400" />
                                         <span class="text-sm font-medium text-blue-700 dark:text-blue-300">Razón Social</span>
                                     </div>
                                     <p class="text-slate-900 dark:text-slate-100 font-medium">{{ $razonSocial }}</p>
@@ -215,7 +215,7 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <!-- Tipo de Documento -->
                         <div class="space-y-2">
                             <flux:select label="Tipo de Documento" wire:model.live="tipoDoc" size="xs" class="w-full">
@@ -231,16 +231,6 @@
                                     <option value="{{ $tipo->codigo }}">{{ $tipo->codigo }} - {{ $tipo->descripcion }}</option>
                                 @endforeach
                             </flux:select>
-                        </div>
-
-                        <!-- Serie -->
-                        <div class="space-y-2">
-                            <flux:input label="Serie" wire:model="serie" placeholder="F001" readonly size="xs" class="w-full" />
-                        </div>
-
-                        <!-- Correlativo -->
-                        <div class="space-y-2">
-                            <flux:input label="Correlativo" wire:model="correlativo" placeholder="1" readonly size="xs" class="w-full" />
                         </div>
 
                         <!-- Fecha de Emisión -->
@@ -292,12 +282,18 @@
                     </div>
 
                     <!-- Búsqueda de Cliente -->
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
                         <div class="space-y-2">
-                            <flux:input label="Buscar por Número de Documento" wire:model.live="numeroDocumentoCliente" placeholder="Ingrese DNI/RUC" size="xs" class="w-full" />
+                            <flux:select label="Tipo de Documento" wire:model="typeCodeCliente" size="xs" class="w-full">
+                                <option value="DNI">DNI</option>
+                                <option value="RUC">RUC</option>
+                            </flux:select>
+                        </div>
+                        <div class="space-y-2">
+                            <flux:input label="Número de Documento" wire:model.live="numeroDocumentoCliente" placeholder="Ingrese DNI/RUC" size="xs" class="w-full" />
                         </div>
                         <div class="flex items-end">
-                            <flux:button icon="search" variant="outline" wire:click="searchClient" :disabled="!$numeroDocumentoCliente" class="w-full">
+                            <flux:button icon="magnifying-glass" variant="outline" wire:click="searchClient" :disabled="!$numeroDocumentoCliente || !$typeCodeCliente" class="w-full">
                                 <span class="hidden sm:inline">Buscar Cliente</span>
                                 <span class="sm:hidden">Buscar</span>
                             </flux:button>
@@ -502,7 +498,7 @@
                     <!-- Percepción -->
                     <div class="mb-8">
                         <div class="flex items-center space-x-3 mb-4">
-                            <flux:icon name="percent" class="w-5 h-5 text-green-600 dark:text-green-400" />
+                            <flux:icon name="calculator" class="w-5 h-5 text-green-600 dark:text-green-400" />
                             <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Percepción</h3>
                         </div>
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -521,7 +517,7 @@
                     <!-- Descuentos y Cargos Globales -->
                     <div class="mb-8">
                         <div class="flex items-center space-x-3 mb-4">
-                            <flux:icon name="adjustments" class="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                            <flux:icon name="calculator" class="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
                             <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Descuentos y Cargos Globales</h3>
                         </div>
                         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -678,7 +674,7 @@
                             </div>
                             <div class="bg-white dark:bg-slate-800 rounded-xl p-4 border border-emerald-200 dark:border-emerald-700">
                                 <p class="text-sm text-emerald-800 dark:text-emerald-200 font-medium leading-relaxed">
-                                    {{ $numeroALetras($total) }}
+                                    {{ $this->montoEnLetras }}
                                 </p>
                             </div>
                         </div>
@@ -766,7 +762,7 @@
                 <!-- Campos del Producto -->
                 <div class="bg-gradient-to-r from-slate-50 to-emerald-50 dark:from-slate-800 dark:to-emerald-900/20 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
                     <div class="flex items-center space-x-3 mb-4">
-                        <flux:icon name="adjustments" class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                        <flux:icon name="cog" class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                         <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Detalles del Producto</h3>
                     </div>
 
