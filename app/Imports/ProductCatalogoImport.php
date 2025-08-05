@@ -71,9 +71,9 @@ class ProductCatalogoImport implements ToModel, WithHeadingRow, WithValidation, 
             'brand_id' => $brand->id,
             'category_id' => $category->id,
             'line_id' => $line->id,
-            'code' => trim($row['code']),
-            'code_fabrica' => trim($row['code_fabrica'] ?? ''),
-            'code_peru' => trim($row['code_peru'] ?? ''),
+            'code' => $this->parseCode($row['code']),
+            'code_fabrica' => $this->parseCode($row['code_fabrica'] ?? ''),
+            'code_peru' => $this->parseCode($row['code_peru'] ?? ''),
             'price_compra' => $this->parsePrice($row['price_compra'] ?? 0),
             'price_venta' => $this->parsePrice($row['price_venta'] ?? 0),
             'stock' => $this->parseStock($row['stock'] ?? 0),
@@ -139,9 +139,9 @@ class ProductCatalogoImport implements ToModel, WithHeadingRow, WithValidation, 
             'brand' => 'required|string',
             'category' => 'required|string',
             'line' => 'required|string',
-            'code' => 'required|string',
-            'code_fabrica' => 'nullable|string',
-            'code_peru' => 'nullable|string',
+            'code' => 'required|string|max:255',
+            'code_fabrica' => 'nullable|string|max:255',
+            'code_peru' => 'nullable|string|max:255',
             'price_compra' => 'nullable|numeric|min:0',
             'price_venta' => 'nullable|numeric|min:0',
             'stock' => 'nullable|numeric|min:0',
@@ -162,6 +162,12 @@ class ProductCatalogoImport implements ToModel, WithHeadingRow, WithValidation, 
             'category.required' => 'La categoría es obligatoria',
             'line.required' => 'La línea es obligatoria',
             'code.required' => 'El código es obligatorio',
+            'code.string' => 'El código debe ser texto (numérico o alfanumérico)',
+            'code.max' => 'El código no puede exceder 255 caracteres',
+            'code_fabrica.string' => 'El código de fábrica debe ser texto (numérico o alfanumérico)',
+            'code_fabrica.max' => 'El código de fábrica no puede exceder 255 caracteres',
+            'code_peru.string' => 'El código Perú debe ser texto (numérico o alfanumérico)',
+            'code_peru.max' => 'El código Perú no puede exceder 255 caracteres',
             'price_compra.numeric' => 'El precio de compra debe ser un número',
             'price_venta.numeric' => 'El precio de venta debe ser un número',
             'stock.numeric' => 'El stock debe ser un número',
@@ -244,5 +250,21 @@ class ProductCatalogoImport implements ToModel, WithHeadingRow, WithValidation, 
         $value = preg_replace('/[^0-9]/', '', $value);
 
         return (int) $value;
+    }
+
+    /**
+     * Parsear códigos (numéricos o alfanuméricos)
+     * Convierte el valor a string y lo limpia de espacios
+     */
+    private function parseCode($value)
+    {
+        if (empty($value)) return '';
+
+        // Convertir a string y limpiar espacios
+        $code = trim((string) $value);
+
+        // Si el código es numérico, mantenerlo como string para preservar ceros a la izquierda
+        // Si es alfanumérico, mantenerlo tal como está
+        return $code;
     }
 }
