@@ -32,9 +32,12 @@ class InvoiceCreateIndex extends Component
     public $serie;
     public $correlativo;
     public $fechaEmision;
+    public $fechaVencimiento;
     public $formaPago_moneda = 'PEN';
     public $formaPago_tipo = '01';
     public $tipoMoneda = 'PEN';
+    public $tipoVenta = 'contado';
+    public $cuotas = [];
     public $observacion;
     public $note_reference;
 
@@ -104,21 +107,22 @@ class InvoiceCreateIndex extends Component
     public $perception_mtoTotal = 0;
 
     // Descuentos Globales
-    public $descuentos_mtoBase = 0;
+    public $aplicarDescuentos = false;
     public $descuentos_mto = 0;
 
     // Cargos
-    public $cargos_mtoBase = 0;
+    public $aplicarCargos = false;
     public $cargos_mto = 0;
 
     // Anticipos
-    public $anticipos_mtoBase = 0;
     public $anticipos_mto = 0;
 
     // Guías de Remisión
+    public $aplicarGuias = false;
     public $guias = [];
 
     // Documentos Relacionados
+    public $aplicarDocumentos = false;
     public $relDocs = [];
 
     // Anticipos Array
@@ -142,6 +146,7 @@ class InvoiceCreateIndex extends Component
     public function mount()
     {
         $this->fechaEmision = date('Y-m-d');
+        $this->fechaVencimiento = date('Y-m-d', strtotime('+30 days'));
 
         // Inicializar propiedades
         $this->tiposOperacion = collect();
@@ -186,6 +191,9 @@ class InvoiceCreateIndex extends Component
 
         // Generar serie y correlativo inicial
         $this->generarSerieYCorrelativo();
+
+        // Asignar leyendas automáticamente
+        $this->asignarLeyendasAutomaticamente();
     }
     // buscar Cliente
     public function searchClient()
@@ -250,6 +258,7 @@ class InvoiceCreateIndex extends Component
             $this->phoneCliente = $customer->telefono;
             $this->emailCliente = $customer->email;
         }
+        //dd($customer);
     }
     public function updatedCompanyId()
     {
@@ -302,6 +311,66 @@ class InvoiceCreateIndex extends Component
     {
         $this->generarSerieYCorrelativo();
         $this->cargarTiposOperacion();
+        $this->asignarLeyendasAutomaticamente();
+    }
+
+    public function updatedTipoOperacion()
+    {
+        $this->asignarLeyendasAutomaticamente();
+    }
+
+    public function updatedFechaEmision()
+    {
+        // Si la fecha de vencimiento es anterior a la fecha de emisión, actualizarla
+        if ($this->fechaVencimiento && $this->fechaEmision && $this->fechaVencimiento <= $this->fechaEmision) {
+            $this->fechaVencimiento = date('Y-m-d', strtotime($this->fechaEmision . ' +30 days'));
+        }
+    }
+
+    public function updatedFechaVencimiento()
+    {
+        // Validar que la fecha de vencimiento sea posterior a la fecha de emisión
+        if ($this->fechaVencimiento && $this->fechaEmision && $this->fechaVencimiento <= $this->fechaEmision) {
+            $this->addError('fechaVencimiento', 'La fecha de vencimiento debe ser posterior a la fecha de emisión');
+        } else {
+            $this->resetErrorBag('fechaVencimiento');
+        }
+    }
+
+    public function updatedTipoVenta()
+    {
+        // Si cambia a contado, limpiar cuotas
+        if ($this->tipoVenta === 'contado') {
+            $this->cuotas = [];
+        }
+    }
+
+    public function agregarCuota()
+    {
+        $this->cuotas[] = [
+            'monto' => 0,
+            'fecha_pago' => date('Y-m-d', strtotime('+30 days')),
+        ];
+    }
+
+    public function eliminarCuota($index)
+    {
+        unset($this->cuotas[$index]);
+        $this->cuotas = array_values($this->cuotas);
+    }
+
+    public function updatedAplicarGuias()
+    {
+        if (!$this->aplicarGuias) {
+            $this->guias = [];
+        }
+    }
+
+    public function updatedAplicarDocumentos()
+    {
+        if (!$this->aplicarDocumentos) {
+            $this->relDocs = [];
+        }
     }
 
     public function updatedBusquedaProducto()
@@ -599,13 +668,13 @@ class InvoiceCreateIndex extends Component
         // El total es la suma de todos los valores con IGV
         $this->total = $total_con_igv;
 
-        // Aplicar descuentos globales
-        if ($this->descuentos_mto > 0) {
+        // Aplicar descuentos globales (solo si están habilitados)
+        if ($this->aplicarDescuentos && $this->descuentos_mto > 0) {
             $this->total -= $this->descuentos_mto;
         }
 
-        // Aplicar cargos
-        if ($this->cargos_mto > 0) {
+        // Aplicar cargos (solo si están habilitados)
+        if ($this->aplicarCargos && $this->cargos_mto > 0) {
             $this->total += $this->cargos_mto;
         }
 
@@ -650,17 +719,19 @@ class InvoiceCreateIndex extends Component
     // Métodos para manejar descuentos globales
     public function calcularDescuentos()
     {
-        if ($this->descuentos_mtoBase > 0 && $this->descuentos_mto > 0) {
+        if ($this->aplicarDescuentos && $this->descuentos_mto > 0) {
             $this->calcularTotales();
         }
+        $this->asignarLeyendasAutomaticamente();
     }
 
     // Métodos para manejar cargos
     public function calcularCargos()
     {
-        if ($this->cargos_mtoBase > 0 && $this->cargos_mto > 0) {
+        if ($this->aplicarCargos && $this->cargos_mto > 0) {
             $this->calcularTotales();
         }
+        $this->asignarLeyendasAutomaticamente();
     }
 
     // Métodos para manejar percepción
@@ -755,6 +826,64 @@ class InvoiceCreateIndex extends Component
         $this->cargosArray = array_values($this->cargosArray);
     }
 
+    // Métodos para manejar checkboxes de descuentos y cargos
+    public function updatedAplicarDescuentos()
+    {
+        if (!$this->aplicarDescuentos) {
+            $this->descuentos_mto = 0;
+        }
+        $this->calcularTotales();
+        $this->asignarLeyendasAutomaticamente();
+    }
+
+    public function updatedAplicarCargos()
+    {
+        if (!$this->aplicarCargos) {
+            $this->cargos_mto = 0;
+        }
+        $this->calcularTotales();
+        $this->asignarLeyendasAutomaticamente();
+    }
+
+    // Método para asignar leyendas automáticamente
+    private function asignarLeyendasAutomaticamente()
+    {
+        $this->leyendasSeleccionadas = [];
+
+        // Leyendas según tipo de documento
+        if ($this->tipoDoc == '01') {
+            // Factura
+            $this->leyendasSeleccionadas[] = '1000'; // MONTO EN LETRAS
+        } elseif ($this->tipoDoc == '03') {
+            // Boleta
+            $this->leyendasSeleccionadas[] = '1000'; // MONTO EN LETRAS
+            $this->leyendasSeleccionadas[] = '1002'; // TRANSFERENCIA GRATUITA DE UN BIEN Y/O SERVICIO PRESTADO GRATUITAMENTE
+        }
+
+        // Leyendas según tipo de operación
+        if (in_array($this->tipoOperacion, ['1001', '1002', '1003', '1004'])) {
+            // Detracción
+            $this->leyendasSeleccionadas[] = '2006'; // DETRACCIÓN
+        }
+
+        if ($this->tipoOperacion == '2001') {
+            // Percepción
+            $this->leyendasSeleccionadas[] = '2000'; // COMPROBANTE DE PERCEPCIÓN
+        }
+
+        // Leyendas según descuentos y cargos
+        if ($this->aplicarDescuentos && $this->descuentos_mto > 0) {
+            $this->leyendasSeleccionadas[] = '1001'; // VALOR VENTA APROXIMADO
+        }
+
+        if ($this->aplicarCargos && $this->cargos_mto > 0) {
+            $this->leyendasSeleccionadas[] = '1001'; // VALOR VENTA APROXIMADO
+        }
+
+        // Eliminar duplicados
+        $this->leyendasSeleccionadas = array_unique($this->leyendasSeleccionadas);
+    }
+
     public function crearFactura()
     {
         $rules = [
@@ -766,6 +895,9 @@ class InvoiceCreateIndex extends Component
             'serie' => 'required|string|max:10',
             'correlativo' => 'required|string|max:10',
             'fechaEmision' => 'required|date',
+            'fechaVencimiento' => 'required|date|after:fechaEmision',
+            'tipoVenta' => 'required|in:contado,credito',
+            'cuotas' => 'nullable|array',
             'formaPago_tipo' => 'required|in:01,02,03',
             'producto_id' => 'required|exists:producto_catalogos,id',
             'cantidad' => 'required|numeric|min:0.01',
@@ -798,6 +930,14 @@ class InvoiceCreateIndex extends Component
             'correlativo.max' => 'El correlativo no puede exceder 10 caracteres',
             'fechaEmision.required' => 'La fecha de emisión es obligatoria',
             'fechaEmision.date' => 'La fecha de emisión debe ser una fecha válida',
+            'fechaVencimiento.required' => 'La fecha de vencimiento es obligatoria',
+            'fechaVencimiento.date' => 'La fecha de vencimiento debe ser una fecha válida',
+            'fechaVencimiento.after' => 'La fecha de vencimiento debe ser posterior a la fecha de emisión',
+            'tipoVenta.required' => 'Debe seleccionar el tipo de venta',
+            'tipoVenta.in' => 'El tipo de venta seleccionado no es válido',
+            'cuotas.integer' => 'El número de cuotas debe ser un número entero',
+            'cuotas.min' => 'El número de cuotas debe ser al menos 1',
+            'cuotas.max' => 'El número de cuotas no puede exceder 60',
 
             // Forma de Pago
             'formaPago_tipo.required' => 'Debe seleccionar la forma de pago',
@@ -822,6 +962,12 @@ class InvoiceCreateIndex extends Component
         ];
         $this->validate($rules, $messages);
 
+        // Validación adicional para cuotas cuando es a crédito
+        if ($this->tipoVenta === 'credito' && empty($this->cuotas)) {
+            $this->addError('cuotas', 'Debe agregar al menos una cuota para ventas a crédito');
+            return;
+        }
+
         if (empty($this->productos)) {
             $this->addError('productos', 'Debe agregar al menos un producto a la factura');
             return;
@@ -840,6 +986,7 @@ class InvoiceCreateIndex extends Component
                 'serie' => $this->serie,
                 'correlativo' => $this->correlativo,
                 'fechaEmision' => $this->fechaEmision,
+                'fechaVencimiento' => $this->fechaVencimiento,
                 'formaPago_moneda' => $this->formaPago_moneda,
                 'formaPago_tipo' => $this->formaPago_tipo,
                 'tipoMoneda' => $this->tipoMoneda,
@@ -862,16 +1009,15 @@ class InvoiceCreateIndex extends Component
                 'perception_mtoBase' => $this->perception_mtoBase,
                 'perception_mto' => $this->perception_mto,
                 'perception_mtoTotal' => $this->perception_mtoTotal,
-                'descuentos_mtoBase' => $this->descuentos_mtoBase,
+                'tipoVenta' => $this->tipoVenta,
+                'cuotas' => $this->tipoVenta === 'credito' ? $this->cuotas : null,
                 'descuentos_mto' => $this->descuentos_mto,
-                'cargos_mtoBase' => $this->cargos_mtoBase,
                 'cargos_mto' => $this->cargos_mto,
-                'anticipos_mtoBase' => $this->anticipos_mtoBase,
                 'anticipos_mto' => $this->anticipos_mto,
                 'observacion' => $this->observacion,
                 'legends' => $this->leyendasSeleccionadas,
-                'guias' => $this->guias,
-                'relDocs' => $this->relDocs,
+                'guias' => $this->aplicarGuias ? $this->guias : [],
+                'relDocs' => $this->aplicarDocumentos ? $this->relDocs : [],
                 'anticipos' => $this->anticiposArray,
                 'descuentos' => $this->descuentosArray,
                 'cargos' => $this->cargosArray,

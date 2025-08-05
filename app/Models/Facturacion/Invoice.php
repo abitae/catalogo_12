@@ -7,12 +7,15 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Facturacion\Company;
 use App\Models\Facturacion\Sucursal;
 use App\Models\Facturacion\Client;
+use App\Models\User;
 
 class Invoice extends Model
 {
     /** @use HasFactory<\Database\Factories\Facturacion\InvoiceFactory> */
     use HasFactory;
+
     protected $fillable = [
+        'user_id',
         'company_id',
         'sucursal_id',
         'client_id',
@@ -21,9 +24,11 @@ class Invoice extends Model
         'serie',
         'correlativo',
         'fechaEmision',
+        'fechaVencimiento',
         'formaPago_moneda',
         'formaPago_tipo',
         'tipoMoneda',
+        'estado_pago_invoice',
         'mtoOperGravadas',
         'mtoOperInafectas',
         'mtoOperExoneradas',
@@ -40,14 +45,19 @@ class Invoice extends Model
         'ctaBanco',
         'setPercent',
         'setMount',
-        'perception_mtoBase',
-        'perception_mto',
-        'perception_mtoTotal',
-        'descuentos_mtoBase',
+        'codReg',
+        'porcentajePer',
+        'mtoBasePer',
+        'mtoPer',
+        'mtoTotalPer',
+        'codRegRet',
+        'mtoBaseRet',
+        'factorRet',
+        'mtoRet',
+        'tipoVenta',
+        'cuotas',
         'descuentos_mto',
-        'cargos_mtoBase',
         'cargos_mto',
-        'anticipos_mtoBase',
         'anticipos_mto',
         'observacion',
         'legends',
@@ -71,6 +81,8 @@ class Invoice extends Model
 
     protected $casts = [
         'fechaEmision' => 'date',
+        'fechaVencimiento' => 'date',
+        'cuotas' => 'array',
         'legends' => 'array',
         'guias' => 'array',
         'relDocs' => 'array',
@@ -79,19 +91,50 @@ class Invoice extends Model
         'cargos' => 'array',
         'tributos' => 'array',
         'exportacion' => 'array',
+        'mtoOperGravadas' => 'decimal:2',
+        'mtoOperInafectas' => 'decimal:2',
+        'mtoOperExoneradas' => 'decimal:2',
+        'mtoOperGratuitas' => 'decimal:2',
+        'mtoIGV' => 'decimal:2',
+        'mtoIGVGratuitas' => 'decimal:2',
+        'totalImpuestos' => 'decimal:2',
+        'valorVenta' => 'decimal:2',
+        'subTotal' => 'decimal:2',
+        'mtoImpVenta' => 'decimal:2',
+        'setPercent' => 'decimal:2',
+        'setMount' => 'decimal:2',
+        'porcentajePer' => 'decimal:2',
+        'mtoBasePer' => 'decimal:2',
+        'mtoPer' => 'decimal:2',
+        'mtoTotalPer' => 'decimal:2',
+        'mtoBaseRet' => 'decimal:2',
+        'factorRet' => 'decimal:2',
+        'mtoRet' => 'decimal:2',
+        'descuentos_mto' => 'decimal:2',
+        'cargos_mto' => 'decimal:2',
+        'anticipos_mto' => 'decimal:2',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function company()
     {
         return $this->belongsTo(Company::class);
     }
+
     public function sucursal()
     {
         return $this->belongsTo(Sucursal::class);
     }
+
     public function client()
     {
         return $this->belongsTo(Client::class);
     }
+
     public function invoiceDetails()
     {
         return $this->hasMany(InvoiceDetail::class);

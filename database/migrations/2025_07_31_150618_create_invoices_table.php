@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('invoices', function (Blueprint $table) {
             $table->id();
-
+            // Infomacion de usuario
+            $table->foreignId('user_id')->constrained('users');
             // Información del Emisor
             $table->foreignId('company_id')->constrained('companies');
             $table->foreignId('sucursal_id')->constrained('sucursals');
@@ -27,9 +28,11 @@ return new class extends Migration
             $table->string('serie', 4);
             $table->string('correlativo', 8);
             $table->date('fechaEmision');
+            $table->date('fechaVencimiento')->nullable();
             $table->string('formaPago_moneda', 3)->default('PEN');
             $table->string('formaPago_tipo', 2); // Catálogo 59
             $table->string('tipoMoneda', 3)->default('PEN');
+            $table->string('estado_pago_invoice')->nullable(); // Cancelado, Por pagar
 
             // Totales
             $table->decimal('mtoOperGravadas', 12, 2)->default(0); // Operaciones gravadas
@@ -52,20 +55,29 @@ return new class extends Migration
             $table->decimal('setMount', 12, 2)->nullable(); // Monto detracción
 
             // Percepción
-            $table->decimal('perception_mtoBase', 12, 2)->nullable(); // Base percepción
-            $table->decimal('perception_mto', 12, 2)->nullable(); // Monto percepción
-            $table->decimal('perception_mtoTotal', 12, 2)->nullable(); // Total percepción
+            $table->string('codReg', 2)->nullable(); // Base percepción
+            $table->decimal('porcentajePer', 5, 2)->nullable(); // Monto percepción
+            $table->decimal('mtoBasePer', 12, 2)->nullable(); // Total percepción
+            $table->decimal('mtoPer', 12, 2)->nullable(); // Total percepción
+            $table->decimal('mtoTotalPer', 12, 2)->nullable(); // Total percepción
+
+            // Retención
+            $table->string('codRegRet', 2)->nullable(); // // Catalog. 53
+            $table->decimal('mtoBaseRet', 12, 2)->nullable(); // Total retención
+            $table->decimal('factorRet', 12, 2)->nullable(); // Total retención
+            $table->decimal('mtoRet', 12, 2)->nullable(); // Total retención
+
+            // Tipo de Venta
+            $table->enum('tipoVenta', ['contado', 'credito'])->default('contado'); // Contado o Crédito
+            $table->json('cuotas')->nullable(); // Cuotas con monto y fecha de pago
 
             // Descuentos Globales
-            $table->decimal('descuentos_mtoBase', 12, 2)->nullable(); // Base descuentos
             $table->decimal('descuentos_mto', 12, 2)->nullable(); // Monto descuentos
 
             // Cargos
-            $table->decimal('cargos_mtoBase', 12, 2)->nullable(); // Base cargos
             $table->decimal('cargos_mto', 12, 2)->nullable(); // Monto cargos
 
             // Anticipos
-            $table->decimal('anticipos_mtoBase', 12, 2)->nullable(); // Base anticipos
             $table->decimal('anticipos_mto', 12, 2)->nullable(); // Monto anticipos
 
             // Otros campos
