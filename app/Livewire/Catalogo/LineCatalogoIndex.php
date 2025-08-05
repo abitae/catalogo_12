@@ -24,6 +24,7 @@ class LineCatalogoIndex extends Component
     // Propiedades para el formulario
     public $name;
     public $code;
+    public $color = '#0074D9';
     public $isActive = true;
 
     // Propiedades para archivos temporales
@@ -42,6 +43,7 @@ class LineCatalogoIndex extends Component
     protected $rules = [
         'name' => 'required|min:3|max:255',
         'code' => 'required|min:2|max:100|unique:line_catalogos,code',
+        'color' => 'required|regex:/^#[0-9A-F]{6}$/i',
         'tempLogo' => 'nullable|image|max:20480', // 2MB max
         'tempFondo' => 'nullable|image|max:20480', // 2MB max
         'tempArchivo' => 'nullable|file|max:10240', // 10MB max
@@ -94,8 +96,9 @@ class LineCatalogoIndex extends Component
 
     public function nuevaLinea()
     {
-        $this->reset(['name', 'code', 'isActive', 'tempLogo', 'tempFondo', 'tempArchivo', 'logoPreview', 'fondoPreview', 'linea_id']);
+        $this->reset(['name', 'code', 'color', 'isActive', 'tempLogo', 'tempFondo', 'tempArchivo', 'logoPreview', 'fondoPreview', 'linea_id']);
         $this->isActive = true; // Asegurar que esté activo por defecto
+        $this->color = '#0074D9'; // Color por defecto
         $this->modal_form_linea = true;
     }
 
@@ -105,6 +108,7 @@ class LineCatalogoIndex extends Component
         $this->linea_id = $linea->id;
         $this->name = $linea->name;
         $this->code = $linea->code;
+        $this->color = $linea->color ?? '#0074D9';
         $this->isActive = $linea->isActive;
 
         if ($linea->logo) {
@@ -219,6 +223,7 @@ class LineCatalogoIndex extends Component
 
         $linea->name = $this->name;
         $linea->code = $this->code;
+        $linea->color = $this->color;
         $linea->isActive = $this->isActive;
 
         // Procesar logo si se subió uno nuevo

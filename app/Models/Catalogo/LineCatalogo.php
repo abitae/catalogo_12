@@ -14,6 +14,7 @@ class LineCatalogo extends Model
         'logo',
         'fondo',
         'archivo',
+        'color',
         'isActive',
     ];
     public function productos()

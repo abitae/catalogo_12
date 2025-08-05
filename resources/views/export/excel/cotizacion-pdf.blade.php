@@ -4,11 +4,42 @@
     <meta charset="UTF-8">
     <title>Cotización PDF</title>
     <style>
-        body { font-family: DejaVu Sans, sans-serif; font-size: 12px; color: #222; }
-        .header { border-bottom: 2px solid #0074D9; margin-bottom: 20px; padding-bottom: 10px; }
-        .empresa { font-size: 20px; font-weight: bold; color: #0074D9; }
+        body {
+            font-family: DejaVu Sans, sans-serif;
+            font-size: 12px;
+            color: #222;
+            @php
+                // Verificar si existe imagen de fondo
+                $fondoRelativePath = $cotizacion->line->fondo ?? '';
+                $fondoPath = storage_path('app/public/' . ltrim($fondoRelativePath, '/'));
+                $fondoExists = file_exists($fondoPath) && !empty($fondoRelativePath);
+            @endphp
+            @if($fondoExists)
+                background-image: url('file://{{ $fondoPath }}');
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                background-attachment: fixed;
+            @endif
+        }
+        .header {
+            border-bottom: 2px solid {{ $cotizacion->line->color ?? '#0074D9' }};
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+        }
+        .empresa {
+            font-size: 20px;
+            font-weight: bold;
+            color: {{ $cotizacion->line->color ?? '#0074D9' }};
+        }
         .ruc { font-size: 12px; color: #555; }
-        .section-title { font-size: 14px; font-weight: bold; margin-top: 20px; margin-bottom: 8px; color: #0074D9; }
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 8px;
+            color: {{ $cotizacion->line->color ?? '#0074D9' }};
+        }
         .info-table, .products-table, .totals-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
         .info-table td { padding: 2px 4px; }
         .products-table th, .products-table td { border: 1px solid #bbb; padding: 5px; }
@@ -22,10 +53,15 @@
     </style>
 </head>
 <body>
-    <div class="header">
+    <div class="header" style="text-align: right;">
         <table width="100%">
             <tr>
-                <td>
+                <td style="text-align: right;">
+                    <div class="empresa">{{ $cotizacion->company->razonSocial }}</div>
+                    <div class="ruc">RUC: {{ $cotizacion->company->ruc }}</div>
+                    <div style="font-size:11px; color:#555;">{{ $cotizacion->company->address->direccion }}<br>Tel: {{ $cotizacion->company->telephone }} | {{ $cotizacion->company->email }}</div>
+                </td>
+                <td style="text-align: right;">
                     @php
                         // Usar storage_path para obtener la ruta absoluta del logo almacenado en storage/app/public
                         $logoRelativePath = $cotizacion->line->logo ?? '';
@@ -33,25 +69,20 @@
                         $logoExists = file_exists($logoPath) && !empty($logoRelativePath);
                     @endphp
                     @if($logoExists)
-                        <img src="file://{{ $logoPath }}" alt="Logo" style="width: 100px; height: 100px;">
+                        <img src="file://{{ $logoPath }}" alt="Logo" style="height: 100px; width: auto;">
                     @else
                         <div style="width:100px; height:100px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; color:#bbb; font-size:12px;">
                             Sin logo
                         </div>
                     @endif
                 </td>
-                <td>
-                    <div class="empresa">{{ $cotizacion->line->name }}</div>
-                    <div class="ruc">RUC: {{ $cotizacion->customer->ruc }}</div>
-                    <div style="font-size:11px; color:#555;">{{ $cotizacion->customer->address }}<br>Tel: {{ $cotizacion->customer->phone }} | {{ $cotizacion->customer->email }}</div>
-                </td>
-                <td style="text-align:right;">
-                    <div style="font-size:18px; color:#0074D9; font-weight:bold;">COTIZACIÓN</div>
-                    <div style="font-size:13px;">N° <b>{{ $cotizacion->codigo_cotizacion }}</b></div>
-                    <div style="font-size:11px;">Fecha: {{ \Carbon\Carbon::parse($cotizacion->fecha_cotizacion)->format('d/m/Y') }}</div>
-                </td>
             </tr>
         </table>
+    </div>
+
+    <div style="text-align: right; margin: 20px 0; border-bottom: 1px solid {{ $cotizacion->line->color ?? '#0074D9' }}; padding-bottom: 10px;">
+        <div style="font-size:18px; color:{{ $cotizacion->line->color ?? '#0074D9' }}; font-weight:bold; margin-bottom: 3px;">COTIZACIÓN N° <b>{{ $cotizacion->codigo_cotizacion }}</b></div>
+        <div style="font-size:11px; color:#666;">Fecha: {{ \Carbon\Carbon::parse($cotizacion->fecha_cotizacion)->format('d/m/Y') }}</div>
     </div>
 
     <div class="section-title">Datos del Cliente</div>
@@ -117,7 +148,7 @@
         </tr>
         <tr>
             <td class="label"><b>TOTAL:</b></td>
-            <td class="value" style="font-size:15px; color:#0074D9;">S/ {{ number_format($cotizacion->total ?? 0, 2) }}</td>
+            <td class="value" style="font-size:15px; color:{{ $cotizacion->line->color ?? '#0074D9' }};">S/ {{ number_format($cotizacion->total ?? 0, 2) }}</td>
         </tr>
     </table>
 
@@ -133,7 +164,7 @@
     </div>
 
     <div class="footer">
-        Documento generado automáticamente - EMPRESA S.A.C. | {{ date('d/m/Y H:i') }}
+        {{ $cotizacion->company->razonSocial }} | {{ date('d/m/Y H:i') }}
     </div>
 </body>
 </html>

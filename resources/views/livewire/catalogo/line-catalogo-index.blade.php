@@ -90,6 +90,9 @@
                             Nombre</th>
                         <th
                             class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
+                            Color</th>
+                        <th
+                            class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
                             Estado</th>
                         <th
                             class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-300 uppercase tracking-wider">
@@ -134,6 +137,17 @@
                             </td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">{{ $line->name }}</td>
                             <td class="px-6 py-4 text-sm">
+                                @if ($line->color)
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-6 h-6 rounded-full border-2 border-gray-300"
+                                             style="background-color: {{ $line->color }}"></div>
+                                        <span class="text-xs font-mono">{{ $line->color }}</span>
+                                    </div>
+                                @else
+                                    <span class="text-gray-400 text-xs">Sin color</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 text-sm">
                                 <span
                                     class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $line->isActive ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' }}">
                                     {{ $line->isActive ? 'Activa' : 'Inactiva' }}
@@ -152,7 +166,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-6 py-8 text-center text-zinc-500 dark:text-zinc-400">
+                            <td colspan="7" class="px-6 py-8 text-center text-zinc-500 dark:text-zinc-400">
                                 <div class="flex flex-col items-center gap-2">
                                     <flux:icon name="inbox" class="w-12 h-12 text-zinc-300" />
                                     <span class="text-lg font-medium">No se encontraron líneas</span>
@@ -197,6 +211,17 @@
                                 placeholder="Ej: linea-001" />
                             <flux:text class="text-xs text-zinc-500 mt-1">Ingrese un código único para la línea.
                                 Ejemplo: linea-001</flux:text>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                        <div>
+                            <flux:label>Color de la línea</flux:label>
+                            <div class="flex items-center gap-3 mt-1">
+                                <flux:input type="color" wire:model.live="color" class="w-16 h-10" />
+                                <flux:input type="text" wire:model.live="color" placeholder="#0074D9"
+                                    class="flex-1" />
+                            </div>
+                            <flux:text class="text-xs text-zinc-500 mt-1">Seleccione o ingrese un color hexadecimal para la línea</flux:text>
                         </div>
                     </div>
                 </div>

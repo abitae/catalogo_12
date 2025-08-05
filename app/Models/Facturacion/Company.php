@@ -2,6 +2,7 @@
 
 namespace App\Models\Facturacion;
 
+use App\Models\Catalogo\CotizacionCatalogo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -39,5 +40,9 @@ class Company extends Model
     public function sucursales()
     {
         return $this->hasMany(Sucursal::class);
+    }
+    public function cotizaciones()
+    {
+        return $this->hasMany(CotizacionCatalogo::class);
     }
 }

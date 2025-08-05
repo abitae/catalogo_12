@@ -5,6 +5,7 @@ namespace App\Livewire\Catalogo;
 use App\Models\Catalogo\CotizacionCatalogo;
 use App\Models\Catalogo\LineCatalogo;
 use App\Models\Catalogo\ProductoCatalogo;
+use App\Models\Facturacion\Company;
 use App\Models\Shared\Customer;
 use App\Models\User;
 use Livewire\Component;
@@ -49,6 +50,7 @@ class CotizacionCatalogoIndex extends Component
     public $condiciones_entrega;
     public $user_id;
     public $line_id;
+    public $company_id;
     public $estado_cotizacion = 'borrador';
 
     protected function rules()
@@ -63,6 +65,7 @@ class CotizacionCatalogoIndex extends Component
             'validez_dias' => 'required|integer|min:1|max:30',
             'user_id' => 'required|exists:users,id',
             'line_id' => 'required|exists:line_catalogos,id',
+            'company_id' => 'nullable|exists:companies,id',
         ];
 
         if (!$this->editingCotizacion) {
@@ -97,6 +100,7 @@ class CotizacionCatalogoIndex extends Component
             'codigo_cotizacion.unique' => 'El código de cotización ya existe.',
             'line_id.required' => 'Debe seleccionar una línea.',
             'line_id.exists' => 'La línea seleccionada no existe.',
+            'company_id.exists' => 'La empresa seleccionada no existe.',
         ];
     }
 
@@ -210,6 +214,7 @@ class CotizacionCatalogoIndex extends Component
 
         $customers = Customer::orderBy('rznSocial')->get();
         $users = User::orderBy('name')->get();
+        $companies = Company::where('isActive', true)->orderBy('razonSocial')->get();
         $productos = ProductoCatalogo::where('isActive', true)
             ->when($this->searchProducto, function ($query) {
                 $query->where(function ($q) {
@@ -227,6 +232,7 @@ class CotizacionCatalogoIndex extends Component
             'cotizaciones' => $cotizaciones,
             'customers' => $customers,
             'users' => $users,
+            'companies' => $companies,
             'productos' => $productos,
             'lines' => $lines,
         ]);
@@ -242,6 +248,7 @@ class CotizacionCatalogoIndex extends Component
         $this->fecha_vencimiento = now()->addDays(15)->format('Y-m-d');
         $this->validez_dias = 15;
         $this->line_id = null;
+        $this->company_id = null;
     }
 
     public function editarCotizacion($id)
@@ -273,6 +280,7 @@ class CotizacionCatalogoIndex extends Component
         $this->user_id = $cotizacion->user_id;
         $this->estado_cotizacion = $cotizacion->estado;
         $this->line_id = $cotizacion->line_id;
+        $this->company_id = $cotizacion->company_id;
 
         foreach ($cotizacion->detalles as $detalle) {
             $this->selectedProductos[] = $detalle->producto_id;
@@ -303,7 +311,7 @@ class CotizacionCatalogoIndex extends Component
 
     public function generarPdfCotizacion($id)
     {
-        $cotizacion = \App\Models\Catalogo\CotizacionCatalogo::with(['detalles.producto', 'customer', 'user'])->find($id);
+        $cotizacion = CotizacionCatalogo::with(['detalles.producto', 'customer', 'user'])->find($id);
         if (!$cotizacion) {
             $this->error('Cotización no encontrada');
             return;
@@ -367,6 +375,7 @@ class CotizacionCatalogoIndex extends Component
             'user_id' => $this->user_id,
             'estado' => $this->estado_cotizacion,
             'line_id' => $this->line_id,
+            'company_id' => $this->company_id,
         ];
 
         if ($this->editingCotizacion) {
@@ -542,7 +551,8 @@ class CotizacionCatalogoIndex extends Component
             'customer_filter',
             'fecha_desde',
             'fecha_hasta',
-            'line_id'
+            'line_id',
+            'company_id'
         ]);
         $this->resetErrorBag();
     }

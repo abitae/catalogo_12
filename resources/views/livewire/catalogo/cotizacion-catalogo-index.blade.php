@@ -254,6 +254,19 @@
                         </div>
                         <div class="grid grid-cols-2 gap-3 mb-3">
                             <div>
+                                <flux:label class="text-xs font-medium">Empresa</flux:label>
+                                <flux:select wire:model.live="company_id" size="sm">
+                                    <option value="">Seleccionar empresa</option>
+                                    @forelse ($companies as $company)
+                                        <option value="{{ $company->id }}">{{ $company->razonSocial }}</option>
+                                    @empty
+                                        <option value="">No hay empresas disponibles</option>
+                                    @endforelse
+                                </flux:select>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 mb-3">
+                            <div>
                                 <flux:label class="text-xs font-medium">Fecha Cotización</flux:label>
                                 <flux:input type="date" wire:model.live="fecha_cotizacion"
                                     wire:change="calcularFechaVencimiento" size="sm" />

@@ -18,7 +18,7 @@ class CatalogoSeeder extends Seeder
         // Crear datos de prueba para el catálogo
         BrandCatalogo::factory(20)->create();
         CategoryCatalogo::factory(20)->create();
-        LineCatalogo::factory(20)->create();
+        LineCatalogo::factory(3)->create();
         ProductoCatalogo::factory(40)->create();
     }
 }

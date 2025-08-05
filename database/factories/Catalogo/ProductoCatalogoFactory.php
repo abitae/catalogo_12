@@ -15,9 +15,9 @@ class ProductoCatalogoFactory extends Factory
     public function definition(): array
     {
         return [
-            'brand_id' => BrandCatalogo::factory(),
-            'category_id' => CategoryCatalogo::factory(),
-            'line_id' => LineCatalogo::factory(),
+            'brand_id' => BrandCatalogo::inRandomOrder()->first()?->id ?? BrandCatalogo::factory(),
+            'category_id' => CategoryCatalogo::inRandomOrder()->first()?->id ?? CategoryCatalogo::factory(),
+            'line_id' => LineCatalogo::inRandomOrder()->first()?->id ?? LineCatalogo::factory(),
             'code' => $this->faker->unique()->bothify('PROD-####'),
             'code_fabrica' => $this->faker->unique()->bothify('FAB-####'),
             'code_peru' => $this->faker->unique()->bothify('PER-####'),

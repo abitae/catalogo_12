@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('logo')->nullable();
             $table->string('fondo')->nullable();
             $table->string('archivo')->nullable();
+            $table->string('color')->nullable();
             $table->boolean('isActive')->default(true);
             $table->timestamps();
         });

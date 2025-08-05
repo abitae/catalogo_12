@@ -4,6 +4,7 @@ namespace Database\Factories\Catalogo;
 
 use App\Models\Catalogo\CotizacionCatalogo;
 use App\Models\Catalogo\LineCatalogo;
+use App\Models\Facturacion\Company;
 use App\Models\Shared\Customer;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -30,6 +31,7 @@ class CotizacionCatalogoFactory extends Factory
         $customer = Customer::inRandomOrder()->first() ?? Customer::factory()->create();
         $user = User::inRandomOrder()->first() ?? User::factory()->create();
         $line = LineCatalogo::inRandomOrder()->first() ?? LineCatalogo::factory()->create();
+        $company = Company::inRandomOrder()->first() ?? Company::factory()->create();
         return [
             'codigo_cotizacion' => (new CotizacionCatalogo())->generarCodigo(),
             'customer_id' => $customer->id,
@@ -48,6 +50,7 @@ class CotizacionCatalogoFactory extends Factory
             'condiciones_entrega' => $this->faker->optional()->sentence(),
             'user_id' => $user->id,
             'line_id' => $line->id,
+            'company_id' => $company->id,
         ];
     }
 }

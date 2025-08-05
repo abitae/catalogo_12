@@ -2,6 +2,7 @@
 
 namespace App\Models\Facturacion;
 
+use App\Models\Catalogo\CotizacionCatalogo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -31,4 +32,5 @@ class Sucursal extends Model
     {
         return $this->belongsTo(Company::class);
     }
+   
 }

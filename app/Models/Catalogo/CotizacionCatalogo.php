@@ -2,6 +2,7 @@
 
 namespace App\Models\Catalogo;
 
+use App\Models\Facturacion\Company;
 use App\Models\Shared\Customer;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -32,6 +33,7 @@ class CotizacionCatalogo extends Model
         'condiciones_entrega',
         'user_id',
         'line_id',
+        'company_id',
     ];
 
     protected $casts = [
@@ -41,7 +43,10 @@ class CotizacionCatalogo extends Model
         'igv' => 'decimal:2',
         'total' => 'decimal:2',
     ];
-
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
