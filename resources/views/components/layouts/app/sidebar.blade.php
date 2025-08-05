@@ -190,7 +190,11 @@
 
                 <flux:menu.radio.group>
                     <flux:menu.item :href="route('settings.profile')" icon="cog" wire:navigate>
-                        {{ __('Settings') }}</flux:menu.item>
+                        {{ __('Configuración') }}</flux:menu.item>
+                </flux:menu.radio.group>
+                <flux:menu.radio.group>
+                    <flux:menu.item :href="route('configuracion.logs')" icon="cog" wire:navigate>
+                        {{ __('Logs') }}</flux:menu.item>
                 </flux:menu.radio.group>
 
                 <flux:menu.separator />

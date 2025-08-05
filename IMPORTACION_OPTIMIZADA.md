@@ -74,14 +74,35 @@ php artisan productos:import archivo.xlsx --process-duplicates
 
 ## 📋 Formato del Archivo Excel
 
+### 📁 Plantilla de Importación Completa
+
+El sistema genera automáticamente una plantilla de importación con **5 hojas especializadas**:
+
+1. **📦 Productos** - Plantilla principal con datos de ejemplo usando datos reales del sistema
+2. **🏷️ Marcas** - Lista completa de marcas activas con ID y nombre
+3. **📂 Categorías** - Lista completa de categorías activas con ID y nombre
+4. **📏 Líneas** - Lista completa de líneas activas con ID, nombre y código
+5. **📖 Instrucciones** - Guía completa de uso con consejos y mejores prácticas
+
+### 📥 Descargar Plantilla de Importación
+
+```php
+// En la interfaz web
+// Botón: "Descargar Plantilla"
+
+// O programáticamente
+$export = new EjemploImportacionProductosExport();
+return Excel::download($export, 'plantilla_importacion.xlsx');
+```
+
 ### Columnas Requeridas
 
 | Columna | Tipo | Requerido | Descripción |
 |---------|------|-----------|-------------|
-| `brand` | string | ✅ | Nombre de la marca |
-| `category` | string | ✅ | Nombre de la categoría |
-| `line` | string | ✅ | Nombre de la línea |
-| `code` | string | ✅ | Código del producto |
+| `brand` | string | ✅ | Nombre de la marca (debe existir en hoja "Marcas") |
+| `category` | string | ✅ | Nombre de la categoría (debe existir en hoja "Categorías") |
+| `line` | string | ✅ | Nombre de la línea (debe existir en hoja "Líneas") |
+| `code` | string | ✅ | Código único del producto |
 
 ### Columnas Opcionales
 
@@ -102,6 +123,15 @@ php artisan productos:import archivo.xlsx --process-duplicates
 - **Formato Americano**: `1234.56`
 - **Formato Europeo**: `1.234,56`
 - **Con símbolos**: `$1,234.56`, `€1.234,56`
+
+### 🎯 Uso de la Plantilla de Importación
+
+1. **Descargar la plantilla** desde la interfaz
+2. **Copiar valores** de las hojas de referencia (Marcas, Categorías, Líneas)
+3. **Pegar en la hoja "Productos"** para usar valores válidos
+4. **Seguir el formato** de los datos de ejemplo proporcionados
+5. **Completar con sus datos** manteniendo la estructura
+6. **Importar solo la hoja "Productos"** - las otras hojas son solo de referencia
 
 ## 🔍 Validaciones Implementadas
 
@@ -130,6 +160,7 @@ php artisan productos:import archivo.xlsx --process-duplicates
 3. **Precios Válidos**: Asegura que los precios sean números positivos
 4. **Stock Válido**: Verifica que el stock sea un entero positivo
 5. **Días de Entrega**: Valida que esté entre 0 y 365 días
+6. **Importación Estricta**: Si hay errores, no se importa ningún item
 
 ## 📊 Estadísticas de Importación
 
@@ -310,6 +341,101 @@ Configurar alertas para:
 3. **Rollback Automático**: Revertir cambios en caso de error
 4. **Importación Incremental**: Solo procesar cambios
 5. **API REST**: Endpoint para importaciones programáticas
+
+## 🆕 Mejoras Recientes Implementadas
+
+### 📁 Plantilla de Importación Mejorada
+
+**Antes**: Archivo simple con datos de ejemplo genéricos
+**Ahora**: Plantilla completa con 5 hojas especializadas
+
+#### ✨ Nuevas Características:
+
+1. **📦 Hoja "Productos"**
+   - Datos de ejemplo usando datos reales del sistema
+   - Formato optimizado con estilos profesionales
+   - Plantilla lista para usar con valores válidos
+
+2. **🏷️ Hoja "Marcas"**
+   - Lista completa de marcas activas con ID y nombre
+   - Valores exactos del sistema para copiar y pegar
+   - Formato de referencia con estilos diferenciados
+
+3. **📂 Hoja "Categorías"**
+   - Lista completa de categorías activas con ID y nombre
+   - Valores exactos del sistema para copiar y pegar
+   - Formato de referencia con estilos diferenciados
+
+4. **📏 Hoja "Líneas"**
+   - Lista completa de líneas activas con ID, nombre y código
+   - Incluye códigos de línea para referencia adicional
+   - Valores exactos del sistema para copiar y pegar
+   - Formato de referencia con estilos diferenciados
+
+5. **📖 Hoja "Instrucciones"**
+   - Guía completa de uso con emojis y formato mejorado
+   - Explicación detallada de todos los campos
+   - Consejos y mejores prácticas para importación exitosa
+   - Información de soporte y troubleshooting
+
+#### 🎨 Mejoras Visuales:
+
+- **Colores diferenciados** por tipo de hoja
+- **Encabezados destacados** con estilos
+- **Auto-ajuste** de columnas
+- **Formato profesional** y fácil de leer
+
+#### 💡 Beneficios:
+
+- **Reduce errores** al usar valores exactos del sistema
+- **Mejora la experiencia** del usuario
+- **Facilita la importación** con referencias claras
+- **Documentación integrada** en el archivo
+
+### 🎨 Modal de Importación Mejorado
+
+#### ✨ Nuevas Características del Modal:
+
+1. **📊 Dashboard de Información del Sistema**
+   - Contador de marcas, categorías y líneas disponibles
+   - Indicadores visuales con gradientes y colores
+   - Información en tiempo real del sistema
+
+2. **📋 Instrucciones Mejoradas**
+   - Diseño en dos columnas para mejor organización
+   - Separación clara entre campos requeridos y opcionales
+   - Iconos y emojis para mejor comprensión
+   - Advertencias destacadas con colores
+
+3. **📊 Resultados de Importación Avanzados**
+   - Estadísticas detalladas con tarjetas individuales
+   - Barra de progreso visual para tasa de éxito
+   - Información de productos actualizados
+   - Diseño responsivo y profesional
+
+4. **❌ Gestión de Errores Mejorada**
+   - Lista numerada de errores con hover effects y animaciones
+   - **Número de línea del Excel** en cada error para fácil localización
+   - **Importación estricta**: Si hay errores, no se importa ningún item
+   - **Sin información de depuración** cuando hay errores para evitar confusión
+   - Consejos automáticos para resolver problemas con iconos y colores
+   - Scroll optimizado para muchos errores
+   - Formato profesional y fácil de leer
+   - **Sugerencias contextuales** según el tipo de error
+
+#### 🎯 Mejoras de UX:
+
+- **Modal más grande** (w-4/5 max-w-6xl) para mejor visualización
+- **Gradientes y colores** para mejor diferenciación visual
+- **Iconos y emojis** para mejor comprensión
+- **Información contextual** en cada sección
+- **Diseño responsivo** para diferentes tamaños de pantalla
+- **Números de línea del Excel** para fácil localización de errores
+- **Importación selectiva** de solo la hoja "Productos"
+- **Dashboard visual** con estadísticas atractivas y animaciones
+- **Tarjetas interactivas** con hover effects y transiciones
+- **Métricas de rendimiento** con cálculos automáticos
+- **Consejos contextuales** para resolver errores específicos
 
 ---
 

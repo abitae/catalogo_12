@@ -25,13 +25,16 @@ class ProductCatalogoImport implements
     SkipsOnError,
     SkipsEmptyRows,
     WithBatchInserts,
-    WithChunkReading
+    WithChunkReading,
+    \Maatwebsite\Excel\Concerns\WithMultipleSheets
 {
     private $rowCount = 0;
     private $errors = [];
     private $importedCount = 0;
     private $skippedCount = 0;
     private $updatedCount = 0;
+    private $excelRowNumber = 0; // Número de línea del Excel
+    private $hasErrors = false; // Flag para controlar si hay errores
 
     // Cache para relaciones
     private $brandsCache = [];
@@ -78,10 +81,17 @@ class ProductCatalogoImport implements
     public function model(array $row)
     {
         $this->rowCount++;
+        $this->excelRowNumber = $this->rowCount + 1; // +1 porque WithHeadingRow cuenta la primera fila como encabezados
+
+        // Si ya hay errores, no procesar más filas
+        if ($this->hasErrors) {
+            return null;
+        }
 
         try {
             // Validar campos requeridos
             if (!$this->validateRequiredFields($row)) {
+                $this->hasErrors = true; // Marcar que hay errores
                 return null;
             }
 
@@ -91,11 +101,13 @@ class ProductCatalogoImport implements
             // Validar relaciones
             $relations = $this->validateRelations($normalizedData);
             if (!$relations) {
+                $this->hasErrors = true; // Marcar que hay errores
                 return null;
             }
 
             // Validar código único
             if (!$this->validateUniqueCode($normalizedData['code'])) {
+                $this->hasErrors = true; // Marcar que hay errores
                 return null;
             }
 
@@ -118,6 +130,7 @@ class ProductCatalogoImport implements
             ]);
 
         } catch (\Exception $e) {
+            $this->hasErrors = true; // Marcar que hay errores
             $this->logError($e, $row);
             return null;
         }
@@ -128,11 +141,16 @@ class ProductCatalogoImport implements
      */
     private function validateRequiredFields(array $row): bool
     {
-        $requiredFields = ['brand', 'category', 'line', 'code'];
+        $requiredFields = [
+            'brand' => 'marca',
+            'category' => 'categoría',
+            'line' => 'línea',
+            'code' => 'código'
+        ];
 
-        foreach ($requiredFields as $field) {
+        foreach ($requiredFields as $field => $label) {
             if (empty($row[$field])) {
-                $this->addError("Fila {$this->rowCount}: Campo requerido '{$field}' está vacío");
+                $this->addError("Línea Excel {$this->excelRowNumber}: Campo requerido '{$label}' está vacío");
                 return false;
             }
         }
@@ -173,11 +191,28 @@ class ProductCatalogoImport implements
 
         if (!$brandId || !$categoryId || !$lineId) {
             $missingRelations = [];
-            if (!$brandId) $missingRelations[] = "marca: {$data['brand']}";
-            if (!$categoryId) $missingRelations[] = "categoría: {$data['category']}";
-            if (!$lineId) $missingRelations[] = "línea: {$data['line']}";
+            $suggestions = [];
 
-            $this->addError("Fila {$this->rowCount}: No se encontraron las relaciones (" . implode(', ', $missingRelations) . ")");
+            if (!$brandId) {
+                $missingRelations[] = "marca: '{$data['brand']}'";
+                $suggestions[] = $this->getSuggestions($data['brand'], array_keys($this->brandsCache), 'marcas');
+            }
+            if (!$categoryId) {
+                $missingRelations[] = "categoría: '{$data['category']}'";
+                $suggestions[] = $this->getSuggestions($data['category'], array_keys($this->categoriesCache), 'categorías');
+            }
+            if (!$lineId) {
+                $missingRelations[] = "línea: '{$data['line']}'";
+                $suggestions[] = $this->getSuggestions($data['line'], array_keys($this->linesCache), 'líneas');
+            }
+
+            $errorMessage = "Línea Excel {$this->excelRowNumber}: No se encontraron las relaciones (" . implode(', ', $missingRelations) . ")";
+
+            if (!empty($suggestions)) {
+                $errorMessage .= ". Sugerencias: " . implode('; ', array_filter($suggestions));
+            }
+
+            $this->addError($errorMessage);
             return null;
         }
 
@@ -199,7 +234,7 @@ class ProductCatalogoImport implements
 
         if (isset($this->existingCodes[$code])) {
             if ($this->skipDuplicates) {
-                $this->addError("Fila {$this->rowCount}: Producto con código '{$code}' ya existe");
+                $this->addError("Línea Excel {$this->excelRowNumber}: Producto con código '{$code}' ya existe");
                 return false;
             }
         }
@@ -214,6 +249,43 @@ class ProductCatalogoImport implements
     {
         if (empty($value)) return '';
         return trim((string) $value);
+    }
+
+    /**
+     * Obtener sugerencias para valores no encontrados
+     */
+    private function getSuggestions(string $searchValue, array $availableValues, string $type): string
+    {
+        $searchValue = strtolower(trim($searchValue));
+        $suggestions = [];
+
+        foreach ($availableValues as $value) {
+            $valueLower = strtolower(trim($value));
+
+            // Buscar coincidencias exactas o similares
+            if ($valueLower === $searchValue) {
+                return ""; // Coincidencia exacta encontrada
+            }
+
+            // Buscar coincidencias parciales
+            if (strpos($valueLower, $searchValue) !== false || strpos($searchValue, $valueLower) !== false) {
+                $suggestions[] = $value;
+            }
+
+            // Buscar similitud de caracteres
+            if (levenshtein($searchValue, $valueLower) <= 3) {
+                $suggestions[] = $value;
+            }
+        }
+
+        // Limitar a 3 sugerencias máximo
+        $suggestions = array_unique(array_slice($suggestions, 0, 3));
+
+        if (empty($suggestions)) {
+            return "No se encontraron {$type} similares";
+        }
+
+        return "{$type} disponibles: " . implode(', ', $suggestions);
     }
 
     /**
@@ -312,10 +384,11 @@ class ProductCatalogoImport implements
      */
     private function logError(\Exception $e, array $row): void
     {
-        $this->addError("Fila {$this->rowCount}: Error inesperado - " . $e->getMessage());
+        $this->addError("Línea Excel {$this->excelRowNumber}: Error inesperado - " . $e->getMessage());
 
         Log::error('Error en importación de productos', [
             'row' => $this->rowCount,
+            'excel_row' => $this->excelRowNumber,
             'message' => $e->getMessage(),
             'data' => $row,
             'file' => $e->getFile(),
@@ -328,15 +401,26 @@ class ProductCatalogoImport implements
      */
     public function getImportStats(): array
     {
-        return [
+        $stats = [
             'total_rows' => $this->rowCount,
             'imported' => $this->importedCount,
             'updated' => $this->updatedCount,
             'skipped' => $this->skippedCount,
             'errors' => $this->errors,
             'error_count' => count($this->errors),
-            'success_rate' => $this->rowCount > 0 ? round(($this->importedCount / $this->rowCount) * 100, 2) : 0
+            'success_rate' => $this->rowCount > 0 ? round(($this->importedCount / $this->rowCount) * 100, 2) : 0,
         ];
+
+        // Solo incluir información de depuración si no hay errores
+        if (empty($this->errors)) {
+            $stats['debug_info'] = [
+                'available_brands' => array_keys($this->brandsCache),
+                'available_categories' => array_keys($this->categoriesCache),
+                'available_lines' => array_keys($this->linesCache)
+            ];
+        }
+
+        return $stats;
     }
 
     /**
@@ -438,6 +522,16 @@ class ProductCatalogoImport implements
     public function chunkSize(): int
     {
         return 1000; // Chunk más grande para mejor rendimiento
+    }
+
+    /**
+     * Especificar qué hojas importar (solo la hoja "Productos")
+     */
+    public function sheets(): array
+    {
+        return [
+            'Productos' => $this,
+        ];
     }
 
     // Métodos getter para compatibilidad

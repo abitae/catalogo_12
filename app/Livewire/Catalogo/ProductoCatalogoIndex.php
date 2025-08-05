@@ -3,6 +3,7 @@
 namespace App\Livewire\Catalogo;
 
 use App\Exports\ProducCatalogoExport;
+use App\Exports\EjemploImportacionProductosExport;
 use App\Imports\ProductCatalogoImport;
 use App\Models\Catalogo\BrandCatalogo;
 use App\Models\Catalogo\CategoryCatalogo;
@@ -604,6 +605,18 @@ class ProductoCatalogoIndex extends Component
     }
     public function procesarImportacion()
     {
+        // Inicializar estadísticas por defecto
+        $this->importacionStats = [
+            'total_rows' => 0,
+            'imported' => 0,
+            'updated' => 0,
+            'skipped' => 0,
+            'errors' => [],
+            'error_count' => 0,
+            'success_rate' => 0
+        ];
+        $this->importacionErrores = [];
+
         try {
             $this->validate([
                 'archivoExcel' => 'required|file|mimes:xlsx,xls|max:10240',
@@ -674,16 +687,17 @@ class ProductoCatalogoIndex extends Component
                 $mensaje .= "📊 Tasa de éxito: {$tasaExito}%";
                 $this->warning($mensaje);
 
-                // Log de advertencias para debugging
-                Log::warning('Advertencias en importación de productos', [
-                    'user_id' => Auth::id(),
-                    'importados' => $importados,
-                    'actualizados' => $actualizados,
-                    'omitidos' => $omitidos,
-                    'errores' => $errores,
-                    'tasa_exito' => $tasaExito,
-                    'archivo' => $this->archivoExcel ? $this->archivoExcel->getClientOriginalName() : 'N/A'
-                ]);
+                            // Log de advertencias para debugging
+                                    Log::warning('Advertencias en importación de productos', [
+                            'user_id' => Auth::id(),
+                            'importados' => $importados,
+                            'actualizados' => $actualizados,
+                            'omitidos' => $omitidos,
+                            'errores' => $errores,
+                            'tasa_exito' => $tasaExito,
+                            'archivo' => $this->archivoExcel ? $this->archivoExcel->getClientOriginalName() : 'N/A',
+                            'debug_info' => $stats['debug_info'] ?? null
+                        ]);
             } else {
                 $this->importacionResultado = 'error';
                 $this->error("❌ No se importó ningún producto. Verifique el formato del archivo y los datos.");
@@ -698,12 +712,30 @@ class ProductoCatalogoIndex extends Component
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->importacionResultado = 'error';
             $this->importacionErrores = [$e->getMessage()];
+            $this->importacionStats = [
+                'total_rows' => 0,
+                'imported' => 0,
+                'updated' => 0,
+                'skipped' => 0,
+                'errors' => [$e->getMessage()],
+                'error_count' => 1,
+                'success_rate' => 0
+            ];
             $this->mostrarResultados = true;
             $this->error('❌ Error de validación: ' . $e->getMessage());
             throw $e;
         } catch (\Exception $e) {
             $this->importacionResultado = 'error';
             $this->importacionErrores = [$e->getMessage()];
+            $this->importacionStats = [
+                'total_rows' => 0,
+                'imported' => 0,
+                'updated' => 0,
+                'skipped' => 0,
+                'errors' => [$e->getMessage()],
+                'error_count' => 1,
+                'success_rate' => 0
+            ];
             $this->mostrarResultados = true;
             $this->error('❌ Error durante la importación: ' . $e->getMessage());
             Log::error('Error en importación de productos', [
@@ -748,80 +780,18 @@ class ProductoCatalogoIndex extends Component
     public function descargarEjemplo()
     {
         try {
-            // Crear datos de ejemplo
-            $datos = [
-                [
-                    'brand' => 'Marca Ejemplo',
-                    'category' => 'Categoría Ejemplo',
-                    'line' => 'Línea Ejemplo',
-                    'code' => 'PROD001',
-                    'code_fabrica' => 'FAB001',
-                    'code_peru' => 'PER001',
-                    'price_compra' => 100.00,
-                    'price_venta' => 150.00,
-                    'stock' => 50,
-                    'dias_entrega' => 3,
-                    'description' => 'Producto de ejemplo para importación',
-                    'garantia' => '1 año',
-                    'observaciones' => 'Observaciones del producto'
-                ],
-                [
-                    'brand' => 'Otra Marca',
-                    'category' => 'Otra Categoría',
-                    'line' => 'Otra Línea',
-                    'code' => 'PROD002',
-                    'code_fabrica' => 'FAB002',
-                    'code_peru' => 'PER002',
-                    'price_compra' => 200.00,
-                    'price_venta' => 300.00,
-                    'stock' => 25,
-                    'dias_entrega' => 5,
-                    'description' => 'Segundo producto de ejemplo',
-                    'garantia' => '6 meses',
-                    'observaciones' => 'Más observaciones'
-                ]
-            ];
+            $this->info('Generando plantilla de importación con referencias...');
 
-            // Crear el archivo Excel usando la librería Maatwebsite Excel
-            $export = new class($datos) implements \Maatwebsite\Excel\Concerns\FromArray, \Maatwebsite\Excel\Concerns\WithHeadings {
-                private $datos;
+            // Usar la nueva clase export que incluye múltiples hojas
+            $export = new EjemploImportacionProductosExport();
 
-                public function __construct($datos)
-                {
-                    $this->datos = $datos;
-                }
-
-                public function array(): array
-                {
-                    return $this->datos;
-                }
-
-                public function headings(): array
-                {
-                    return [
-                        'brand',
-                        'category',
-                        'line',
-                        'code',
-                        'code_fabrica',
-                        'code_peru',
-                        'price_compra',
-                        'price_venta',
-                        'stock',
-                        'dias_entrega',
-                        'description',
-                        'garantia',
-                        'observaciones'
-                    ];
-                }
-            };
-
-            return Excel::download($export, 'ejemplo_importacion_productos.xlsx');
+            return Excel::download($export, 'plantilla_importacion_' . date('Y-m-d_H-i-s') . '.xlsx');
         } catch (\Exception $e) {
-            $this->error('Error al generar el archivo de ejemplo');
-            Log::error('Error al generar archivo de ejemplo', [
+            $this->error('Error al generar la plantilla de importación: ' . $e->getMessage());
+            Log::error('Error al generar plantilla de importación', [
                 'user_id' => Auth::id(),
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
         }
     }
