@@ -236,10 +236,10 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-300">
-                                <div class="relative group w-20 h-20">
+                                <div class="relative group w-32 h-32">
                                     <img src="{{ $producto->image ? asset('storage/' . $producto->image) : 'https://placehold.co/600x400/e2e8f0/64748b?text=Sin+Imagen' }}"
                                         alt="Imagen del producto"
-                                        class="w-20 h-20 rounded-lg object-cover border-2 border-zinc-200 dark:border-zinc-600 hover:border-blue-300 transition-colors shadow-sm cursor-pointer"
+                                        class="w-32 h-32 rounded-lg object-cover border-2 border-zinc-200 dark:border-zinc-600 hover:border-blue-300 transition-colors shadow-sm cursor-pointer"
                                         loading="lazy"
                                         @if ($producto->image) onclick="window.open('{{ asset('storage/' . $producto->image) }}', '_blank')" @endif>
                                     @if ($producto->image)

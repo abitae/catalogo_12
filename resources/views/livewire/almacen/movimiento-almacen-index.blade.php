@@ -856,7 +856,7 @@
                     <div class="space-y-4">
                         <div class="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 border border-blue-200 dark:border-blue-800">
                             <h3 class="text-lg font-semibold text-zinc-900 dark:text-white mb-3 flex items-center gap-2">
-                                <flux:icon name="information" class="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                <flux:icon.information-circle class="w-4 h-4 text-blue-600 dark:text-blue-400" />
                                 Información General
                             </h3>
                             <div class="space-y-3">
