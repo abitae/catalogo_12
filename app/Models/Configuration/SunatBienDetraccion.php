@@ -2,10 +2,13 @@
 
 namespace App\Models\Configuration;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class SunatBienDetraccion extends Model
 {
+    use HasFactory;
+
     protected $table = 'sunat_54';
     protected $primaryKey = 'codigo';
     public $incrementing = false;

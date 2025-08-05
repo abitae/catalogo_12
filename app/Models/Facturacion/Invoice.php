@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Facturacion\Company;
 use App\Models\Facturacion\Sucursal;
 use App\Models\Facturacion\Client;
+use App\Models\Shared\Customer;
 use App\Models\User;
 
 class Invoice extends Model
@@ -132,7 +133,7 @@ class Invoice extends Model
 
     public function client()
     {
-        return $this->belongsTo(Client::class);
+        return $this->belongsTo(Customer::class, 'client_id');
     }
 
     public function invoiceDetails()

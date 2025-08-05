@@ -262,12 +262,36 @@
                         <!-- Tipo de Operación -->
                         @if (in_array($tipoOperacion, ['1001', '1002', '1003', '1004']))
                             <div class="space-y-2">
-                                <flux:select label="Tipo de Detracción" wire:model.live="codBienDetraccion" size="xs"
+                                <flux:select label="Tipo de Detracción" wire:model="codBienDetraccion" size="xs"
                                     class="w-full">
                                     @foreach ($bienesDetraccion as $tipo)
                                         <option value="{{ $tipo->codigo }}">{{ $tipo->codigo }} -
                                             {{ $tipo->descripcion }}</option>
                                     @endforeach
+                                </flux:select>
+                            </div>
+                        @endif
+
+                        @if ($tipoOperacion == '2001')
+                            <div class="space-y-2">
+                                <flux:select label="Régimen de Percepción" wire:model.live="codReg" size="xs"
+                                    class="w-full">
+                                    <option value="">Seleccionar régimen</option>
+                                    <option value="01">01 - Régimen General</option>
+                                    <option value="02">02 - Régimen Especial</option>
+                                    <option value="03">03 - Régimen MYPE</option>
+                                </flux:select>
+                            </div>
+                        @endif
+
+                        @if (in_array($tipoOperacion, ['2002', '2003', '2004']))
+                            <div class="space-y-2">
+                                <flux:select label="Régimen de Retención" wire:model.live="codRegRet" size="xs"
+                                    class="w-full">
+                                    <option value="">Seleccionar régimen</option>
+                                    <option value="01">01 - Retención IGV</option>
+                                    <option value="02">02 - Retención Renta</option>
+                                    <option value="03">03 - Retención IGV + Renta</option>
                                 </flux:select>
                             </div>
                         @endif
@@ -527,7 +551,7 @@
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm">
                                                 <div class="flex items-center space-x-2">
-                                                    <flux:button icon="edit" variant="outline" size="xs"
+                                                    <flux:button icon="pencil" variant="outline" size="xs"
                                                         wire:click="editarProducto({{ $index }})"
                                                         class="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300" />
                                                     <flux:button icon="trash" variant="outline" size="xs"
@@ -600,6 +624,17 @@
                                 @endif
                             </div>
 
+                            <!-- Retenciones Globales Minimalista -->
+                            <div
+                                class="rounded-md p-2 border border-red-100 dark:border-red-800 flex items-center space-x-2">
+                                <flux:checkbox label="Retenciones (3%)" wire:model.live="aplicarRetencion"
+                                    class="text-red-600 dark:text-red-400" />
+                                <flux:icon name="shield-check" class="w-4 h-4 text-red-600 dark:text-red-400" />
+                                @if ($aplicarRetencion)
+                                    <span class="text-xs text-red-700 dark:text-red-300 ml-2">Automático si > S/ 700</span>
+                                @endif
+                            </div>
+
                             <!-- Tipo de Venta Minimalista -->
                             <div class="flex items-center gap-2">
                                 <flux:icon name="credit-card" class="w-4 h-4 text-green-500 dark:text-green-400" />
@@ -608,6 +643,49 @@
                                     <option value="credito">Crédito</option>
                                 </flux:select>
                             </div>
+
+                            <!-- Información de Regímenes Tributarios -->
+                            @if ($aplicarDetraccion)
+                                <div class="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded border border-yellow-200 dark:border-yellow-800">
+                                    <div class="flex items-center gap-2 text-xs">
+                                        <flux:icon name="exclamation-triangle" class="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+                                        <span class="text-yellow-800 dark:text-yellow-200 font-medium">Detracción SPOT</span>
+                                    </div>
+                                    <div class="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                                        <div>Porcentaje: {{ $setPercent }}%</div>
+                                        <div>Monto: S/ {{ number_format($setMount, 2) }}</div>
+                                        <div class="text-xs mt-1">*Depositar en Banco de la Nación</div>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if ($aplicarPercepcion)
+                                <div class="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                                    <div class="flex items-center gap-2 text-xs">
+                                        <flux:icon name="document-text" class="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                                        <span class="text-blue-800 dark:text-blue-200 font-medium">Percepción</span>
+                                    </div>
+                                    <div class="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                                        <div>Porcentaje: {{ $porcentajePer }}%</div>
+                                        <div>Monto: S/ {{ number_format($mtoTotalPer, 2) }}</div>
+                                        <div class="text-xs mt-1">*Cobrar al cliente</div>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if ($aplicarRetencion && !in_array($tipoOperacion, ['2002', '2003', '2004']))
+                                <div class="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-800">
+                                    <div class="flex items-center gap-2 text-xs">
+                                        <flux:icon name="shield-check" class="w-4 h-4 text-red-600 dark:text-red-400" />
+                                        <span class="text-red-800 dark:text-red-200 font-medium">Retención Automática</span>
+                                    </div>
+                                    <div class="text-xs text-red-700 dark:text-red-300 mt-1">
+                                        <div>Porcentaje: 3% del total</div>
+                                        <div>Monto: S/ {{ number_format($mtoRet, 2) }}</div>
+                                        <div class="text-xs mt-1">*Se aplica si total > S/ 700</div>
+                                    </div>
+                                </div>
+                            @endif
                             <!-- Cuotas Minimalista (solo si es crédito) -->
                             @if ($tipoVenta === 'credito')
                                 <div class="mt-3 space-y-2">
@@ -666,14 +744,26 @@
                                 @endif
                                 @if ($setMount > 0)
                                     <li class="flex justify-between py-1">
-                                        <span class="text-slate-500 dark:text-slate-400">Detracción</span>
+                                        <span class="text-slate-500 dark:text-slate-400">Detracción ({{ $setPercent }}%)</span>
                                         <span class="font-medium text-red-600 dark:text-red-400">- S/ {{ number_format($setMount, 2) }}</span>
                                     </li>
                                 @endif
-                                @if ($perception_mtoTotal > 0)
+                                @if ($mtoTotalPer > 0)
                                     <li class="flex justify-between py-1">
-                                        <span class="text-slate-500 dark:text-slate-400">Percepción</span>
-                                        <span class="font-medium text-green-600 dark:text-green-400">+ S/ {{ number_format($perception_mtoTotal, 2) }}</span>
+                                        <span class="text-slate-500 dark:text-slate-400">Percepción ({{ $porcentajePer }}%)</span>
+                                        <span class="font-medium text-green-600 dark:text-green-400">+ S/ {{ number_format($mtoTotalPer, 2) }}</span>
+                                    </li>
+                                @endif
+                                @if ($mtoRet > 0 && in_array($tipoOperacion, ['2002', '2003', '2004']))
+                                    <li class="flex justify-between py-1">
+                                        <span class="text-slate-500 dark:text-slate-400">Retención ({{ number_format($factorRet * 100, 0) }}%)</span>
+                                        <span class="font-medium text-red-600 dark:text-red-400">- S/ {{ number_format($mtoRet, 2) }}</span>
+                                    </li>
+                                @endif
+                                @if ($mtoRet > 0 && $aplicarRetencion && !in_array($tipoOperacion, ['2002', '2003', '2004']))
+                                    <li class="flex justify-between py-1">
+                                        <span class="text-slate-500 dark:text-slate-400">Retención (3%)</span>
+                                        <span class="font-medium text-red-600 dark:text-red-400">- S/ {{ number_format($mtoRet, 2) }}</span>
                                     </li>
                                 @endif
                             </ul>
@@ -835,165 +925,244 @@
         </div>
     </div>
 
-    <!-- Modal de Productos Mejorado -->
-    <flux:modal wire:model="modal_productos" max-width="5xl">
-        <div class="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-6">
-            <div class="flex items-center space-x-3">
-                <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                    <flux:icon name="shopping-cart" class="w-4 h-4" />
-                </div>
-                <flux:heading size="lg" class="text-white">{{ $editando_producto ? 'Editar' : 'Agregar' }}
-                    Producto</flux:heading>
+    <!-- Modal de Productos - Formulario Directo -->
+    <flux:modal wire:model="modal_productos" max-width="4xl">
+        <!-- Header Minimalista -->
+        <div class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 p-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
+                    {{ $editando_producto ? 'Editar' : 'Agregar' }} Producto
+                </h2>
+                <flux:button variant="ghost" size="xs" wire:click="cerrarModalProductos" class="text-slate-400 hover:text-slate-600">
+                    <flux:icon name="x-mark" class="w-4 h-4" />
+                </flux:button>
             </div>
         </div>
 
-        <div class="p-6">
-            <div class="space-y-4">
-                <!-- Búsqueda de Productos -->
-                <div
-                    class="bg-gradient-to-r from-slate-50 to-blue-50 dark:from-slate-800 dark:to-blue-900/20 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-                    <div class="flex items-center space-x-3 mb-2">
-                        <flux:icon name="magnifying-glass" class="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Buscar Producto</h3>
+        <div class="p-6 space-y-6">
+            <!-- Botón para buscar producto del catálogo -->
+            <div class="flex items-center justify-between p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div class="flex items-center space-x-3">
+                    <flux:icon name="magnifying-glass" class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <div>
+                        <h3 class="font-medium text-blue-900 dark:text-blue-100">Buscar en Catálogo</h3>
+                        <p class="text-sm text-blue-700 dark:text-blue-300">Selecciona un producto existente</p>
                     </div>
-                    <flux:input label="Buscar por código o nombre" wire:model.live="busquedaProducto"
-                        placeholder="Escriba para buscar productos..." size="xs" class="w-full" />
+                </div>
+                <flux:button
+                    variant="outline"
+                    size="sm"
+                    wire:click="abrirModalEscogerProducto"
+                    class="border-blue-300 text-blue-700 hover:bg-blue-100 dark:border-blue-600 dark:text-blue-300 dark:hover:bg-blue-900/30">
+                    <flux:icon name="magnifying-glass" class="w-4 h-4 mr-2" />
+                    Buscar Producto
+                </flux:button>
+            </div>
+
+            <!-- Información del producto seleccionado -->
+            @if($producto_seleccionado)
+                <div class="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <flux:icon name="check-circle" class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                            <div>
+                                <div class="font-medium text-emerald-900 dark:text-emerald-100">
+                                    {{ $producto_seleccionado->code }}
+                                </div>
+                                <div class="text-sm text-emerald-700 dark:text-emerald-300">
+                                    {{ $producto_seleccionado->description }}
+                                </div>
+                            </div>
+                        </div>
+                        <flux:button
+                            variant="ghost"
+                            size="xs"
+                            wire:click="limpiarProductoSeleccionado"
+                            class="text-emerald-600 hover:text-emerald-800 dark:text-emerald-400 dark:hover:text-emerald-200">
+                            <flux:icon name="x-mark" class="w-4 h-4" />
+                        </flux:button>
+                    </div>
+                </div>
+            @endif
+
+            <!-- Formulario Compacto Ordenado Profesionalmente -->
+            <div class="space-y-4">
+                <!-- Primera fila: Unidad, Cantidad, Precio Unitario -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <flux:select
+                        label="Unidad"
+                        wire:model="unidad"
+                        size="sm">
+                        @foreach ($unidades as $unidad)
+                            <option value="{{ $unidad->codigo }}">{{ $unidad->codigo }}</option>
+                        @endforeach
+                    </flux:select>
+                    <flux:input
+                        label="Cantidad"
+                        wire:model.live="cantidad"
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        size="sm" />
+                    <flux:input
+                        label="Precio Unitario"
+                        wire:model.live="precio_unitario"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        size="sm" />
                 </div>
 
-                <!-- Lista de Productos Filtrados -->
-                @if (!empty($productosFiltrados))
-                    <div
-                        class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                        <div class="p-4 border-b border-slate-200 dark:border-slate-700">
-                            <h3
-                                class="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
-                                Productos Disponibles</h3>
+                <!-- Segunda fila: Descripción (ocupa todo el ancho) -->
+                <div>
+                    <flux:textarea
+                        label="Descripción"
+                        wire:model="descripcion_producto"
+                        placeholder="Descripción opcional..."
+                        rows="2"
+                        size="sm"
+                        class="w-full" />
+                </div>
+
+                <!-- Tercera fila: Afectación IGV (al final, ocupa todo el ancho en móvil y 1/3 en desktop) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="md:col-start-3">
+                        <flux:select
+                            label="Afectación IGV"
+                            wire:model="tipAfeIgv"
+                            size="sm"
+                            class="w-full">
+                            @foreach ($tiposAfectacionIgv as $tipo)
+                                <option value="{{ $tipo->codigo }}">{{ $tipo->codigo }} - {{ $tipo->descripcion }}</option>
+                            @endforeach
+                        </flux:select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen Compacto -->
+            @if ($producto_id && $cantidad > 0 && $precio_unitario > 0)
+                <div class="bg-slate-50 dark:bg-slate-800 rounded-lg p-4">
+                    <div class="grid grid-cols-3 gap-4 text-center">
+                        <div>
+                            <div class="text-xs text-slate-500 dark:text-slate-400">Valor Venta</div>
+                            <div class="font-semibold text-slate-900 dark:text-slate-100">
+                                S/ {{ number_format(($cantidad * $precio_unitario) / 1.18, 2) }}
+                            </div>
                         </div>
-                        <div class="max-h-64 overflow-y-auto">
-                            @foreach ($productosFiltrados as $producto)
-                                <div class="p-4 border-b border-slate-100 dark:border-slate-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 dark:hover:from-purple-900/20 dark:hover:to-pink-900/20 cursor-pointer transition-all duration-200"
-                                    wire:click="seleccionarProducto({{ $producto->id }})">
-                                    <div class="flex justify-between items-center">
-                                        <div class="flex items-center space-x-3">
-                                            <div
-                                                class="w-10 h-10 bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 rounded-lg flex items-center justify-center">
-                                                <flux:icon name="cube"
-                                                    class="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                                            </div>
-                                            <div>
-                                                <div class="font-semibold text-slate-900 dark:text-slate-100">
-                                                    {{ $producto->codigo }}</div>
-                                                <div class="text-sm text-slate-600 dark:text-slate-400">
-                                                    {{ $producto->nombre }}</div>
-                                            </div>
+                        <div>
+                            <div class="text-xs text-slate-500 dark:text-slate-400">IGV</div>
+                            <div class="font-semibold text-slate-900 dark:text-slate-100">
+                                S/ {{ number_format($cantidad * $precio_unitario - ($cantidad * $precio_unitario) / 1.18, 2) }}
+                            </div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-500 dark:text-slate-400">Total</div>
+                            <div class="font-semibold text-emerald-600 dark:text-emerald-400">
+                                S/ {{ number_format($cantidad * $precio_unitario, 2) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+        </div>
+
+        <!-- Footer Minimalista -->
+        <div class="bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-4">
+            <div class="flex justify-end space-x-3">
+                <flux:button
+                    variant="outline"
+                    wire:click="cerrarModalProductos"
+                    size="sm">
+                    Cancelar
+                </flux:button>
+                <flux:button
+                    variant="primary"
+                    wire:click="agregarProducto"
+                    :disabled="!$producto_id || $cantidad <= 0 || $precio_unitario <= 0"
+                    size="sm">
+                    <flux:icon name="{{ $editando_producto ? 'check' : 'plus' }}" class="w-4 h-4 mr-2" />
+                    {{ $editando_producto ? 'Actualizar' : 'Agregar' }}
+                </flux:button>
+            </div>
+        </div>
+    </flux:modal>
+
+    <!-- Modal Escoger Producto - Búsqueda y Selección -->
+    <flux:modal wire:model="escojeProducto" max-width="3xl">
+        <!-- Header -->
+        <div class="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 p-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
+                    Seleccionar Producto del Catálogo
+                </h2>
+                <flux:button variant="ghost" size="xs" wire:click="cerrarModalEscogerProducto" class="text-slate-400 hover:text-slate-600">
+                    <flux:icon name="x-mark" class="w-4 h-4" />
+                </flux:button>
+            </div>
+        </div>
+
+        <div class="p-6 space-y-4">
+            <!-- Búsqueda -->
+            <div class="space-y-3">
+                <flux:input
+                    label="Buscar producto"
+                    wire:model.live="busquedaProducto"
+                    placeholder="Código o nombre del producto..."
+                    size="sm"
+                    class="w-full"
+                    icon="magnifying-glass" />
+            </div>
+
+            <!-- Lista de Productos -->
+            @if (!empty($productosFiltrados))
+                <div class="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                    <div class="max-h-96 overflow-y-auto">
+                        @foreach ($productosFiltrados as $producto)
+                            <div class="p-4 border-b border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors"
+                                wire:click="seleccionarProductoDelCatalogo({{ $producto->id }})">
+                                <div class="flex justify-between items-center">
+                                    <div class="flex-1">
+                                        <div class="font-medium text-slate-900 dark:text-slate-100">
+                                            {{ $producto->code }}
                                         </div>
-                                        <div class="text-right">
-                                            <div class="font-semibold text-slate-900 dark:text-slate-100">S/
-                                                {{ number_format($producto->precio, 2) }}</div>
-                                            <div class="text-sm text-slate-500 dark:text-slate-400">
-                                                {{ $producto->unidad }}</div>
+                                        <div class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                                            {{ $producto->description }}
+                                        </div>
+                                        <div class="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                                            Unidad: {{ $producto->unidadMedida->codigo ?? 'NIU' }}
+                                        </div>
+                                    </div>
+                                    <div class="text-right ml-4">
+                                        <div class="font-semibold text-slate-900 dark:text-slate-100">
+                                            S/ {{ number_format($producto->price_venta, 2) }}
+                                        </div>
+                                        <div class="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
+                                            Precio de venta
                                         </div>
                                     </div>
                                 </div>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
-
-                <!-- Campos del Producto -->
-                <div
-                    class="bg-gradient-to-r from-slate-50 to-emerald-50 dark:from-slate-800 dark:to-emerald-900/20 rounded-xl p-6 border border-slate-200 dark:border-slate-700">
-                    <div class="flex items-center space-x-3 mb-2">
-                        <flux:icon name="cog" class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Detalles del Producto</h3>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-                        <div class="space-y-2">
-                            <flux:input label="Cantidad" wire:model.live="cantidad" type="number" step="0.01"
-                                min="0.01" size="xs" class="w-full" />
-                        </div>
-                        <div class="space-y-2">
-                            <flux:input label="Precio Unitario" wire:model.live="precio_unitario" type="number"
-                                step="0.01" min="0" size="xs" class="w-full" />
-                        </div>
-                        <div class="space-y-2">
-                            <flux:select label="Unidad de Medida" wire:model="unidad" size="xs" class="w-full">
-                                @foreach ($unidades as $unidad)
-                                    <option value="{{ $unidad->codigo }}">{{ $unidad->codigo }} -
-                                        {{ $unidad->descripcion }}</option>
-                                @endforeach
-                            </flux:select>
-                        </div>
-                    </div>
-
-                    <div class="space-y-3">
-                        <div class="space-y-2">
-                            <flux:textarea label="Descripción" wire:model="descripcion_producto"
-                                placeholder="Descripción del producto..." rows="3" size="xs"
-                                class="w-full" />
-                        </div>
-
-                        <div class="space-y-2">
-                            <flux:select label="Tipo de Afectación IGV" wire:model="tipAfeIgv" size="xs"
-                                class="w-full">
-                                @foreach ($tiposAfectacionIgv as $tipo)
-                                    <option value="{{ $tipo->codigo }}">{{ $tipo->codigo }} -
-                                        {{ $tipo->descripcion }}</option>
-                                @endforeach
-                            </flux:select>
-                        </div>
+                            </div>
+                        @endforeach
                     </div>
                 </div>
-
-                <!-- Resumen del Producto -->
-                @if ($producto_id && $cantidad > 0 && $precio_unitario > 0)
-                    <div
-                        class="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl p-6 border border-emerald-200 dark:border-emerald-800">
-                        <div class="flex items-center space-x-3 mb-2">
-                            <flux:icon name="calculator" class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
-                            <h3 class="text-lg font-semibold text-emerald-900 dark:text-emerald-100">Resumen del
-                                Producto</h3>
-                        </div>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div
-                                class="bg-white dark:bg-slate-800 rounded-lg p-4 border border-emerald-200 dark:border-emerald-700">
-                                <div class="text-sm font-medium text-emerald-700 dark:text-emerald-300 mb-1">Valor
-                                    Venta</div>
-                                <div class="text-lg font-bold text-emerald-900 dark:text-emerald-100">S/
-                                    {{ number_format(($cantidad * $precio_unitario) / 1.18, 2) }}</div>
-                            </div>
-                            <div
-                                class="bg-white dark:bg-slate-800 rounded-lg p-4 border border-emerald-200 dark:border-emerald-700">
-                                <div class="text-sm font-medium text-emerald-700 dark:text-emerald-300 mb-1">IGV</div>
-                                <div class="text-lg font-bold text-emerald-900 dark:text-emerald-100">S/
-                                    {{ number_format($cantidad * $precio_unitario - ($cantidad * $precio_unitario) / 1.18, 2) }}
-                                </div>
-                            </div>
-                            <div
-                                class="bg-white dark:bg-slate-800 rounded-lg p-4 border border-emerald-200 dark:border-emerald-700">
-                                <div class="text-sm font-medium text-emerald-700 dark:text-emerald-300 mb-1">Total
-                                </div>
-                                <div class="text-lg font-bold text-emerald-900 dark:text-emerald-100">S/
-                                    {{ number_format($cantidad * $precio_unitario, 2) }}</div>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-            </div>
+            @else
+                <div class="text-center py-8">
+                    <flux:icon name="magnifying-glass" class="w-12 h-12 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
+                    <h3 class="text-lg font-medium text-slate-900 dark:text-slate-100 mb-2">No se encontraron productos</h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400">Intenta con otros términos de búsqueda</p>
+                </div>
+            @endif
         </div>
 
-        <div class="bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-6">
-            <div class="flex justify-between items-center w-full">
-                <flux:button variant="outline" wire:click="cerrarModalProductos"
-                    class="border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">
+        <!-- Footer -->
+        <div class="bg-slate-50 dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-4">
+            <div class="flex justify-end space-x-3">
+                <flux:button
+                    variant="outline"
+                    wire:click="cerrarModalEscogerProducto"
+                    size="sm">
                     Cancelar
-                </flux:button>
-                <flux:button variant="primary" wire:click="agregarProducto"
-                    :disabled="!$producto_id || $cantidad <= 0 || $precio_unitario <= 0"
-                    class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0">
-                    <flux:icon name="{{ $editando_producto ? 'check' : 'plus' }}" class="w-4 h-4 mr-2" />
-                    {{ $editando_producto ? 'Actualizar' : 'Agregar' }} Producto
                 </flux:button>
             </div>
         </div>

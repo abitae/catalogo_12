@@ -20,7 +20,7 @@ return new class extends Migration
             $table->foreignId('sucursal_id')->constrained('sucursals');
 
             // Información del Cliente
-            $table->foreignId('client_id')->constrained('clients');
+            $table->foreignId('client_id')->constrained('customers');
 
             // Datos del Documento
             $table->string('tipoDoc', 2); // 01-Factura, 03-Boleta

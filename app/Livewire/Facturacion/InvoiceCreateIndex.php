@@ -19,6 +19,8 @@ use App\Models\Configuration\SunatLeyenda;
 use Illuminate\Support\Facades\DB;
 use App\Traits\SearchDocument;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Luecano\NumeroALetras\NumeroALetras;
 
 class InvoiceCreateIndex extends Component
 {
@@ -29,8 +31,6 @@ class InvoiceCreateIndex extends Component
     public $client_id;
     public $tipoDoc = '01';
     public $tipoOperacion = '0101';
-    public $serie;
-    public $correlativo;
     public $fechaEmision;
     public $fechaVencimiento;
     public $formaPago_moneda = 'PEN';
@@ -78,6 +78,10 @@ class InvoiceCreateIndex extends Component
     public $editando_producto = false;
     public $indice_producto_editar = null;
 
+    // Modal de selección de productos del catálogo
+    public $escojeProducto = false;
+    public $producto_seleccionado = null;
+
     // Totales calculados
     public $subtotal = 0;
     public $igv = 0;
@@ -100,11 +104,22 @@ class InvoiceCreateIndex extends Component
     public $ctaBanco = null;
     public $setPercent = null;
     public $setMount = null;
+    public $aplicarDetraccion = false;
 
     // Percepción
-    public $perception_mtoBase = 0;
-    public $perception_mto = 0;
-    public $perception_mtoTotal = 0;
+    public $codReg = null;
+    public $porcentajePer = null;
+    public $mtoBasePer = 0;
+    public $mtoPer = 0;
+    public $mtoTotalPer = 0;
+    public $aplicarPercepcion = false;
+
+    // Retención
+    public $codRegRet = null;
+    public $mtoBaseRet = 0;
+    public $factorRet = null;
+    public $mtoRet = 0;
+    public $aplicarRetencion = false;
 
     // Descuentos Globales
     public $aplicarDescuentos = false;
@@ -189,9 +204,6 @@ class InvoiceCreateIndex extends Component
         // Tipo de documento inicial: Factura
         $this->tipoDoc = '01';
 
-        // Generar serie y correlativo inicial
-        $this->generarSerieYCorrelativo();
-
         // Asignar leyendas automáticamente
         $this->asignarLeyendasAutomaticamente();
     }
@@ -263,8 +275,6 @@ class InvoiceCreateIndex extends Component
     public function updatedCompanyId()
     {
         $this->sucursal_id = null;
-        $this->serie = null;
-        $this->correlativo = null;
         $this->series_suffix = null;
 
         if ($this->company_id) {
@@ -282,7 +292,6 @@ class InvoiceCreateIndex extends Component
                 if ($primeraSucursal) {
                     $this->sucursal_id = $primeraSucursal->id;
                     $this->series_suffix = $primeraSucursal->series_suffix;
-                    $this->generarSerieYCorrelativo();
                 }
             }
         } else {
@@ -298,26 +307,19 @@ class InvoiceCreateIndex extends Component
             $sucursal = Sucursal::find($this->sucursal_id);
             if ($sucursal) {
                 $this->series_suffix = $sucursal->series_suffix;
-                $this->generarSerieYCorrelativo();
             }
         } else {
             $this->series_suffix = null;
-            $this->serie = null;
-            $this->correlativo = null;
         }
     }
 
     public function updatedTipoDoc()
     {
-        $this->generarSerieYCorrelativo();
         $this->cargarTiposOperacion();
         $this->asignarLeyendasAutomaticamente();
     }
 
-    public function updatedTipoOperacion()
-    {
-        $this->asignarLeyendasAutomaticamente();
-    }
+
 
     public function updatedFechaEmision()
     {
@@ -436,33 +438,38 @@ class InvoiceCreateIndex extends Component
         $this->leyendas = SunatLeyenda::getAll();
     }
 
-    private function generarSerieYCorrelativo()
+    private function generarSerieYCorrelativo($tipoDoc, $sucursal_id)
     {
-        if (!$this->sucursal_id || !$this->tipoDoc) {
-            return;
+        if (!$sucursal_id || !$tipoDoc) {
+            return ['serie' => null, 'correlativo' => null];
         }
 
-        $sucursal = Sucursal::find($this->sucursal_id);
+        $sucursal = Sucursal::find($sucursal_id);
         if (!$sucursal || !$sucursal->series_suffix) {
-            return;
+            return ['serie' => null, 'correlativo' => null];
         }
 
         // Generar serie de 4 dígitos: prefijo + series_suffix (ej: F001, B001)
-        $prefijo = $this->tipoDoc == '01' ? 'F' : 'B';
-        $this->serie = $prefijo . str_pad($sucursal->series_suffix, 3, '0', STR_PAD_LEFT);
+        $prefijo = $tipoDoc == '01' ? 'F' : 'B';
+        $serie = $prefijo . str_pad($sucursal->series_suffix, 3, '0', STR_PAD_LEFT);
 
         // Buscar el último correlativo para esta serie
-        $ultimoCorrelativo = Invoice::where('serie', $this->serie)
+        $ultimoCorrelativo = Invoice::where('serie', $serie)
             ->orderBy('correlativo', 'desc')
             ->value('correlativo');
 
         if ($ultimoCorrelativo) {
             // Incrementar el último correlativo (solo el número)
-            $this->correlativo = (int)$ultimoCorrelativo + 1;
+            $correlativo = (int)$ultimoCorrelativo + 1;
         } else {
             // Primer documento de esta serie
-            $this->correlativo = 1;
+            $correlativo = 1;
         }
+
+        return [
+            'serie' => $serie,
+            'correlativo' => (string)$correlativo
+        ];
     }
 
     public function updatedProductoId()
@@ -522,6 +529,7 @@ class InvoiceCreateIndex extends Component
             'cantidad' => 'required|numeric|min:0.01|max:999999.99',
             'precio_unitario' => 'required|numeric|min:0|max:999999.99',
             'unidad' => 'required|string|max:10',
+            'descripcion_producto' => 'nullable|string|max:500',
         ], [
             'producto_id.required' => 'Debe seleccionar un producto',
             'producto_id.exists' => 'El producto seleccionado no existe',
@@ -536,6 +544,8 @@ class InvoiceCreateIndex extends Component
             'unidad.required' => 'La unidad es obligatoria',
             'unidad.string' => 'La unidad debe ser un texto',
             'unidad.max' => 'La unidad no puede exceder 10 caracteres',
+            'descripcion_producto.string' => 'La descripción debe ser un texto',
+            'descripcion_producto.max' => 'La descripción no puede exceder 500 caracteres',
         ]);
 
         $producto = ProductoCatalogo::find($this->producto_id);
@@ -652,6 +662,55 @@ class InvoiceCreateIndex extends Component
         $this->calcularTotales();
     }
 
+
+
+    public function actualizarProductoEnTabla($index, $campo, $valor)
+    {
+        if (!isset($this->productos[$index])) {
+            return;
+        }
+
+        // Validar el campo específico antes de actualizar
+        switch ($campo) {
+            case 'cantidad':
+                if (!is_numeric($valor) || $valor <= 0 || $valor > 999999.99) {
+                    $this->addError("productos.{$index}.cantidad", 'La cantidad debe ser un número mayor a 0 y menor a 999,999.99');
+                    return;
+                }
+                break;
+            case 'precio_unitario':
+                if (!is_numeric($valor) || $valor < 0 || $valor > 999999.99) {
+                    $this->addError("productos.{$index}.precio_unitario", 'El precio unitario debe ser un número mayor o igual a 0 y menor a 999,999.99');
+                    return;
+                }
+                break;
+            case 'unidad':
+                if (empty($valor) || strlen($valor) > 10) {
+                    $this->addError("productos.{$index}.unidad", 'La unidad es obligatoria y no puede exceder 10 caracteres');
+                    return;
+                }
+                break;
+            case 'descripcion':
+                if (empty($valor) || strlen($valor) > 500) {
+                    $this->addError("productos.{$index}.descripcion", 'La descripción es obligatoria y no puede exceder 500 caracteres');
+                    return;
+                }
+                break;
+        }
+
+        // Actualizar el valor
+        $this->productos[$index][$campo] = $valor;
+
+        // Recalcular valores del producto
+        if (in_array($campo, ['cantidad', 'precio_unitario'])) {
+            $this->productos[$index]['valor_venta'] = $this->productos[$index]['cantidad'] * $this->productos[$index]['precio_unitario'];
+            $this->calcularTotales();
+        }
+
+        // Limpiar errores si la validación pasó
+        $this->resetErrorBag("productos.{$index}.{$campo}");
+    }
+
     public function calcularTotales()
     {
         // Los precios ya incluyen IGV, por lo que necesitamos calcular el subtotal sin IGV
@@ -684,8 +743,18 @@ class InvoiceCreateIndex extends Component
         }
 
         // Aplicar percepción
-        if ($this->perception_mtoTotal > 0) {
-            $this->total += $this->perception_mtoTotal;
+        if ($this->mtoTotalPer > 0) {
+            $this->total += $this->mtoTotalPer;
+        }
+
+        // Calcular retención automática si está habilitada
+        if ($this->aplicarRetencion) {
+            $this->calcularRetencionAutomatica();
+        }
+
+        // Aplicar retención (como descuento global)
+        if ($this->aplicarRetencion && $this->mtoRet > 0) {
+            $this->total -= $this->mtoRet;
         }
 
         // Actualizar el IGV de cada producto individual
@@ -696,23 +765,224 @@ class InvoiceCreateIndex extends Component
         }
     }
 
-    // Métodos para manejar detracción
+    // ========================================
+    // MÉTODOS PARA DETRACCIONES (SPOT)
+    // ========================================
+
+    /**
+     * Verifica si la operación está sujeta a detracción según DL 940
+     */
+    public function verificarDetraccion()
+    {
+        // Solo aplicar detracción para tipos de operación específicos
+        if (!in_array($this->tipoOperacion, ['1001', '1002', '1003', '1004'])) {
+            $this->aplicarDetraccion = false;
+            $this->resetearDetraccion();
+            return;
+        }
+
+        // Verificar si el monto excede el mínimo afecto (S/ 700)
+        if ($this->subtotal < 700) {
+            $this->aplicarDetraccion = false;
+            $this->resetearDetraccion();
+            return;
+        }
+
+        // Si hay bien de detracción seleccionado, aplicar
+        if ($this->codBienDetraccion) {
+            $this->aplicarDetraccion = true;
+            $this->calcularDetraccion();
+        }
+    }
+
     public function updatedCodBienDetraccion()
     {
         if ($this->codBienDetraccion && $this->bienesDetraccion) {
             $bien = $this->bienesDetraccion->firstWhere('codigo', $this->codBienDetraccion);
             if ($bien) {
                 $this->setPercent = $bien->porcentaje;
-                $this->calcularDetraccion();
+                $this->verificarDetraccion();
             }
         }
     }
 
+    public function updatedTipoOperacion()
+    {
+        $this->asignarLeyendasAutomaticamente();
+        $this->verificarDetraccion();
+        $this->verificarPercepcion();
+        $this->verificarRetencion();
+    }
+
     public function calcularDetraccion()
     {
-        if ($this->setPercent && $this->subtotal > 0) {
+        if ($this->aplicarDetraccion && $this->setPercent && $this->subtotal > 0) {
+            // La detracción se calcula sobre el valor de venta (sin IGV)
             $this->setMount = round($this->subtotal * ($this->setPercent / 100), 2);
+        } else {
+            $this->setMount = 0;
         }
+        $this->calcularTotales();
+    }
+
+    public function resetearDetraccion()
+    {
+        $this->codBienDetraccion = null;
+        $this->codMedioPago = null;
+        $this->ctaBanco = null;
+        $this->setPercent = null;
+        $this->setMount = 0;
+        $this->calcularTotales();
+    }
+
+    // ========================================
+    // MÉTODOS PARA PERCEPCIONES
+    // ========================================
+
+    /**
+     * Verifica si la operación está sujeta a percepción
+     */
+    public function verificarPercepcion()
+    {
+        // Solo aplicar percepción para tipo de operación 2001
+        if ($this->tipoOperacion !== '2001') {
+            $this->aplicarPercepcion = false;
+            $this->resetearPercepcion();
+            return;
+        }
+
+        // Verificar si el monto excede el mínimo afecto
+        if ($this->subtotal < 700) {
+            $this->aplicarPercepcion = false;
+            $this->resetearPercepcion();
+            return;
+        }
+
+        // Si hay régimen de percepción seleccionado, aplicar
+        if ($this->codReg) {
+            $this->aplicarPercepcion = true;
+            $this->calcularPercepcion();
+        }
+    }
+
+    public function updatedCodReg()
+    {
+        if ($this->codReg) {
+            // Aquí se cargarían los porcentajes según el régimen seleccionado
+            // Por ahora usamos valores estándar
+            switch ($this->codReg) {
+                case '01': // Régimen General
+                    $this->porcentajePer = 2.00;
+                    break;
+                case '02': // Régimen Especial
+                    $this->porcentajePer = 1.00;
+                    break;
+                case '03': // Régimen MYPE
+                    $this->porcentajePer = 0.50;
+                    break;
+                default:
+                    $this->porcentajePer = 0;
+            }
+            $this->verificarPercepcion();
+        }
+    }
+
+    public function calcularPercepcion()
+    {
+        if ($this->aplicarPercepcion && $this->porcentajePer && $this->subtotal > 0) {
+            // La percepción se calcula sobre el valor de venta (sin IGV)
+            $this->mtoBasePer = $this->subtotal;
+            $this->mtoPer = round($this->subtotal * ($this->porcentajePer / 100), 2);
+            $this->mtoTotalPer = $this->mtoPer; // La percepción es solo el monto calculado
+        } else {
+            $this->mtoBasePer = 0;
+            $this->mtoPer = 0;
+            $this->mtoTotalPer = 0;
+        }
+        $this->calcularTotales();
+    }
+
+    public function resetearPercepcion()
+    {
+        $this->codReg = null;
+        $this->porcentajePer = null;
+        $this->mtoBasePer = 0;
+        $this->mtoPer = 0;
+        $this->mtoTotalPer = 0;
+        $this->calcularTotales();
+    }
+
+    // ========================================
+    // MÉTODOS PARA RETENCIONES
+    // ========================================
+
+    /**
+     * Verifica si la operación está sujeta a retención
+     */
+    public function verificarRetencion()
+    {
+        // Solo aplicar retención para tipos de operación específicos
+        if (!in_array($this->tipoOperacion, ['2002', '2003', '2004'])) {
+            $this->aplicarRetencion = false;
+            $this->resetearRetencion();
+            return;
+        }
+
+        // Verificar si el monto excede el mínimo afecto
+        if ($this->subtotal < 1000) {
+            $this->aplicarRetencion = false;
+            $this->resetearRetencion();
+            return;
+        }
+
+        // Si hay régimen de retención seleccionado, aplicar
+        if ($this->codRegRet) {
+            $this->aplicarRetencion = true;
+            $this->calcularRetencion();
+        }
+    }
+
+    public function updatedCodRegRet()
+    {
+        if ($this->codRegRet) {
+            // Aquí se cargarían los factores según el régimen seleccionado
+            // Por ahora usamos valores estándar
+            switch ($this->codRegRet) {
+                case '01': // Retención IGV
+                    $this->factorRet = 0.18; // 18% IGV
+                    break;
+                case '02': // Retención Renta
+                    $this->factorRet = 0.03; // 3% Renta
+                    break;
+                case '03': // Retención IGV + Renta
+                    $this->factorRet = 0.21; // 18% + 3%
+                    break;
+                default:
+                    $this->factorRet = 0;
+            }
+            $this->verificarRetencion();
+        }
+    }
+
+    public function calcularRetencion()
+    {
+        if ($this->aplicarRetencion && $this->factorRet && $this->subtotal > 0) {
+            // La retención se calcula sobre el valor de venta (sin IGV)
+            $this->mtoBaseRet = $this->subtotal;
+            $this->mtoRet = round($this->subtotal * $this->factorRet, 2);
+        } else {
+            $this->mtoBaseRet = 0;
+            $this->mtoRet = 0;
+        }
+        $this->calcularTotales();
+    }
+
+    public function resetearRetencion()
+    {
+        $this->codRegRet = null;
+        $this->mtoBaseRet = 0;
+        $this->factorRet = null;
+        $this->mtoRet = 0;
         $this->calcularTotales();
     }
 
@@ -734,14 +1004,7 @@ class InvoiceCreateIndex extends Component
         $this->asignarLeyendasAutomaticamente();
     }
 
-    // Métodos para manejar percepción
-    public function calcularPercepcion()
-    {
-        if ($this->perception_mtoBase > 0 && $this->perception_mto > 0) {
-            $this->perception_mtoTotal = $this->perception_mtoBase + $this->perception_mto;
-            $this->calcularTotales();
-        }
-    }
+
 
     // Métodos para manejar guías de remisión
     public function agregarGuia()
@@ -845,6 +1108,30 @@ class InvoiceCreateIndex extends Component
         $this->asignarLeyendasAutomaticamente();
     }
 
+    public function updatedAplicarRetencion()
+    {
+        if (!$this->aplicarRetencion) {
+            $this->mtoRet = 0;
+        } else {
+            // Calcular retención automática del 3% si el monto es superior a S/ 700
+            $this->calcularRetencionAutomatica();
+        }
+        $this->calcularTotales();
+        $this->asignarLeyendasAutomaticamente();
+    }
+
+    /**
+     * Calcula la retención automática del 3% sobre el monto total
+     */
+    public function calcularRetencionAutomatica()
+    {
+        if ($this->aplicarRetencion && $this->total > 700) {
+            $this->mtoRet = round($this->total * 0.03, 2); // 3% del total
+        } else {
+            $this->mtoRet = 0;
+        }
+    }
+
     // Método para asignar leyendas automáticamente
     private function asignarLeyendasAutomaticamente()
     {
@@ -861,14 +1148,20 @@ class InvoiceCreateIndex extends Component
         }
 
         // Leyendas según tipo de operación
-        if (in_array($this->tipoOperacion, ['1001', '1002', '1003', '1004'])) {
+        if (in_array($this->tipoOperacion, ['1001', '1002', '1003', '1004']) && $this->aplicarDetraccion) {
             // Detracción
             $this->leyendasSeleccionadas[] = '2006'; // DETRACCIÓN
         }
 
-        if ($this->tipoOperacion == '2001') {
+        if ($this->tipoOperacion == '2001' && $this->aplicarPercepcion) {
             // Percepción
             $this->leyendasSeleccionadas[] = '2000'; // COMPROBANTE DE PERCEPCIÓN
+        }
+
+        if ((in_array($this->tipoOperacion, ['2002', '2003', '2004']) && $this->aplicarRetencion) ||
+            ($this->aplicarRetencion && $this->mtoRet > 0)) {
+            // Retención
+            $this->leyendasSeleccionadas[] = '2001'; // COMPROBANTE DE RETENCIÓN
         }
 
         // Leyendas según descuentos y cargos
@@ -886,23 +1179,24 @@ class InvoiceCreateIndex extends Component
 
     public function crearFactura()
     {
+        //dd($this->correlativo);
         $rules = [
             'company_id' => 'required|exists:companies,id',
             'sucursal_id' => 'required|exists:sucursals,id',
             'client_id' => 'required|exists:customers,id',
             'tipoDoc' => 'required|in:01,03,07,08',
             'tipoOperacion' => 'required|exists:sunat_51,codigo',
-            'serie' => 'required|string|max:10',
-            'correlativo' => 'required|string|max:10',
             'fechaEmision' => 'required|date',
             'fechaVencimiento' => 'required|date|after:fechaEmision',
             'tipoVenta' => 'required|in:contado,credito',
             'cuotas' => 'nullable|array',
-            'formaPago_tipo' => 'required|in:01,02,03',
-            'producto_id' => 'required|exists:producto_catalogos,id',
-            'cantidad' => 'required|numeric|min:0.01',
-            'precio_unitario' => 'required|numeric|min:0',
-            'unidad' => 'required|string|max:10',
+            'formaPago_tipo' => 'required',
+            'productos' => 'required|array|min:1',
+            'productos.*.producto_id' => 'required|exists:producto_catalogos,id',
+            'productos.*.cantidad' => 'required|numeric|min:0.01|max:999999.99',
+            'productos.*.precio_unitario' => 'required|numeric|min:0|max:999999.99',
+            'productos.*.unidad' => 'required|string|max:10',
+            'productos.*.descripcion' => 'required|string|max:500',
             'observacion' => 'nullable|string|max:500',
             'note_reference' => 'nullable|string|max:100',
         ];
@@ -922,12 +1216,6 @@ class InvoiceCreateIndex extends Component
             'tipoDoc.in' => 'El tipo de documento seleccionado no es válido',
             'tipoOperacion.required' => 'Debe seleccionar el tipo de operación',
             'tipoOperacion.exists' => 'El tipo de operación seleccionado no es válido',
-            'serie.required' => 'La serie es obligatoria',
-            'serie.string' => 'La serie debe ser un texto',
-            'serie.max' => 'La serie no puede exceder 10 caracteres',
-            'correlativo.required' => 'El correlativo es obligatorio',
-            'correlativo.string' => 'El correlativo debe ser un texto',
-            'correlativo.max' => 'El correlativo no puede exceder 10 caracteres',
             'fechaEmision.required' => 'La fecha de emisión es obligatoria',
             'fechaEmision.date' => 'La fecha de emisión debe ser una fecha válida',
             'fechaVencimiento.required' => 'La fecha de vencimiento es obligatoria',
@@ -941,20 +1229,27 @@ class InvoiceCreateIndex extends Component
 
             // Forma de Pago
             'formaPago_tipo.required' => 'Debe seleccionar la forma de pago',
-            'formaPago_tipo.in' => 'La forma de pago seleccionada no es válida',
 
-            // Producto
-            'producto_id.required' => 'Debe seleccionar un producto',
-            'producto_id.exists' => 'El producto seleccionado no existe',
-            'cantidad.required' => 'La cantidad es obligatoria',
-            'cantidad.numeric' => 'La cantidad debe ser un número',
-            'cantidad.min' => 'La cantidad debe ser mayor a 0',
-            'precio_unitario.required' => 'El precio unitario es obligatorio',
-            'precio_unitario.numeric' => 'El precio unitario debe ser un número',
-            'precio_unitario.min' => 'El precio unitario debe ser mayor o igual a 0',
-            'unidad.required' => 'La unidad es obligatoria',
-            'unidad.string' => 'La unidad debe ser un texto',
-            'unidad.max' => 'La unidad no puede exceder 10 caracteres',
+            // Productos
+            'productos.required' => 'Debe agregar al menos un producto a la factura',
+            'productos.array' => 'Los productos deben estar en formato de lista',
+            'productos.min' => 'Debe agregar al menos un producto a la factura',
+            'productos.*.producto_id.required' => 'Debe seleccionar un producto',
+            'productos.*.producto_id.exists' => 'El producto seleccionado no existe',
+            'productos.*.cantidad.required' => 'La cantidad es obligatoria',
+            'productos.*.cantidad.numeric' => 'La cantidad debe ser un número',
+            'productos.*.cantidad.min' => 'La cantidad debe ser mayor a 0',
+            'productos.*.cantidad.max' => 'La cantidad no puede exceder 999,999.99',
+            'productos.*.precio_unitario.required' => 'El precio unitario es obligatorio',
+            'productos.*.precio_unitario.numeric' => 'El precio unitario debe ser un número',
+            'productos.*.precio_unitario.min' => 'El precio unitario debe ser mayor o igual a 0',
+            'productos.*.precio_unitario.max' => 'El precio unitario no puede exceder 999,999.99',
+            'productos.*.unidad.required' => 'La unidad es obligatoria',
+            'productos.*.unidad.string' => 'La unidad debe ser un texto',
+            'productos.*.unidad.max' => 'La unidad no puede exceder 10 caracteres',
+            'productos.*.descripcion.required' => 'La descripción del producto es obligatoria',
+            'productos.*.descripcion.string' => 'La descripción debe ser un texto',
+            'productos.*.descripcion.max' => 'La descripción no puede exceder 500 caracteres',
 
             // Mensajes adicionales para validaciones específicas
             'observacion.max' => 'Las observaciones no pueden exceder 500 caracteres',
@@ -968,23 +1263,27 @@ class InvoiceCreateIndex extends Component
             return;
         }
 
-        if (empty($this->productos)) {
-            $this->addError('productos', 'Debe agregar al menos un producto a la factura');
-            return;
-        }
-
         try {
             DB::beginTransaction();
 
+            // Generar serie y correlativo automáticamente
+            $serieYCorrelativo = $this->generarSerieYCorrelativo($this->tipoDoc, $this->sucursal_id);
+
+            if (!$serieYCorrelativo['serie'] || !$serieYCorrelativo['correlativo']) {
+                $this->addError('general', 'No se pudo generar la serie y correlativo. Verifique la sucursal seleccionada.');
+                return;
+            }
+
             // Crear la factura
             $invoice = Invoice::create([
+                'user_id' => Auth::user()->id,
                 'company_id' => $this->company_id,
                 'sucursal_id' => $this->sucursal_id,
                 'client_id' => $this->client_id,
                 'tipoDoc' => $this->tipoDoc,
                 'tipoOperacion' => $this->tipoOperacion,
-                'serie' => $this->serie,
-                'correlativo' => $this->correlativo,
+                'serie' => $serieYCorrelativo['serie'],
+                'correlativo' => $serieYCorrelativo['correlativo'],
                 'fechaEmision' => $this->fechaEmision,
                 'fechaVencimiento' => $this->fechaVencimiento,
                 'formaPago_moneda' => $this->formaPago_moneda,
@@ -1006,9 +1305,15 @@ class InvoiceCreateIndex extends Component
                 'ctaBanco' => $this->ctaBanco,
                 'setPercent' => $this->setPercent,
                 'setMount' => $this->setMount,
-                'perception_mtoBase' => $this->perception_mtoBase,
-                'perception_mto' => $this->perception_mto,
-                'perception_mtoTotal' => $this->perception_mtoTotal,
+                'codReg' => $this->codReg,
+                'porcentajePer' => $this->porcentajePer,
+                'mtoBasePer' => $this->mtoBasePer,
+                'mtoPer' => $this->mtoPer,
+                'mtoTotalPer' => $this->mtoTotalPer,
+                'codRegRet' => $this->codRegRet,
+                'mtoBaseRet' => $this->mtoBaseRet,
+                'factorRet' => $this->factorRet,
+                'mtoRet' => $this->mtoRet,
                 'tipoVenta' => $this->tipoVenta,
                 'cuotas' => $this->tipoVenta === 'credito' ? $this->cuotas : null,
                 'descuentos_mto' => $this->descuentos_mto,
@@ -1061,46 +1366,41 @@ class InvoiceCreateIndex extends Component
 
     public function numeroALetras($numero)
     {
-        // Función simple para convertir números a letras
-        $unidades = ['', 'UNO', 'DOS', 'TRES', 'CUATRO', 'CINCO', 'SEIS', 'SIETE', 'OCHO', 'NUEVE'];
-        $decenas = ['', 'DIEZ', 'VEINTE', 'TREINTA', 'CUARENTA', 'CINCUENTA', 'SESENTA', 'SETENTA', 'OCHENTA', 'NOVENTA'];
+        $formatter = new NumeroALetras();
+        return $formatter->toMoney($numero, 2, 'SOLES', 'CENTIMOS');
+    }
 
-        $entero = (int) $numero;
-        $decimal = round(($numero - $entero) * 100);
+    // Métodos para el modal de selección de productos del catálogo
+    public function abrirModalEscogerProducto()
+    {
+        $this->escojeProducto = true;
+    }
 
-        if ($entero == 0) {
-            return 'CERO SOLES';
+    public function cerrarModalEscogerProducto()
+    {
+        $this->escojeProducto = false;
+    }
+
+    public function seleccionarProductoDelCatalogo($productoId)
+    {
+        $producto = ProductoCatalogo::find($productoId);
+        if ($producto) {
+            $this->producto_seleccionado = $producto;
+            $this->producto_id = $producto->id;
+            $this->precio_unitario = $producto->price_venta;
+            $this->unidad = $producto->unidadMedida->codigo ?? 'NIU';
+            $this->descripcion_producto = $producto->description;
+            $this->cerrarModalEscogerProducto();
         }
+    }
 
-        $texto = '';
-        if ($entero >= 1000) {
-            $texto .= 'MIL ';
-            $entero -= 1000;
-        }
-
-        if ($entero >= 100) {
-            $centenas = (int) ($entero / 100);
-            $texto .= $unidades[$centenas] . 'CIENTOS ';
-            $entero %= 100;
-        }
-
-        if ($entero >= 10) {
-            $decena = (int) ($entero / 10);
-            $texto .= $decenas[$decena] . ' ';
-            $entero %= 10;
-        }
-
-        if ($entero > 0) {
-            $texto .= $unidades[$entero] . ' ';
-        }
-
-        $texto .= 'SOLES';
-
-        if ($decimal > 0) {
-            $texto .= ' CON ' . $decimal . '/100';
-        }
-
-        return trim($texto);
+    public function limpiarProductoSeleccionado()
+    {
+        $this->producto_seleccionado = null;
+        $this->producto_id = null;
+        $this->precio_unitario = null;
+        $this->unidad = null;
+        $this->descripcion_producto = null;
     }
 
     public function render()

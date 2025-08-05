@@ -2,10 +2,13 @@
 
 namespace App\Models\Configuration;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class SunatTipoOperacion extends Model
 {
+    use HasFactory;
+
     protected $table = 'sunat_51';
     protected $primaryKey = 'codigo';
     public $incrementing = false;
@@ -25,7 +28,7 @@ class SunatTipoOperacion extends Model
     public static function getByTipoComprobante($tipoDoc)
     {
         $tiposComprobante = [];
-        
+
         switch ($tipoDoc) {
             case '01': // Factura
                 $tiposComprobante = ['Factura', 'Factura, Boletas'];
@@ -49,4 +52,4 @@ class SunatTipoOperacion extends Model
     {
         return $this->codigo . ' - ' . $this->descripcion;
     }
-} 
+}
