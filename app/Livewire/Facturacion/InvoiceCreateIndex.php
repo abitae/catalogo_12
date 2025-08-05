@@ -1357,7 +1357,7 @@ class InvoiceCreateIndex extends Component
             DB::commit();
 
             session()->flash('message', 'Factura creada exitosamente');
-            return redirect()->route('facturacion.invoices.index');
+            return redirect()->route('facturacion.facturas.create');
         } catch (\Exception $e) {
             DB::rollback();
             $this->addError('general', 'Error al crear la factura. Por favor, verifique los datos e intente nuevamente. Detalle: ' . $e->getMessage());
