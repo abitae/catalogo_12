@@ -615,46 +615,78 @@ class ProductoCatalogoIndex extends Component
             ]);
 
             // Mostrar toast de inicio
-            $this->info('Iniciando importación de productos...');
+            $this->info('Iniciando importación optimizada de productos...');
 
-            // Procesar la importación
-            $import = new ProductCatalogoImport;
+            // Configurar opciones de importación
+            $updateExisting = false; // Cambiar a true si se desea actualizar productos existentes
+            $skipDuplicates = true;  // Cambiar a false si se desean procesar duplicados
+
+            // Procesar la importación con configuración optimizada
+            $import = new ProductCatalogoImport($updateExisting, $skipDuplicates);
+
+            // Usar chunk reading para archivos grandes
             Excel::import($import, $this->archivoExcel);
 
-            // Obtener estadísticas de la importación
+            // Obtener estadísticas detalladas de la importación
             $stats = $import->getImportStats();
             $importados = $stats['imported'];
+            $actualizados = $stats['updated'] ?? 0;
             $omitidos = $stats['skipped'];
             $errores = $stats['errors'];
+            $tasaExito = $stats['success_rate'] ?? 0;
 
             // Guardar resultados para mostrar en el modal
             $this->importacionStats = $stats;
             $this->importacionErrores = $errores;
             $this->mostrarResultados = true;
 
-            // Mostrar resultado
+            // Log detallado de la importación
+            Log::info('Importación de productos completada', [
+                'user_id' => Auth::id(),
+                'user_name' => Auth::user()->name ?? 'N/A',
+                'archivo' => $this->archivoExcel ? $this->archivoExcel->getClientOriginalName() : 'N/A',
+                'tamaño_archivo' => $this->archivoExcel ? $this->archivoExcel->getSize() : 0,
+                'stats' => $stats,
+                'configuracion' => [
+                    'update_existing' => $updateExisting,
+                    'skip_duplicates' => $skipDuplicates
+                ]
+            ]);
+
+            // Mostrar resultado según el tipo de resultado
             if ($importados > 0 && empty($errores)) {
                 $this->importacionResultado = 'success';
-                $this->success("Importación completada exitosamente. Se importaron {$importados} productos.");
+                $mensaje = "✅ Importación completada exitosamente.\n";
+                $mensaje .= "📦 Productos importados: {$importados}\n";
+                if ($actualizados > 0) {
+                    $mensaje .= "🔄 Productos actualizados: {$actualizados}\n";
+                }
+                $mensaje .= "📊 Tasa de éxito: {$tasaExito}%";
+                $this->success($mensaje);
             } elseif ($importados > 0 && !empty($errores)) {
                 $this->importacionResultado = 'warning';
-                $mensaje = "Importación completada con advertencias. Se importaron {$importados} productos.";
-                if ($omitidos > 0) {
-                    $mensaje .= " Se omitieron {$omitidos} filas.";
+                $mensaje = "⚠️ Importación completada con advertencias.\n";
+                $mensaje .= "📦 Productos importados: {$importados}\n";
+                if ($actualizados > 0) {
+                    $mensaje .= "🔄 Productos actualizados: {$actualizados}\n";
                 }
+                $mensaje .= "❌ Filas omitidas: {$omitidos}\n";
+                $mensaje .= "📊 Tasa de éxito: {$tasaExito}%";
                 $this->warning($mensaje);
 
-                // Log de errores para debugging
+                // Log de advertencias para debugging
                 Log::warning('Advertencias en importación de productos', [
                     'user_id' => Auth::id(),
                     'importados' => $importados,
+                    'actualizados' => $actualizados,
                     'omitidos' => $omitidos,
                     'errores' => $errores,
+                    'tasa_exito' => $tasaExito,
                     'archivo' => $this->archivoExcel ? $this->archivoExcel->getClientOriginalName() : 'N/A'
                 ]);
             } else {
                 $this->importacionResultado = 'error';
-                $this->error("No se importó ningún producto. Verifique el formato del archivo.");
+                $this->error("❌ No se importó ningún producto. Verifique el formato del archivo y los datos.");
 
                 Log::error('Fallo en importación de productos', [
                     'user_id' => Auth::id(),
@@ -662,21 +694,23 @@ class ProductoCatalogoIndex extends Component
                     'archivo' => $this->archivoExcel ? $this->archivoExcel->getClientOriginalName() : 'N/A'
                 ]);
             }
+
         } catch (\Illuminate\Validation\ValidationException $e) {
             $this->importacionResultado = 'error';
             $this->importacionErrores = [$e->getMessage()];
             $this->mostrarResultados = true;
-            $this->error('Error de validación: ' . $e->getMessage());
+            $this->error('❌ Error de validación: ' . $e->getMessage());
             throw $e;
         } catch (\Exception $e) {
             $this->importacionResultado = 'error';
             $this->importacionErrores = [$e->getMessage()];
             $this->mostrarResultados = true;
-            $this->error('Error durante la importación: ' . $e->getMessage());
+            $this->error('❌ Error durante la importación: ' . $e->getMessage());
             Log::error('Error en importación de productos', [
                 'user_id' => Auth::id(),
                 'error' => $e->getMessage(),
-                'archivo' => $this->archivoExcel ? $this->archivoExcel->getClientOriginalName() : 'N/A'
+                'archivo' => $this->archivoExcel ? $this->archivoExcel->getClientOriginalName() : 'N/A',
+                'trace' => $e->getTraceAsString()
             ]);
         }
     }
