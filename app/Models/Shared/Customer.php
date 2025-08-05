@@ -2,6 +2,7 @@
 
 namespace App\Models\Shared;
 
+use App\Models\Catalogo\CotizacionCatalogo;
 use App\Models\Crm\ContactCrm;
 use App\Models\Crm\OpportunityCrm;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -38,5 +39,9 @@ class Customer extends Model
     public function tipoCustomer()
     {
         return $this->belongsTo(TipoCustomer::class, 'tipo_customer_id');
+    }
+    public function cotizaciones()
+    {
+        return $this->hasMany(CotizacionCatalogo::class);
     }
 }

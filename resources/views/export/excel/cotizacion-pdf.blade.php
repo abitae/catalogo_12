@@ -86,22 +86,16 @@
     </div>
 
     <div class="section-title">Datos del Cliente</div>
-    <table class="info-table">
+    <table class="info-table" style="background: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px #eee;">
         <tr>
-            <td><b>Cliente:</b></td>
-            <td>{{ $cotizacion->customer->rznSocial ?? $cotizacion->cliente_nombre }}</td>
-            <td><b>Contacto:</b></td>
-            <td>{{ $cotizacion->cliente_nombre }}</td>
+            <td style="width: 18%;"><b>Razón Social:</b></td>
+            <td style="width: 32%;">{{ $cotizacion->customer->rznSocial ?? $cotizacion->cliente_nombre }}</td>
+            <td style="width: 18%;"><b>RUC:</b></td>
+            <td style="width: 32%;">{{ $cotizacion->customer->numDoc ?? '-' }}</td>
         </tr>
         <tr>
-            <td><b>Email:</b></td>
-            <td>{{ $cotizacion->cliente_email }}</td>
-            <td><b>Teléfono:</b></td>
-            <td>{{ $cotizacion->cliente_telefono }}</td>
-        </tr>
-        <tr>
-            <td><b>Vendedor:</b></td>
-            <td>{{ $cotizacion->user->name ?? '' }}</td>
+            <td><b>Dirección:</b></td>
+            <td>{{ $cotizacion->customer->direccion ?? '-' }}</td>
             <td><b>Validez:</b></td>
             <td>{{ $cotizacion->validez_dias }} días</td>
         </tr>
