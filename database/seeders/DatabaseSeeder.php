@@ -20,7 +20,7 @@ class DatabaseSeeder extends Seeder
         // Agregar el seeder de usuario administrador
         $this->call(UserSeeder::class);
 
-        // Agregar el seeder de clientes
+       /*  // Agregar el seeder de clientes
         $this->call(CustomerSeeder::class);
 
         // Agregar el seeder de catálogo
@@ -59,6 +59,6 @@ class DatabaseSeeder extends Seeder
         // Agregar el seeder de guías de remisión
         $this->call(DespatchSeeder::class);
         // Agregar el seeder de detalles de guías de remisión
-        $this->call(DespatchDetailSeeder::class);
+        $this->call(DespatchDetailSeeder::class); */
     }
 }
