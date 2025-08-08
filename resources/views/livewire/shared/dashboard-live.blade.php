@@ -344,7 +344,7 @@
                         </div>
                         <div class="text-right">
                             <p class="text-sm font-semibold text-blue-700 dark:text-blue-300">{{ $movimiento->cantidad }}</p>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $movimiento->fecha_movimiento->format('d/m/Y') }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $movimiento->fecha_movimiento }}</p>
                         </div>
                     </div>
                 @empty
