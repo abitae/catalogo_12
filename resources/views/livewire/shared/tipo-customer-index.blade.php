@@ -110,7 +110,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">
-                                {{ $tipo->created_at->format('d/m/Y H:i') }}
+                                {{ $tipo->created_at }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center gap-2">
