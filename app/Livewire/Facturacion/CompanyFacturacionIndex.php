@@ -62,9 +62,9 @@ class CompanyFacturacionIndex extends Component
             'departamento' => 'required|string|max:100',
             'provincia' => 'required|string|max:100',
             'distrito' => 'required|string|max:100',
-            'urbanizacion' => 'nullable|string|max:100',
-            'codLocal' => 'nullable|string|max:20',
-            'ubigueo' => 'nullable|string|max:20',
+            'urbanizacion' => 'required|string|max:100',
+            'codLocal' => 'required|string|max:20',
+            'ubigueo' => 'required|string|max:20',
             'codigoPais' => 'required|string|max:10',
             // Otros campos
             'ctaBanco' => 'nullable|string|max:50',

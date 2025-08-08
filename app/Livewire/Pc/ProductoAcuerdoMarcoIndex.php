@@ -18,6 +18,7 @@ class ProductoAcuerdoMarcoIndex extends Component
 
     // Propiedades para búsqueda y filtros
     public $search = '';
+    public $search_marca = '';
     public $sortField = 'cod_acuerdo_marco';
     public $sortDirection = 'asc';
     public $perPage = 10;
@@ -25,6 +26,10 @@ class ProductoAcuerdoMarcoIndex extends Component
 
     // Filtros específicos
     public $cod_acuerdo_marco_filter = '';
+
+    // Filtros de fecha de publicación
+    public $fecha_publicacion_inicio = '';
+    public $fecha_publicacion_fin = '';
 
     // Estados de modales
     public $modal_detalle_producto = false;
@@ -39,6 +44,8 @@ class ProductoAcuerdoMarcoIndex extends Component
 
     public function mount()
     {
+        $this->fecha_publicacion_inicio = \Carbon\Carbon::now()->subDays(15)->toDateString();
+        $this->fecha_publicacion_fin = \Carbon\Carbon::now()->toDateString();
         // Obtener códigos únicos de acuerdo marco para el filtro
         $this->codigos_acuerdo_marco = ProductoAcuerdoMarco::select('cod_acuerdo_marco')
             ->distinct()
@@ -61,7 +68,15 @@ class ProductoAcuerdoMarcoIndex extends Component
         $this->resetPage();
     }
 
+    public function updatedFechaPublicacionInicio()
+    {
+        $this->resetPage();
+    }
 
+    public function updatedFechaPublicacionFin()
+    {
+        $this->resetPage();
+    }
 
     public function updatedPerPage()
     {
@@ -116,7 +131,9 @@ class ProductoAcuerdoMarcoIndex extends Component
     {
         $this->reset([
             'search',
-            'cod_acuerdo_marco_filter'
+            'cod_acuerdo_marco_filter',
+            'fecha_publicacion_inicio',
+            'fecha_publicacion_fin'
         ]);
         $this->resetPage();
         $this->info('Filtros limpiados correctamente');
@@ -148,20 +165,28 @@ class ProductoAcuerdoMarcoIndex extends Component
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('cod_acuerdo_marco', 'like', '%' . $this->search . '%')
-                      ->orWhere('orden_electronica', 'like', '%' . $this->search . '%')
-                      ->orWhere('ruc_proveedor', 'like', '%' . $this->search . '%')
-                      ->orWhere('razon_proveedor', 'like', '%' . $this->search . '%')
-                      ->orWhere('ruc_entidad', 'like', '%' . $this->search . '%')
-                      ->orWhere('razon_entidad', 'like', '%' . $this->search . '%')
-                      ->orWhere('descripcion_ficha_producto', 'like', '%' . $this->search . '%')
-                      ->orWhere('marca_ficha_producto', 'like', '%' . $this->search . '%')
-                      ->orWhere('numero_parte', 'like', '%' . $this->search . '%');
+                        ->orWhere('orden_electronica', 'like', '%' . $this->search . '%')
+                        ->orWhere('ruc_proveedor', 'like', '%' . $this->search . '%')
+                        ->orWhere('razon_proveedor', 'like', '%' . $this->search . '%')
+                        ->orWhere('ruc_entidad', 'like', '%' . $this->search . '%')
+                        ->orWhere('razon_entidad', 'like', '%' . $this->search . '%')
+                        ->orWhere('descripcion_ficha_producto', 'like', '%' . $this->search . '%')
+                        ->orWhere('numero_parte', 'like', '%' . $this->search . '%');
                 });
+            })
+            ->when($this->search_marca, function ($query) {
+                $query->where('marca_ficha_producto', 'like', '%' . $this->search_marca . '%');
             })
             ->when($this->cod_acuerdo_marco_filter, function ($query) {
                 $query->where('cod_acuerdo_marco', $this->cod_acuerdo_marco_filter);
             })
-
+            ->when($this->fecha_publicacion_inicio, function ($query) {
+                $query->where('fecha_publicacion', '>=', $this->fecha_publicacion_inicio);
+            })
+            ->when($this->fecha_publicacion_fin, function ($query) {
+                $query->where('fecha_publicacion', '<=', $this->fecha_publicacion_fin);
+            })
+            ->orderBy('fecha_publicacion', 'desc')
             ->orderBy($this->sortField, $this->sortDirection);
     }
 
