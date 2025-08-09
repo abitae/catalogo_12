@@ -15,8 +15,6 @@ use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Validators\Failure;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Collection;
 
 class ProductCatalogoImport implements
     ToModel,
@@ -74,12 +72,13 @@ class ProductCatalogoImport implements
     }
 
     /**
-    * @param array $row
-    *
-    * @return \Illuminate\Database\Eloquent\Model|null
-    */
+     * @param array $row
+     *
+     * @return \Illuminate\Database\Eloquent\Model|null
+     */
     public function model(array $row)
     {
+        
         $this->rowCount++;
         $this->excelRowNumber = $this->rowCount + 1; // +1 porque WithHeadingRow cuenta la primera fila como encabezados
 
@@ -87,7 +86,7 @@ class ProductCatalogoImport implements
         if ($this->hasErrors) {
             return null;
         }
-
+        
         try {
             // Validar campos requeridos
             if (!$this->validateRequiredFields($row)) {
@@ -112,7 +111,7 @@ class ProductCatalogoImport implements
             }
 
             $this->importedCount++;
-
+            
             return new ProductoCatalogo([
                 'brand_id' => $relations['brand_id'],
                 'category_id' => $relations['category_id'],
@@ -128,7 +127,6 @@ class ProductCatalogoImport implements
                 'garantia' => $normalizedData['garantia'],
                 'observaciones' => $normalizedData['observaciones'],
             ]);
-
         } catch (\Exception $e) {
             $this->hasErrors = true; // Marcar que hay errores
             $this->logError($e, $row);
@@ -141,6 +139,7 @@ class ProductCatalogoImport implements
      */
     private function validateRequiredFields(array $row): bool
     {
+        
         $requiredFields = [
             'brand' => 'marca',
             'category' => 'categoría',
@@ -163,6 +162,7 @@ class ProductCatalogoImport implements
      */
     private function normalizeRowData(array $row): array
     {
+        
         return [
             'brand' => $this->normalizeString($row['brand']),
             'category' => $this->normalizeString($row['category']),
@@ -293,6 +293,7 @@ class ProductCatalogoImport implements
      */
     private function parseCode($value): string
     {
+        
         if (empty($value)) return '';
 
         $code = trim((string) $value);
@@ -310,6 +311,7 @@ class ProductCatalogoImport implements
      */
     private function parsePrice($value): float
     {
+        
         if (empty($value)) return 0.0;
 
         // Convertir a string y limpiar
@@ -428,13 +430,14 @@ class ProductCatalogoImport implements
      */
     public function rules(): array
     {
+        
         return [
             'brand' => 'required|string|max:255',
             'category' => 'required|string|max:255',
             'line' => 'required|string|max:255',
-            'code' => 'required|string|max:255',
-            'code_fabrica' => 'nullable|string|max:255',
-            'code_peru' => 'nullable|string|max:255',
+            'code' => 'required|max:255',
+            'code_fabrica' => 'nullable|max:255',
+            'code_peru' => 'nullable|max:255',
             'price_compra' => 'nullable|numeric|min:0|max:999999999.99',
             'price_venta' => 'nullable|numeric|min:0|max:999999999.99',
             'stock' => 'nullable|integer|min:0|max:2147483647',
@@ -535,10 +538,20 @@ class ProductCatalogoImport implements
     }
 
     // Métodos getter para compatibilidad
-    public function getRowCount(): int { return $this->rowCount; }
-    public function getImportedCount(): int { return $this->importedCount; }
-    public function getSkippedCount(): int { return $this->skippedCount; }
-    public function getErrors(): array { return $this->errors; }
-
-
+    public function getRowCount(): int
+    {
+        return $this->rowCount;
+    }
+    public function getImportedCount(): int
+    {
+        return $this->importedCount;
+    }
+    public function getSkippedCount(): int
+    {
+        return $this->skippedCount;
+    }
+    public function getErrors(): array
+    {
+        return $this->errors;
+    }
 }

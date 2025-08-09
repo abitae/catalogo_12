@@ -20,12 +20,12 @@ class DatabaseSeeder extends Seeder
         // Agregar el seeder de usuario administrador
         $this->call(UserSeeder::class);
 
-       /*  // Agregar el seeder de clientes
+       // Agregar el seeder de clientes
         $this->call(CustomerSeeder::class);
 
         // Agregar el seeder de catálogo
         $this->call(CatalogoSeeder::class);
-
+        /* 
         // Agregar el seeder de almacén
         $this->call(AlmacenSeeder::class);
 

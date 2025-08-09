@@ -605,6 +605,7 @@ class ProductoCatalogoIndex extends Component
     }
     public function procesarImportacion()
     {
+        
         // Inicializar estadísticas por defecto
         $this->importacionStats = [
             'total_rows' => 0,
@@ -618,6 +619,7 @@ class ProductoCatalogoIndex extends Component
         $this->importacionErrores = [];
 
         try {
+            
             $this->validate([
                 'archivoExcel' => 'required|file|mimes:xlsx,xls|max:10240',
             ], [
@@ -636,10 +638,10 @@ class ProductoCatalogoIndex extends Component
 
             // Procesar la importación con configuración optimizada
             $import = new ProductCatalogoImport($updateExisting, $skipDuplicates);
-
+            
             // Usar chunk reading para archivos grandes
             Excel::import($import, $this->archivoExcel);
-
+            
             // Obtener estadísticas detalladas de la importación
             $stats = $import->getImportStats();
             $importados = $stats['imported'];
