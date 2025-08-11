@@ -618,14 +618,14 @@
     </flux:modal>
 
     <!-- Modal Confirmar Eliminación -->
-    <flux:modal wire:model="modal_form_eliminar_producto" variant="flyout" class="w-2/3 max-w-4xl">
+    <flux:modal wire:model="modal_form_eliminar_producto"  class="w-2/3 max-w-4xl">
         <div class="space-y-6">
             <div>
                 <flux:heading size="lg">Confirmar Eliminación</flux:heading>
                 <flux:text class="mt-2">¿Estás seguro de querer eliminar este producto?</flux:text>
             </div>
             <div>
-                <flux:button wire:click="eliminarProducto" variant="danger" icon="trash">Eliminar</flux:button>
+                <flux:button wire:click="confirmarEliminarProducto" variant="danger" icon="trash">Eliminar</flux:button>
                 <flux:button wire:click="$set('modal_form_eliminar_producto', false)" variant="outline"
                     icon="x-circle">Cancelar</flux:button>
             </div>

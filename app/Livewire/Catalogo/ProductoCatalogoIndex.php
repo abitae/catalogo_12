@@ -294,10 +294,8 @@ class ProductoCatalogoIndex extends Component
             if ($this->producto->archivo2 && Storage::disk('public')->exists($this->producto->archivo2)) {
                 Storage::disk('public')->delete($this->producto->archivo2);
             }
-            // Eliminar características
-            $this->producto->isActive = false;
-            $this->producto->save();
-            //$this->producto->delete();
+
+            $this->producto->delete();
 
             $this->modal_form_eliminar_producto = false;
             $this->reset(['producto_id', 'producto']);
