@@ -294,8 +294,10 @@ class ProductoCatalogoIndex extends Component
             if ($this->producto->archivo2 && Storage::disk('public')->exists($this->producto->archivo2)) {
                 Storage::disk('public')->delete($this->producto->archivo2);
             }
-
-            $this->producto->delete();
+            // Eliminar características
+            $this->producto->isActive = false;
+            $this->producto->save();
+            //$this->producto->delete();
 
             $this->modal_form_eliminar_producto = false;
             $this->reset(['producto_id', 'producto']);
@@ -605,7 +607,7 @@ class ProductoCatalogoIndex extends Component
     }
     public function procesarImportacion()
     {
-        
+
         // Inicializar estadísticas por defecto
         $this->importacionStats = [
             'total_rows' => 0,
@@ -619,7 +621,7 @@ class ProductoCatalogoIndex extends Component
         $this->importacionErrores = [];
 
         try {
-            
+
             $this->validate([
                 'archivoExcel' => 'required|file|mimes:xlsx,xls|max:10240',
             ], [
@@ -638,10 +640,10 @@ class ProductoCatalogoIndex extends Component
 
             // Procesar la importación con configuración optimizada
             $import = new ProductCatalogoImport($updateExisting, $skipDuplicates);
-            
+
             // Usar chunk reading para archivos grandes
             Excel::import($import, $this->archivoExcel);
-            
+
             // Obtener estadísticas detalladas de la importación
             $stats = $import->getImportStats();
             $importados = $stats['imported'];
