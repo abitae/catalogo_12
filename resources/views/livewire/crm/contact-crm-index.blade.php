@@ -263,7 +263,7 @@
                         <flux:select wire:model="customer_id" id="customer_id" class="w-full mt-1">
                             <option value="">Seleccione un cliente</option>
                             @foreach($customers as $customer)
-                                <option value="{{ $customer->id }}">{{ $customer->nombre }}</option>
+                                <option value="{{ $customer->id }}">{{ $customer->rznSocial }}</option>
                             @endforeach
                         </flux:select>
                         @error('customer_id') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror

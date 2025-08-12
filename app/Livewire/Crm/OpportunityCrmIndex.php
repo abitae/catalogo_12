@@ -707,7 +707,7 @@ class OpportunityCrmIndex extends Component
                 if ($this->activity_id && $this->activity && $this->activity->image) {
                     Storage::disk('public')->delete($this->activity->image);
                 }
-                $imagePath = $this->tempImageActivity->store('activities/images', 'public');
+                $imagePath = $this->tempImageActivity->store('action/image', 'public');
                 $data['image'] = $imagePath;
             }
 
@@ -716,7 +716,7 @@ class OpportunityCrmIndex extends Component
                 if ($this->activity_id && $this->activity && $this->activity->archivo) {
                     Storage::disk('public')->delete($this->activity->archivo);
                 }
-                $archivoPath = $this->tempArchivoActivity->store('activities/archivos', 'public');
+                $archivoPath = $this->tempArchivoActivity->store('action/pdf', 'public');
                 $data['archivo'] = $archivoPath;
             }
 
