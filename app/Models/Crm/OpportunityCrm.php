@@ -16,6 +16,7 @@ class OpportunityCrm extends Model
 
     protected $fillable = [
         'nombre',
+        'codigo_oportunidad',
         'estado',
         'valor',
         'etapa',

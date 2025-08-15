@@ -103,6 +103,9 @@
             <table class="w-full">
                 <thead class="bg-zinc-50 dark:bg-zinc-700/50">
                     <tr>
+                        <th class="px-3 py-2 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                            Código
+                        </th>
                         <th class="px-3 py-2 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors"
                             wire:click="sortBy('nombre')">
                             <div class="flex items-center space-x-1">
@@ -112,6 +115,7 @@
                                     class="w-3 h-3" />
                             </div>
                         </th>
+                        
                         <th
                             class="px-3 py-2 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Cliente
@@ -147,6 +151,15 @@
                 <tbody class="bg-white dark:bg-zinc-800 divide-y divide-zinc-200 dark:divide-zinc-700">
                     @forelse ($opportunities as $opportunity)
                         <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors">
+                            <td class="px-3 py-2 whitespace-nowrap text-sm text-zinc-900 dark:text-white">
+                                @if ($opportunity->codigo_oportunidad)
+                                    <span class="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                                        {{ $opportunity->codigo_oportunidad }}
+                                    </span>
+                                @else
+                                    <span class="text-zinc-400 text-xs">Sin código</span>
+                                @endif
+                            </td>
                             <td class="px-3 py-2 whitespace-nowrap">
                                 <div>
                                     <div class="text-sm font-medium text-zinc-900 dark:text-white">
@@ -157,6 +170,7 @@
                                     @endif
                                 </div>
                             </td>
+                            
                             <td class="px-3 py-2 whitespace-nowrap text-sm text-zinc-900 dark:text-white">
                                 @if ($opportunity->cliente)
                                     <div class="text-sm font-medium truncate max-w-32">{{ $opportunity->cliente->rznSocial }}</div>
@@ -206,7 +220,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="9" class="px-6 py-12 text-center text-zinc-500 dark:text-zinc-400">
+                            <td colspan="10" class="px-6 py-12 text-center text-zinc-500 dark:text-zinc-400">
                                 <div class="flex flex-col items-center">
                                     <div
                                         class="w-12 h-12 mb-4 bg-zinc-100 dark:bg-zinc-700 rounded-full flex items-center justify-center">
@@ -264,6 +278,14 @@
                                 <flux:input wire:model="nombre" type="text"
                                     placeholder="Ej: Implementación CRM Enterprise" size="sm" />
                                 @error('nombre')
+                                    <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div>
+                                <flux:label class="text-xs font-medium">Código de Oportunidad</flux:label>
+                                <flux:input wire:model="codigo_oportunidad" type="text"
+                                    placeholder="Ej: OPP-2024-001" size="sm" />
+                                @error('codigo_oportunidad')
                                     <span class="text-red-500 text-xs mt-1">{{ $message }}</span>
                                 @enderror
                             </div>

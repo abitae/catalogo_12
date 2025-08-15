@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::create('opportunities_crm', function (Blueprint $table) {
             $table->id();
+            $table->string('codigo_oportunidad')->nullable();
             $table->string('nombre');
             $table->string('estado')->default('nueva');
             $table->decimal('valor', 10, 2);
