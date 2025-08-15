@@ -255,10 +255,11 @@ class OpportunityCrmIndex extends Component
             ->when($this->etapa_filter, function ($query) {
                 $query->where('etapa', $this->etapa_filter);
             })
+            ->latest()
             ->orderBy($this->sortField, $this->sortDirection);
 
         return view('livewire.crm.opportunity-crm-index', [
-            'opportunities' => $query->latest()->paginate($this->perPage),
+            'opportunities' => $query->paginate($this->perPage),
             'tipos_negocio' => TipoNegocioCrm::all(),
             'marcas' => MarcaCrm::all(),
             'customers' => Customer::all(),
