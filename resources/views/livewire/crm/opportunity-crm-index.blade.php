@@ -1,13 +1,13 @@
 <div class="p-6 bg-white dark:bg-zinc-900 min-h-screen">
     <!-- Encabezado -->
-    <div class="mb-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl p-4 shadow-sm border border-zinc-200 dark:border-zinc-700">
-        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+    <div class="mb-3 bg-zinc-50 dark:bg-zinc-800 rounded-xl p-3 shadow-sm border border-zinc-200 dark:border-zinc-700">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
             <div>
-                <flux:heading size="md" class="text-zinc-900 dark:text-white">Gestión de Oportunidades</flux:heading>
-                <flux:text class="mt-1 text-sm text-zinc-600 dark:text-zinc-400">Administra las oportunidades de venta del CRM</flux:text>
+                <flux:heading size="sm" class="text-zinc-900 dark:text-white">Gestión de Oportunidades</flux:heading>
+                <flux:text class="mt-1 text-xs text-zinc-600 dark:text-zinc-400">Administra las oportunidades de venta del CRM</flux:text>
             </div>
-            <div class="flex items-center gap-3">
-                <flux:button variant="primary" wire:click="nuevaOpportunity" icon="plus" size="sm">
+            <div class="flex items-center gap-2">
+                <flux:button variant="primary" wire:click="nuevaOpportunity" icon="plus" size="xs">
                     Nueva Oportunidad
                 </flux:button>
             </div>
@@ -15,16 +15,16 @@
     </div>
 
     <!-- Barra de Búsqueda y Filtros -->
-    <div class="mb-4 bg-zinc-50 dark:bg-zinc-800 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700">
-        <div class="p-4">
+    <div class="mb-3 bg-zinc-50 dark:bg-zinc-800 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700">
+        <div class="p-3">
             <!-- Búsqueda -->
-            <div class="mb-4">
+            <div class="mb-3">
                 <flux:input type="search" placeholder="Buscar oportunidades..."
                     wire:model.live="search" icon="magnifying-glass" class="w-full" size="sm" />
             </div>
 
             <!-- Filtros -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2">
                 <div>
                     <flux:label class="text-xs font-medium text-zinc-700 dark:text-zinc-300">Estado</flux:label>
                     <flux:select wire:model.live="estado_filter" class="w-full mt-1" size="sm">
@@ -84,12 +84,12 @@
     <!-- Tabla de Oportunidades -->
     <div
         class="bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-zinc-200 dark:border-zinc-700 overflow-hidden">
-        <div class="px-4 py-3 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-700/50">
+        <div class="px-3 py-2 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-700/50">
             <div class="flex items-center justify-between">
-                <h3 class="text-base font-semibold text-zinc-900 dark:text-white">Oportunidades</h3>
-                <div class="flex items-center gap-3">
+                <h3 class="text-sm font-semibold text-zinc-900 dark:text-white">Oportunidades</h3>
+                <div class="flex items-center gap-2">
                     <span class="text-xs text-zinc-500 dark:text-zinc-400">{{ $opportunities->count() }} oportunidades</span>
-                    <flux:select wire:model.live="perPage" class="w-28 text-xs">
+                    <flux:select wire:model.live="perPage" class="w-24 text-xs">
                         <option value="10">10</option>
                         <option value="25">25</option>
                         <option value="50">50</option>
@@ -103,10 +103,10 @@
             <table class="w-full">
                 <thead class="bg-zinc-50 dark:bg-zinc-700/50">
                     <tr>
-                        <th class="px-3 py-2 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-2 py-1.5 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Código
                         </th>
-                        <th class="px-3 py-2 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors"
+                        <th class="px-2 py-1.5 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors"
                             wire:click="sortBy('nombre')">
                             <div class="flex items-center space-x-1">
                                 <span>Oportunidad</span>
@@ -116,24 +116,20 @@
                             </div>
                         </th>
                         
-                        <th
-                            class="px-3 py-2 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-2 py-1.5 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Cliente
                         </th>
-                        <th
-                            class="px-3 py-2 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-2 py-1.5 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Encargado
                         </th>
-                        <th
-                            class="px-3 py-2 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-2 py-1.5 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Etapa
                         </th>
-                        <th
-                            class="px-3 py-2 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-2 py-1.5 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Valor
                         </th>
                         
-                        <th class="px-3 py-2 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors"
+                        <th class="px-2 py-1.5 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider cursor-pointer hover:text-blue-600 transition-colors"
                             wire:click="sortBy('fecha_cierre_esperada')">
                             <div class="flex items-center space-x-1">
                                 <span>Cierre</span>
@@ -142,8 +138,7 @@
                                     class="w-3 h-3" />
                             </div>
                         </th>
-                        <th
-                            class="px-3 py-2 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
+                        <th class="px-2 py-1.5 text-left text-xs font-semibold text-zinc-600 dark:text-zinc-300 uppercase tracking-wider">
                             Acciones
                         </th>
                     </tr>
@@ -151,69 +146,69 @@
                 <tbody class="bg-white dark:bg-zinc-800 divide-y divide-zinc-200 dark:divide-zinc-700">
                     @forelse ($opportunities as $opportunity)
                         <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors">
-                            <td class="px-3 py-2 whitespace-nowrap text-sm text-zinc-900 dark:text-white">
+                            <td class="px-2 py-1.5 whitespace-nowrap text-sm text-zinc-900 dark:text-white">
                                 @if ($opportunity->codigo_oportunidad)
-                                    <span class="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                                    <span class="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">
                                         {{ $opportunity->codigo_oportunidad }}
                                     </span>
                                 @else
-                                    <span class="text-zinc-400 text-xs">Sin código</span>
+                                    <span class="text-zinc-400 text-xs">-</span>
                                 @endif
                             </td>
-                            <td class="px-3 py-2 whitespace-nowrap">
+                            <td class="px-2 py-1.5 whitespace-nowrap">
                                 <div>
                                     <div class="text-sm font-medium text-zinc-900 dark:text-white">
                                         {{ $opportunity->nombre }}</div>
                                     @if ($opportunity->descripcion)
-                                        <div class="text-xs text-zinc-500 dark:text-zinc-400 truncate max-w-48">
+                                        <div class="text-xs text-zinc-500 dark:text-zinc-400 truncate max-w-40">
                                             {{ $opportunity->descripcion }}</div>
                                     @endif
                                 </div>
                             </td>
                             
-                            <td class="px-3 py-2 whitespace-nowrap text-sm text-zinc-900 dark:text-white">
+                            <td class="px-2 py-1.5 whitespace-nowrap text-sm text-zinc-900 dark:text-white">
                                 @if ($opportunity->cliente)
-                                    <div class="text-sm font-medium truncate max-w-32">{{ $opportunity->cliente->rznSocial }}</div>
-                                    <div class="text-xs text-zinc-500 dark:text-zinc-400 truncate max-w-32">
+                                    <div class="text-sm font-medium truncate max-w-28">{{ $opportunity->cliente->rznSocial }}</div>
+                                    <div class="text-xs text-zinc-500 dark:text-zinc-400 truncate max-w-28">
                                         {{ $opportunity->cliente->nombreComercial }}</div>
                                 @else
-                                    <span class="text-zinc-400 text-xs">Sin cliente</span>
+                                    <span class="text-zinc-400 text-xs">-</span>
                                 @endif
                             </td>
-                            <td class="px-3 py-2 whitespace-nowrap text-sm text-zinc-900 dark:text-white">
+                            <td class="px-2 py-1.5 whitespace-nowrap text-sm text-zinc-900 dark:text-white">
                                 @if ($opportunity->usuario)
-                                    <span class="text-sm font-medium truncate max-w-24">{{ $opportunity->usuario->name }}</span>
+                                    <span class="text-sm font-medium truncate max-w-20">{{ $opportunity->usuario->name }}</span>
                                 @else
-                                    <span class="text-zinc-400 text-xs">Sin encargado</span>
+                                    <span class="text-zinc-400 text-xs">-</span>
                                 @endif
                             </td>
-                            <td class="px-3 py-2 whitespace-nowrap">
+                            <td class="px-2 py-1.5 whitespace-nowrap">
                                 <span
-                                    class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-                                    @if ($opportunity->etapa === 'inicial') bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200
-                                    @elseif($opportunity->etapa === 'negociacion') bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
-                                    @elseif($opportunity->etapa === 'propuesta') bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200
-                                    @else bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 @endif">
+                                    class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium
+                                    @if ($opportunity->etapa === 'aceptada') bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
+                                    @elseif($opportunity->etapa === 'entregada') bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
+                                    @elseif($opportunity->etapa === 'pagada') bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200
+                                    @else bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 @endif">
                                     {{ ucfirst($opportunity->etapa) }}
                                 </span>
                             </td>
-                            <td class="px-3 py-2 whitespace-nowrap text-sm text-zinc-900 dark:text-white">
-                                <span class="font-medium text-sm">S/ {{ number_format($opportunity->valor, 2) }}</span>
+                            <td class="px-2 py-1.5 whitespace-nowrap text-sm text-zinc-900 dark:text-white">
+                                <span class="font-medium text-sm">S/ {{ number_format($opportunity->valor, 0) }}</span>
                             </td>
                             
-                            <td class="px-3 py-2 whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">
-                                {{ $opportunity->fecha_cierre_esperada ? $opportunity->fecha_cierre_esperada->format('d/m/Y') : 'Sin fecha' }}
+                            <td class="px-2 py-1.5 whitespace-nowrap text-sm text-zinc-500 dark:text-zinc-400">
+                                {{ $opportunity->fecha_cierre_esperada ? $opportunity->fecha_cierre_esperada->format('d/m') : '-' }}
                             </td>
-                            <td class="px-3 py-2 whitespace-nowrap text-right text-sm font-medium">
+                            <td class="px-2 py-1.5 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center gap-1">
                                     <flux:button wire:click="verActividades({{ $opportunity->id }})" size="xs"
-                                        color="blue" icon="eye" class="!px-2 !py-1">
+                                        color="blue" icon="eye" class="!px-1.5 !py-0.5">
                                     </flux:button>
                                     <flux:button wire:click="editarOpportunity({{ $opportunity->id }})"
-                                        size="xs" color="blue" icon="pencil" class="!px-2 !py-1">
+                                        size="xs" color="blue" icon="pencil" class="!px-1.5 !py-0.5">
                                     </flux:button>
                                     <flux:button wire:click="eliminarOpportunity({{ $opportunity->id }})"
-                                        size="xs" color="red" icon="trash" class="!px-2 !py-1">
+                                        size="xs" color="red" icon="trash" class="!px-1.5 !py-0.5">
                                     </flux:button>
                                 </div>
                             </td>
@@ -242,7 +237,7 @@
         </div>
 
         <!-- Paginación -->
-        <div class="px-4 py-3 border-t border-zinc-200 dark:border-zinc-700">
+        <div class="px-3 py-2 border-t border-zinc-200 dark:border-zinc-700">
             {{ $opportunities->links() }}
         </div>
     </div>
