@@ -902,6 +902,7 @@ class OpportunityCrmIndex extends Component
 
             if ($this->customer_id_form) {
                 $customer = Customer::find($this->customer_id_form);
+                $data['isActive'] = 1;
                 $customer->update($data);
 
                 // Log de auditoría para actualización de cliente
@@ -918,6 +919,7 @@ class OpportunityCrmIndex extends Component
 
                 $this->success('Cliente actualizado correctamente');
             } else {
+                $data['isActive'] = 1;
                 $customer = Customer::create($data);
 
                 // Log de auditoría para creación de cliente
