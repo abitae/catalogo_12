@@ -43,6 +43,7 @@ class OpportunityCrmIndex extends Component
     public $opportunity_id = '';
     public $opportunity = null;
     public $nombre = '';
+    public $codigo_oportunidad = '';
     public $valor = '';
     public $etapa = '';
     public $probabilidad = '';
@@ -136,6 +137,7 @@ class OpportunityCrmIndex extends Component
     {
         return [
             'nombre' => 'required|string|max:255',
+            'codigo_oportunidad' => 'nullable|string|max:100',
             'valor' => 'required|numeric|min:0',
             'etapa' => 'required|string|in:aceptada,entregada,pagada',
             'customer_id' => 'required|exists:customers,id',
@@ -157,6 +159,8 @@ class OpportunityCrmIndex extends Component
     {
         return [
             'nombre.required' => 'El nombre es requerido',
+            'codigo_oportunidad.max' => 'El código de oportunidad no debe exceder 100 caracteres',
+            'codigo_oportunidad.unique' => 'Este código de oportunidad ya está en uso',
             'valor.required' => 'El valor es requerido',
             'valor.numeric' => 'El valor debe ser numérico',
             'valor.min' => 'El valor debe ser mayor a 0',
@@ -229,6 +233,7 @@ class OpportunityCrmIndex extends Component
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('nombre', 'like', '%' . $this->search . '%')
+                        ->orWhere('codigo_oportunidad', 'like', '%' . $this->search . '%')
                         ->orWhere('descripcion', 'like', '%' . $this->search . '%');
                 });
             })
@@ -250,10 +255,11 @@ class OpportunityCrmIndex extends Component
             ->when($this->etapa_filter, function ($query) {
                 $query->where('etapa', $this->etapa_filter);
             })
+            ->latest()
             ->orderBy($this->sortField, $this->sortDirection);
 
         return view('livewire.crm.opportunity-crm-index', [
-            'opportunities' => $query->latest()->paginate($this->perPage),
+            'opportunities' => $query->paginate($this->perPage),
             'tipos_negocio' => TipoNegocioCrm::all(),
             'marcas' => MarcaCrm::all(),
             'customers' => Customer::all(),
@@ -274,6 +280,7 @@ class OpportunityCrmIndex extends Component
             'opportunity_id',
             'opportunity',
             'nombre',
+            'codigo_oportunidad',
             'valor',
             'etapa',
             'customer_id',
@@ -302,6 +309,7 @@ class OpportunityCrmIndex extends Component
 
         if ($this->opportunity) {
             $this->nombre = $this->opportunity->nombre;
+            $this->codigo_oportunidad = $this->opportunity->codigo_oportunidad;
             $this->valor = $this->opportunity->valor;
             $this->etapa = $this->opportunity->etapa;
             $this->customer_id = $this->opportunity->customer_id;
@@ -518,6 +526,7 @@ class OpportunityCrmIndex extends Component
             'opportunity_id',
             'opportunity',
             'nombre',
+            'codigo_oportunidad',
             'valor',
             'etapa',
             'customer_id',
@@ -815,6 +824,7 @@ class OpportunityCrmIndex extends Component
             'opportunity_id',
             'opportunity',
             'nombre',
+            'codigo_oportunidad',
             'valor',
             'etapa',
             'customer_id',
