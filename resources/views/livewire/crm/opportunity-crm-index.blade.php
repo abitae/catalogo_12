@@ -145,7 +145,7 @@
                 </thead>
                 <tbody class="bg-white dark:bg-zinc-800 divide-y divide-zinc-200 dark:divide-zinc-700">
                     @forelse ($opportunities as $opportunity)
-                        <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors">
+                        <tr wire:key="opportunity-{{ $opportunity->id }}" class="hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors">
                             <td class="px-2 py-1.5 whitespace-nowrap text-sm text-zinc-900 dark:text-white">
                                 @if ($opportunity->codigo_oportunidad)
                                     <span class="font-mono text-xs bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">
@@ -168,8 +168,8 @@
                             
                             <td class="px-2 py-1.5 whitespace-nowrap text-sm text-zinc-900 dark:text-white">
                                 @if ($opportunity->cliente)
-                                    <div class="text-sm font-medium truncate max-w-28">{{ $opportunity->cliente->rznSocial }}</div>
-                                    <div class="text-xs text-zinc-500 dark:text-zinc-400 truncate max-w-28">
+                                    <div class="text-sm font-medium">{{ $opportunity->cliente->rznSocial }}</div>
+                                    <div class="text-xs text-zinc-500 dark:text-zinc-400">
                                         {{ $opportunity->cliente->nombreComercial }}</div>
                                 @else
                                     <span class="text-zinc-400 text-xs">-</span>
@@ -640,7 +640,7 @@
 
                             @if ($selected_opportunity->actividades && $selected_opportunity->actividades->count() > 0)
                                 <div class="space-y-3">
-                                    @foreach ($selected_opportunity->actividades as $activity)
+                                    @foreach ($selected_opportunity->actividades->sortByDesc('created_at') as $activity)
                                         <div class="bg-white dark:bg-zinc-700/50 rounded-lg p-4 border border-zinc-200 dark:border-zinc-600 hover:shadow-md transition-shadow cursor-pointer"
                                             wire:click="editarActivity({{ $activity->id }})">
                                             <div class="flex justify-between items-start mb-3">

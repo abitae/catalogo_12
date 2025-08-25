@@ -139,7 +139,7 @@ class OpportunityCrmIndex extends Component
             'nombre' => 'required|string|max:255',
             'codigo_oportunidad' => 'nullable|string|max:100',
             'valor' => 'required|numeric|min:0',
-            'etapa' => 'required|string|in:aceptada,entregada,pagada',
+            'etapa' => 'required|string|in:aceptada,entregada,pagada,resuelta',
             'customer_id' => 'required|exists:customers,id',
             'contact_id' => 'required|exists:contacts_crm,id',
             'tipo_negocio_id' => 'nullable|exists:tipos_negocio_crm,id',
@@ -165,7 +165,7 @@ class OpportunityCrmIndex extends Component
             'valor.numeric' => 'El valor debe ser numérico',
             'valor.min' => 'El valor debe ser mayor a 0',
             'etapa.required' => 'La etapa es requerida',
-            'etapa.in' => 'La etapa debe ser aceptada, entregada o pagada',
+            'etapa.in' => 'La etapa debe ser aceptada, entregada, pagada o resuelta',
             'customer_id.required' => 'El cliente es requerido',
             'customer_id.exists' => 'El cliente seleccionado no existe',
             'contact_id.required' => 'El contacto es requerido',
@@ -268,7 +268,7 @@ class OpportunityCrmIndex extends Component
                 $q->where('name', 'Super Admin');
             })->get(),
             'estados' => ['nueva', 'en_proceso', 'ganada', 'perdida'],
-            'etapas' => ['aceptada', 'entregada', 'pagada'],
+            'etapas' => ['aceptada', 'entregada', 'pagada','resuelta'],
             'fuentes' => ['web', 'referido', 'cold_call', 'email', 'evento', 'otro'],
             'tipos_customer' => TipoCustomer::all(),
         ]);
