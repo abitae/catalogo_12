@@ -17,8 +17,8 @@ use App\Models\Configuration\SunatBienDetraccion;
 use App\Models\Configuration\SunatMedioPago;
 use App\Models\Configuration\SunatLeyenda;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use App\Traits\SearchDocument;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Luecano\NumeroALetras\NumeroALetras;
 
@@ -34,7 +34,7 @@ class InvoiceCreateIndex extends Component
     public $fechaEmision;
     public $fechaVencimiento;
     public $formaPago_moneda = 'PEN';
-    public $formaPago_tipo = '01';
+    public $codMedioPago = '01';
     public $tipoMoneda = 'PEN';
     public $tipoVenta = 'contado';
     public $cuotas = [];
@@ -69,18 +69,18 @@ class InvoiceCreateIndex extends Component
     // Búsqueda de productos
     public $busquedaProducto;
     public $productosFiltrados = [];
+    public $cargandoProductos = false;
+    public $totalProductos = 0;
+    public $paginaActual = 1;
+    public $productosPorPagina = 10;
 
     // Productos en memoria
     public $productos = [];
 
-    // Modal de productos
+    // Modal unificado de productos
     public $modal_productos = false;
-    public $editando_producto = false;
-    public $indice_producto_editar = null;
-
-    // Modal de selección de productos del catálogo
-    public $escojeProducto = false;
     public $producto_seleccionado = null;
+    public $vista_actual = 'buscar'; // 'buscar' o 'formulario'
 
     // Totales calculados
     public $subtotal = 0;
@@ -100,7 +100,6 @@ class InvoiceCreateIndex extends Component
 
     // Detracción
     public $codBienDetraccion = null;
-    public $codMedioPago = null;
     public $ctaBanco = null;
     public $setPercent = null;
     public $setMount = null;
@@ -377,19 +376,98 @@ class InvoiceCreateIndex extends Component
 
     public function updatedBusquedaProducto()
     {
-        if ($this->busquedaProducto && strlen($this->busquedaProducto) >= 2) {
-            $this->productosFiltrados = ProductoCatalogo::where('isActive', true)
-                ->where(function ($query) {
-                    $query->where('code', 'like', '%' . $this->busquedaProducto . '%')
-                        ->orWhere('description', 'like', '%' . $this->busquedaProducto . '%')
-                        ->orWhere('code_fabrica', 'like', '%' . $this->busquedaProducto . '%')
-                        ->orWhere('code_peru', 'like', '%' . $this->busquedaProducto . '%');
-                })
-                ->with(['category', 'brand'])
-                ->limit(10)
-                ->get();
-        } else {
+        // Resetear paginación cuando cambia la búsqueda
+        $this->paginaActual = 1;
+        
+        
+        $this->buscarProductos();
+    }
+
+    public function buscarProductos()
+    {
+        // Solo buscar si hay un término de búsqueda de al menos 2 caracteres
+        if (!$this->busquedaProducto || strlen($this->busquedaProducto) < 2) {
             $this->productosFiltrados = [];
+            $this->totalProductos = 0;
+            $this->cargandoProductos = false;
+            return;
+        }
+
+        $this->cargandoProductos = true;
+
+        try {
+            // Crear clave de cache única para esta búsqueda
+            $cacheKey = 'productos_busqueda_' . md5($this->busquedaProducto . '_' . $this->paginaActual . '_' . $this->productosPorPagina);
+            
+            // Intentar obtener desde cache primero
+            $cachedResult = Cache::get($cacheKey);
+            
+            if ($cachedResult) {
+                $this->productosFiltrados = $cachedResult['productos'];
+                $this->totalProductos = $cachedResult['total'];
+            } else {
+                // Si no está en cache, hacer la consulta
+                
+                $query = ProductoCatalogo::where('isActive', true)
+                    ->where(function ($q) {
+                        $termino = '%' . $this->busquedaProducto . '%';
+                        $q->where('code', 'like', $termino)
+                            ->orWhere('description', 'like', $termino)
+                            ->orWhere('code_fabrica', 'like', $termino)
+                            ->orWhere('code_peru', 'like', $termino)
+                            ->orWhereHas('category', function ($catQuery) use ($termino) {
+                                $catQuery->where('name', 'like', $termino);
+                            })
+                            ->orWhereHas('brand', function ($brandQuery) use ($termino) {
+                                $brandQuery->where('name', 'like', $termino);
+                            });
+                    });
+
+                // Contar total de resultados
+                $this->totalProductos = $query->count();
+
+                // Obtener productos paginados
+                $this->productosFiltrados = $query
+                    ->with(['category', 'brand'])
+                    ->orderBy('code')
+                    ->skip(($this->paginaActual - 1) * $this->productosPorPagina)
+                    ->take($this->productosPorPagina)
+                    ->get();
+
+                // Guardar en cache por 5 minutos
+                Cache::put($cacheKey, [
+                    'productos' => $this->productosFiltrados,
+                    'total' => $this->totalProductos
+                ], 300);
+            }
+
+        } catch (\Exception $e) {
+            $this->productosFiltrados = [];
+            $this->totalProductos = 0;
+            session()->flash('error', 'Error al buscar productos: ' . $e->getMessage());
+        } finally {
+            $this->cargandoProductos = false;
+        }
+    }
+
+    public function cambiarPagina($pagina)
+    {
+        $this->paginaActual = $pagina;
+        $this->buscarProductos();
+    }
+
+    public function siguientePagina()
+    {
+        $totalPaginas = ceil($this->totalProductos / $this->productosPorPagina);
+        if ($this->paginaActual < $totalPaginas) {
+            $this->cambiarPagina($this->paginaActual + 1);
+        }
+    }
+
+    public function paginaAnterior()
+    {
+        if ($this->paginaActual > 1) {
+            $this->cambiarPagina($this->paginaActual - 1);
         }
     }
 
@@ -576,24 +654,19 @@ class InvoiceCreateIndex extends Component
             'total' => $total_producto, // Ya incluye IGV
         ];
 
-        if ($this->editando_producto && $this->indice_producto_editar !== null) {
-            // Editar producto existente
-            $this->productos[$this->indice_producto_editar] = $productoData;
-        } else {
-            // Verificar si el producto ya está en la lista
-            $indiceExistente = collect($this->productos)->search(function ($item) {
-                return $item['producto_id'] == $this->producto_id;
-            });
+        // Verificar si el producto ya está en la lista
+        $indiceExistente = collect($this->productos)->search(function ($item) {
+            return $item['producto_id'] == $this->producto_id;
+        });
 
-            if ($indiceExistente !== false) {
-                // Producto duplicado: actualizar cantidad y precio con los últimos valores
-                $this->productos[$indiceExistente] = $productoData;
-                session()->flash('message', 'Producto actualizado exitosamente con los nuevos valores');
-            } else {
-                // Agregar nuevo producto
-                $this->productos[] = $productoData;
-                session()->flash('message', 'Producto agregado exitosamente a la factura');
-            }
+        if ($indiceExistente !== false) {
+            // Producto duplicado: actualizar cantidad y precio con los últimos valores
+            $this->productos[$indiceExistente] = $productoData;
+            session()->flash('message', 'Producto actualizado exitosamente con los nuevos valores');
+        } else {
+            // Agregar nuevo producto
+            $this->productos[] = $productoData;
+            session()->flash('message', 'Producto agregado exitosamente a la factura');
         }
 
         // Limpiar campos del producto
@@ -607,45 +680,17 @@ class InvoiceCreateIndex extends Component
 
         $this->calcularTotales();
 
-        // Cerrar el modal después de agregar/editar el producto
+        // Cerrar el modal después de agregar el producto
         $this->modal_productos = false;
-        $this->editando_producto = false;
-        $this->indice_producto_editar = null;
     }
 
     public function abrirModalProductos()
     {
         $this->modal_productos = true;
-        $this->editando_producto = false;
-        $this->indice_producto_editar = null;
+        $this->vista_actual = 'buscar';
+        $this->producto_seleccionado = null;
+        
         // Limpiar campos
-        $this->producto_id = null;
-        $this->cantidad = 1;
-        $this->precio_unitario = 0;
-        $this->descripcion_producto = null;
-        $this->unidad = 'NIU';
-    }
-
-    public function editarProducto($index)
-    {
-        if (isset($this->productos[$index])) {
-            $producto = $this->productos[$index];
-            $this->editando_producto = true;
-            $this->indice_producto_editar = $index;
-            $this->producto_id = $producto['producto_id'];
-            $this->cantidad = $producto['cantidad'];
-            $this->precio_unitario = $producto['precio_unitario'];
-            $this->descripcion_producto = $producto['descripcion'];
-            $this->unidad = $producto['unidad'];
-            $this->modal_productos = true;
-        }
-    }
-
-    public function cerrarModalProductos()
-    {
-        $this->modal_productos = false;
-        $this->editando_producto = false;
-        $this->indice_producto_editar = null;
         $this->producto_id = null;
         $this->cantidad = 1;
         $this->precio_unitario = 0;
@@ -653,6 +698,29 @@ class InvoiceCreateIndex extends Component
         $this->unidad = 'NIU';
         $this->busquedaProducto = null;
         $this->productosFiltrados = [];
+        $this->totalProductos = 0;
+        $this->paginaActual = 1;
+        $this->cargandoProductos = false;
+        
+        // No cargar productos automáticamente - solo se mostrarán cuando el usuario busque
+    }
+
+
+    public function cerrarModalProductos()
+    {
+        $this->modal_productos = false;
+        $this->vista_actual = 'buscar';
+        $this->producto_seleccionado = null;
+        $this->producto_id = null;
+        $this->cantidad = 1;
+        $this->precio_unitario = 0;
+        $this->descripcion_producto = null;
+        $this->unidad = 'NIU';
+        $this->busquedaProducto = null;
+        $this->productosFiltrados = [];
+        $this->totalProductos = 0;
+        $this->paginaActual = 1;
+        $this->cargandoProductos = false;
     }
 
     public function eliminarProducto($index)
@@ -1190,7 +1258,7 @@ class InvoiceCreateIndex extends Component
             'fechaVencimiento' => 'required|date|after:fechaEmision',
             'tipoVenta' => 'required|in:contado,credito',
             'cuotas' => 'nullable|array',
-            'formaPago_tipo' => 'required',
+            'codMedioPago' => 'required',
             'productos' => 'required|array|min:1',
             'productos.*.producto_id' => 'required|exists:producto_catalogos,id',
             'productos.*.cantidad' => 'required|numeric|min:0.01|max:999999.99',
@@ -1228,7 +1296,7 @@ class InvoiceCreateIndex extends Component
             'cuotas.max' => 'El número de cuotas no puede exceder 60',
 
             // Forma de Pago
-            'formaPago_tipo.required' => 'Debe seleccionar la forma de pago',
+            'codMedioPago.required' => 'Debe seleccionar la forma de pago',
 
             // Productos
             'productos.required' => 'Debe agregar al menos un producto a la factura',
@@ -1287,7 +1355,7 @@ class InvoiceCreateIndex extends Component
                 'fechaEmision' => $this->fechaEmision,
                 'fechaVencimiento' => $this->fechaVencimiento,
                 'formaPago_moneda' => $this->formaPago_moneda,
-                'formaPago_tipo' => $this->formaPago_tipo,
+                'codMedioPago' => $this->codMedioPago,
                 'tipoMoneda' => $this->tipoMoneda,
                 'mtoOperGravadas' => $this->subtotal, // Valor sin IGV
                 'mtoOperInafectas' => 0, // Operaciones inafectas
@@ -1370,15 +1438,28 @@ class InvoiceCreateIndex extends Component
         return $formatter->toMoney($numero, 2, 'SOLES', 'CENTIMOS');
     }
 
-    // Métodos para el modal de selección de productos del catálogo
-    public function abrirModalEscogerProducto()
+    public function cargarProductosPopulares()
     {
-        $this->escojeProducto = true;
-    }
-
-    public function cerrarModalEscogerProducto()
-    {
-        $this->escojeProducto = false;
+        $this->cargandoProductos = true;
+        
+        try {
+            // Cargar productos más vendidos o populares
+            $this->productosFiltrados = ProductoCatalogo::where('isActive', true)
+                ->with(['category', 'brand'])
+                ->orderBy('price_venta', 'asc') // Ordenar por precio para mostrar opciones económicas primero
+                ->take($this->productosPorPagina)
+                ->get();
+                
+            $this->totalProductos = ProductoCatalogo::where('isActive', true)->count();
+            $this->paginaActual = 1;
+            
+        } catch (\Exception $e) {
+            $this->productosFiltrados = [];
+            $this->totalProductos = 0;
+            session()->flash('error', 'Error al cargar productos: ' . $e->getMessage());
+        } finally {
+            $this->cargandoProductos = false;
+        }
     }
 
     public function seleccionarProductoDelCatalogo($productoId)
@@ -1390,9 +1471,35 @@ class InvoiceCreateIndex extends Component
             $this->precio_unitario = $producto->price_venta;
             $this->unidad = $producto->unidadMedida->codigo ?? 'NIU';
             $this->descripcion_producto = $producto->description;
-            $this->cerrarModalEscogerProducto();
+            $this->vista_actual = 'formulario';
         }
     }
+
+    public function cambiarVista($vista)
+    {
+        $this->vista_actual = $vista;
+        if ($vista === 'buscar') {
+            // Limpiar productos cuando se cambia a vista de búsqueda
+            $this->productosFiltrados = [];
+            $this->totalProductos = 0;
+            $this->busquedaProducto = null;
+        }
+    }
+
+    public function volverABuscar()
+    {
+        $this->vista_actual = 'buscar';
+        $this->producto_seleccionado = null;
+        $this->producto_id = null;
+        $this->precio_unitario = 0;
+        $this->descripcion_producto = null;
+        $this->unidad = 'NIU';
+        // Limpiar productos - solo se mostrarán cuando el usuario busque
+        $this->productosFiltrados = [];
+        $this->totalProductos = 0;
+        $this->busquedaProducto = null;
+    }
+
 
     public function limpiarProductoSeleccionado()
     {
@@ -1401,6 +1508,16 @@ class InvoiceCreateIndex extends Component
         $this->precio_unitario = null;
         $this->unidad = null;
         $this->descripcion_producto = null;
+    }
+
+    public function limpiarCacheProductos()
+    {
+        // Limpiar cache de búsqueda de productos
+        $pattern = 'productos_busqueda_*';
+        $keys = Cache::getRedis()->keys($pattern);
+        if (!empty($keys)) {
+            Cache::getRedis()->del($keys);
+        }
     }
 
     public function render()

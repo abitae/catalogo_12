@@ -28,6 +28,7 @@ class SucursalFactory extends Factory
             'isActive' => $this->faker->boolean(80), // 80% probabilidad de estar activo
             'logo_path' => $this->faker->optional()->imageUrl(200, 200, 'business'),
             'series_suffix' => $this->faker->optional()->numerify('##'), // 2 dígitos del 01 al 99
+            'codigoSunat' => $this->faker->optional()->numerify('####'), // 4 dígitos del 0000 al 9999
         ];
     }
 }

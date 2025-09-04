@@ -23,6 +23,7 @@ return new class extends Migration
             $table->foreignId('company_id')->constrained('companies');
             $table->string('logo_path')->nullable(); // path de la imagen de la sucursal
             $table->string('series_suffix')->nullable(); // sufijo de la serie de documentos ejemplo F001, F002, B001, B002, T001, T002, NC001, NC002, ND001, ND002, etc.
+            $table->string('codigoSunat')->nullable(); // código de la sucursal en el sistema de SUNAT
             $table->boolean('isActive')->default(true);
             $table->softDeletes();
             $table->timestamps();

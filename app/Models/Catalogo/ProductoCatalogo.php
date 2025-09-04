@@ -43,4 +43,10 @@ class ProductoCatalogo extends Model
     {
         return $this->belongsTo(LineCatalogo::class, 'line_id');
     }
+    
+    // Relación temporal deshabilitada hasta agregar la columna unidad_medida_id
+    // public function unidadMedida()
+    // {
+    //     return $this->belongsTo(\App\Models\Configuration\SunatUnidadMedida::class, 'unidad_medida_id');
+    // }
 }

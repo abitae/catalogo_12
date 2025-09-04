@@ -38,6 +38,7 @@ class SucursalFacturacionIndex extends Component
     public $codLocal;
     public $ubigueo;
     public $codigoPais;
+    public $codigoSunat;
     public $company_filter = '';
 
     protected function rules()
@@ -63,6 +64,7 @@ class SucursalFacturacionIndex extends Component
             'codLocal' => 'nullable|string|max:20',
             'ubigueo' => 'nullable|string|max:20',
             'codigoPais' => 'nullable|string|max:10',
+            'codigoSunat' => 'nullable|string|max:20',
         ];
         return $rules;
     }
@@ -144,6 +146,7 @@ class SucursalFacturacionIndex extends Component
         $this->codLocal = $sucursal->address->codLocal ?? '';
         $this->ubigueo = $sucursal->address->ubigueo ?? '';
         $this->codigoPais = $sucursal->address->codigoPais ?? '';
+        $this->codigoSunat = $sucursal->codigoSunat ?? '';
         $this->modal_sucursal = true;
     }
 
@@ -191,6 +194,7 @@ class SucursalFacturacionIndex extends Component
             'isActive' => $this->isActive,
             'logo_path' => $logoPath,
             'series_suffix' => $this->series_suffix,
+            'codigoSunat' => $this->codigoSunat,
             'address_id' => $address->id,
         ];
         if ($this->editingSucursal) {
@@ -245,6 +249,7 @@ class SucursalFacturacionIndex extends Component
             'codLocal',
             'ubigueo',
             'codigoPais',
+            'codigoSunat',
         ]);
         $this->resetErrorBag();
     }

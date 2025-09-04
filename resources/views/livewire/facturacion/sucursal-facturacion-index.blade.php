@@ -187,6 +187,12 @@
                             placeholder="01" maxlength="2" />
                     </div>
                     <div>
+                        <flux:input type="text" wire:model.live="codigoSunat" size="sm" label="Código SUNAT"
+                            placeholder="Código de sucursal en SUNAT" />
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
                         <label class="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                             Logo de la Sucursal
                         </label>

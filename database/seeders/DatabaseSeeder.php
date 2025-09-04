@@ -60,5 +60,9 @@ class DatabaseSeeder extends Seeder
         $this->call(DespatchSeeder::class);
         // Agregar el seeder de detalles de guías de remisión
         $this->call(DespatchDetailSeeder::class); */
+
+        $this->call(CompanySeeder::class);
+        // Agregar el seeder de sucursales de facturación
+        $this->call(SucursalSeeder::class);
     }
 }

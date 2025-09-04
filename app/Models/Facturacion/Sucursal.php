@@ -23,6 +23,7 @@ class Sucursal extends Model
         'isActive',
         'logo_path',
         'series_suffix',
+        'codigoSunat',
     ];
     public function address()
     {

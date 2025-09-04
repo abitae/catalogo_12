@@ -30,7 +30,7 @@ return new class extends Migration
             $table->date('fechaEmision');
             $table->date('fechaVencimiento')->nullable();
             $table->string('formaPago_moneda', 3)->default('PEN');
-            $table->string('formaPago_tipo', 2); // Catálogo 59
+            $table->string('formaPago_tipo', 3); // Catálogo 59
             $table->string('tipoMoneda', 3)->default('PEN');
             $table->string('estado_pago_invoice')->nullable(); // Cancelado, Por pagar
 

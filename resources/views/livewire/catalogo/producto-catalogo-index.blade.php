@@ -154,12 +154,24 @@
     <!-- Tabla de Productos -->
     <div
         class="bg-white dark:bg-zinc-800 rounded-xl overflow-hidden shadow-sm border border-zinc-200 dark:border-zinc-700">
-        <div class="px-6 py-4 border-b border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-700/50">
-            <div class="flex items-center justify-between">
-                <h3 class="text-lg font-semibold text-zinc-900 dark:text-white">Productos</h3>
-                <div class="flex items-center gap-4">
-                    <span class="text-sm text-zinc-500 dark:text-zinc-400">{{ $productos->count() }} productos
-                        encontrados</span>
+        <div
+            class="px-8 py-5 border-b border-zinc-200 dark:border-zinc-700 bg-gradient-to-r from-zinc-50 via-blue-50 to-zinc-100 dark:from-zinc-700/60 dark:via-blue-900/30 dark:to-zinc-800/60">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <flux:icon.cube class="w-7 h-7 text-blue-500 dark:text-blue-400" />
+                    <h3 class="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">Catálogo de Productos
+                    </h3>
+                </div>
+                <div class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                    <flux:input type="search" placeholder="Buscar por código, nombre o categoría..."
+                        wire:model.live="search" icon="magnifying-glass" class="w-full sm:w-72" />
+                    <div class="flex items-center gap-2 mt-2 sm:mt-0">
+                        <span
+                            class="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 dark:bg-blue-900/40 text-xs font-medium text-blue-700 dark:text-blue-200 shadow">
+                            <flux:icon name="list-bullet" class="w-4 h-4 mr-1" />
+                            {{ $productos->count() }} encontrados
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -618,14 +630,15 @@
     </flux:modal>
 
     <!-- Modal Confirmar Eliminación -->
-    <flux:modal wire:model="modal_form_eliminar_producto"  class="w-2/3 max-w-4xl">
+    <flux:modal wire:model="modal_form_eliminar_producto" class="w-2/3 max-w-4xl">
         <div class="space-y-6">
             <div>
                 <flux:heading size="lg">Confirmar Eliminación</flux:heading>
                 <flux:text class="mt-2">¿Estás seguro de querer eliminar este producto?</flux:text>
             </div>
             <div>
-                <flux:button wire:click="confirmarEliminarProducto" variant="danger" icon="trash">Eliminar</flux:button>
+                <flux:button wire:click="confirmarEliminarProducto" variant="danger" icon="trash">Eliminar
+                </flux:button>
                 <flux:button wire:click="$set('modal_form_eliminar_producto', false)" variant="outline"
                     icon="x-circle">Cancelar</flux:button>
             </div>
@@ -643,7 +656,8 @@
             @if (!$mostrarResultados)
                 <!-- Información del Sistema -->
                 <div class="grid grid-cols-3 gap-3 mb-4">
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                    <div
+                        class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                         <div class="flex items-center gap-2 mb-1">
                             <flux:icon name="tag" class="w-4 h-4 text-blue-600 dark:text-blue-400" />
                             <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Marcas</span>
@@ -651,7 +665,8 @@
                         <p class="text-lg font-bold text-gray-900 dark:text-white">{{ count($brands) }}</p>
                     </div>
 
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                    <div
+                        class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                         <div class="flex items-center gap-2 mb-1">
                             <flux:icon name="folder" class="w-4 h-4 text-green-600 dark:text-green-400" />
                             <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Categorías</span>
@@ -659,7 +674,8 @@
                         <p class="text-lg font-bold text-gray-900 dark:text-white">{{ count($categories) }}</p>
                     </div>
 
-                    <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
+                    <div
+                        class="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 border border-gray-200 dark:border-gray-700">
                         <div class="flex items-center gap-2 mb-1">
                             <flux:icon name="bars-3" class="w-4 h-4 text-purple-600 dark:text-purple-400" />
                             <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Líneas</span>
@@ -671,7 +687,8 @@
                 <!-- Instrucciones -->
                 <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                     <div class="flex items-center justify-between mb-3">
-                        <flux:heading size="sm" class="text-gray-900 dark:text-white">Instrucciones</flux:heading>
+                        <flux:heading size="sm" class="text-gray-900 dark:text-white">Instrucciones
+                        </flux:heading>
                         <flux:button wire:click="descargarEjemplo" size="sm" variant="outline"
                             icon="arrow-down-tray" class="text-sm">
                             Descargar Plantilla
@@ -695,7 +712,8 @@
                         </div>
                     </div>
 
-                    <div class="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded border border-yellow-200 dark:border-yellow-700">
+                    <div
+                        class="mt-3 p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded border border-yellow-200 dark:border-yellow-700">
                         <div class="text-xs text-yellow-700 dark:text-yellow-300">
                             ⚠️ Los nombres deben coincidir exactamente. Use la plantilla como referencia.
                         </div>
@@ -785,79 +803,100 @@
                     <div class="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
                         <div class="flex items-center gap-3 mb-6">
                             <flux:icon name="chart-bar" class="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                            <flux:heading size="lg" class="text-gray-900 dark:text-white">Dashboard de Importación</flux:heading>
+                            <flux:heading size="lg" class="text-gray-900 dark:text-white">Dashboard de
+                                Importación</flux:heading>
                         </div>
 
-                                                <!-- Barra de progreso minimalista -->
-                        @if(isset($importacionStats['success_rate']) && is_numeric($importacionStats['success_rate']))
-                        <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-                            <div class="flex items-center justify-between mb-3">
-                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Tasa de Éxito</span>
-                                <span class="text-lg font-bold {{ isset($importacionStats['success_rate']) && $importacionStats['success_rate'] >= 90 ? 'text-green-600 dark:text-green-400' : (isset($importacionStats['success_rate']) && $importacionStats['success_rate'] >= 70 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400') }}">
-                                    {{ $importacionStats['success_rate'] ?? 0 }}%
-                                </span>
+                        <!-- Barra de progreso minimalista -->
+                        @if (isset($importacionStats['success_rate']) && is_numeric($importacionStats['success_rate']))
+                            <div
+                                class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Tasa de
+                                        Éxito</span>
+                                    <span
+                                        class="text-lg font-bold {{ isset($importacionStats['success_rate']) && $importacionStats['success_rate'] >= 90 ? 'text-green-600 dark:text-green-400' : (isset($importacionStats['success_rate']) && $importacionStats['success_rate'] >= 70 ? 'text-yellow-600 dark:text-yellow-400' : 'text-red-600 dark:text-red-400') }}">
+                                        {{ $importacionStats['success_rate'] ?? 0 }}%
+                                    </span>
+                                </div>
+                                <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
+                                    <div class="h-2 rounded-full transition-all duration-500 {{ isset($importacionStats['success_rate']) && $importacionStats['success_rate'] >= 90 ? 'bg-green-500' : (isset($importacionStats['success_rate']) && $importacionStats['success_rate'] >= 70 ? 'bg-yellow-500' : 'bg-red-500') }}"
+                                        style="width: {{ $importacionStats['success_rate'] ?? 0 }}%"></div>
+                                </div>
                             </div>
-                            <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                                <div class="h-2 rounded-full transition-all duration-500 {{ isset($importacionStats['success_rate']) && $importacionStats['success_rate'] >= 90 ? 'bg-green-500' : (isset($importacionStats['success_rate']) && $importacionStats['success_rate'] >= 70 ? 'bg-yellow-500' : 'bg-red-500') }}"
-                                     style="width: {{ $importacionStats['success_rate'] ?? 0 }}%"></div>
-                            </div>
-                        </div>
                         @endif
 
                         <!-- Estadísticas minimalistas -->
                         <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-                            <div class="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                            <div
+                                class="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
                                 <div class="text-center">
-                                    <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ $importacionStats['total_rows'] ?? 0 }}</div>
+                                    <div class="text-2xl font-bold text-gray-900 dark:text-white">
+                                        {{ $importacionStats['total_rows'] ?? 0 }}</div>
                                     <div class="text-sm text-gray-600 dark:text-gray-400">Total</div>
                                 </div>
                             </div>
 
-                            <div class="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                            <div
+                                class="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
                                 <div class="text-center">
-                                    <div class="text-2xl font-bold text-green-600 dark:text-green-400">{{ $importacionStats['imported'] ?? 0 }}</div>
+                                    <div class="text-2xl font-bold text-green-600 dark:text-green-400">
+                                        {{ $importacionStats['imported'] ?? 0 }}</div>
                                     <div class="text-sm text-gray-600 dark:text-gray-400">Importados</div>
                                 </div>
                             </div>
 
-                            @if(isset($importacionStats['updated']) && $importacionStats['updated'] > 0)
-                            <div class="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-                                <div class="text-center">
-                                    <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">{{ $importacionStats['updated'] ?? 0 }}</div>
-                                    <div class="text-sm text-gray-600 dark:text-gray-400">Actualizados</div>
+                            @if (isset($importacionStats['updated']) && $importacionStats['updated'] > 0)
+                                <div
+                                    class="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                            {{ $importacionStats['updated'] ?? 0 }}</div>
+                                        <div class="text-sm text-gray-600 dark:text-gray-400">Actualizados</div>
+                                    </div>
                                 </div>
-                            </div>
                             @endif
 
-                            <div class="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                            <div
+                                class="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
                                 <div class="text-center">
-                                    <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{{ $importacionStats['skipped'] ?? 0 }}</div>
+                                    <div class="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                                        {{ $importacionStats['skipped'] ?? 0 }}</div>
                                     <div class="text-sm text-gray-600 dark:text-gray-400">Omitidos</div>
                                 </div>
                             </div>
 
-                            <div class="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                            <div
+                                class="bg-white dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
                                 <div class="text-center">
-                                    <div class="text-2xl font-bold text-red-600 dark:text-red-400">{{ is_array($importacionErrores) ? count($importacionErrores) : 0 }}</div>
+                                    <div class="text-2xl font-bold text-red-600 dark:text-red-400">
+                                        {{ is_array($importacionErrores) ? count($importacionErrores) : 0 }}</div>
                                     <div class="text-sm text-gray-600 dark:text-gray-400">Errores</div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Métricas minimalistas -->
-                        <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                        <div
+                            class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                                 <div class="text-center">
                                     <div class="text-xs text-gray-600 dark:text-gray-400">Tiempo</div>
-                                    <div class="font-bold text-gray-900 dark:text-white">{{ isset($importacionStats['total_rows']) && $importacionStats['total_rows'] ? round($importacionStats['total_rows'] * 0.1, 1) : 0 }}s</div>
+                                    <div class="font-bold text-gray-900 dark:text-white">
+                                        {{ isset($importacionStats['total_rows']) && $importacionStats['total_rows'] ? round($importacionStats['total_rows'] * 0.1, 1) : 0 }}s
+                                    </div>
                                 </div>
                                 <div class="text-center">
                                     <div class="text-xs text-gray-600 dark:text-gray-400">Velocidad</div>
-                                    <div class="font-bold text-gray-900 dark:text-white">{{ isset($importacionStats['total_rows']) && $importacionStats['total_rows'] ? round($importacionStats['total_rows'] / max(1, (($importacionStats['imported'] ?? 0) + ($importacionStats['updated'] ?? 0))), 1) : 0 }}/s</div>
+                                    <div class="font-bold text-gray-900 dark:text-white">
+                                        {{ isset($importacionStats['total_rows']) && $importacionStats['total_rows'] ? round($importacionStats['total_rows'] / max(1, ($importacionStats['imported'] ?? 0) + ($importacionStats['updated'] ?? 0)), 1) : 0 }}/s
+                                    </div>
                                 </div>
                                 <div class="text-center">
                                     <div class="text-xs text-gray-600 dark:text-gray-400">Eficiencia</div>
-                                    <div class="font-bold text-gray-900 dark:text-white">{{ isset($importacionStats['total_rows']) && $importacionStats['total_rows'] ? round((($importacionStats['imported'] ?? 0) + ($importacionStats['updated'] ?? 0)) / $importacionStats['total_rows'] * 100, 1) : 0 }}%</div>
+                                    <div class="font-bold text-gray-900 dark:text-white">
+                                        {{ isset($importacionStats['total_rows']) && $importacionStats['total_rows'] ? round(((($importacionStats['imported'] ?? 0) + ($importacionStats['updated'] ?? 0)) / $importacionStats['total_rows']) * 100, 1) : 0 }}%
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -865,44 +904,62 @@
 
                     <!-- Errores detallados mejorados -->
                     @if (!empty($importacionErrores))
-                        <div class="bg-gradient-to-br from-red-50 via-pink-50 to-orange-50 dark:from-red-900/20 dark:via-pink-900/20 dark:to-orange-900/20 rounded-xl p-8 border border-red-200 dark:border-red-800 shadow-lg">
+                        <div
+                            class="bg-gradient-to-br from-red-50 via-pink-50 to-orange-50 dark:from-red-900/20 dark:via-pink-900/20 dark:to-orange-900/20 rounded-xl p-8 border border-red-200 dark:border-red-800 shadow-lg">
                             <div class="flex items-center gap-4 mb-6">
-                                <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+                                <div
+                                    class="w-12 h-12 bg-gradient-to-br from-red-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
                                     <flux:icon name="exclamation-triangle" class="w-6 h-6 text-white" />
                                 </div>
                                 <div class="flex-1">
-                                    <flux:heading size="lg" class="text-red-900 dark:text-red-100 mb-1">❌ Errores Encontrados</flux:heading>
-                                    <p class="text-sm text-red-700 dark:text-red-300">Se encontraron problemas durante la importación que deben ser corregidos</p>
+                                    <flux:heading size="lg" class="text-red-900 dark:text-red-100 mb-1">❌ Errores
+                                        Encontrados</flux:heading>
+                                    <p class="text-sm text-red-700 dark:text-red-300">Se encontraron problemas durante
+                                        la importación que deben ser corregidos</p>
                                 </div>
-                                <div class="bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 text-sm font-bold px-4 py-2 rounded-full shadow-sm">
+                                <div
+                                    class="bg-red-100 dark:bg-red-800 text-red-800 dark:text-red-200 text-sm font-bold px-4 py-2 rounded-full shadow-sm">
                                     {{ count($importacionErrores) }} errores
                                 </div>
                             </div>
 
-                            <div class="bg-white dark:bg-gray-800 rounded-xl border border-red-200 dark:border-red-700 shadow-lg overflow-hidden">
-                                <div class="bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 px-6 py-4 border-b border-red-200 dark:border-red-700">
+                            <div
+                                class="bg-white dark:bg-gray-800 rounded-xl border border-red-200 dark:border-red-700 shadow-lg overflow-hidden">
+                                <div
+                                    class="bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 px-6 py-4 border-b border-red-200 dark:border-red-700">
                                     <div class="flex items-center gap-3">
-                                        <flux:icon name="information-circle" class="w-5 h-5 text-red-600 dark:text-red-400" />
-                                        <span class="text-sm font-semibold text-red-800 dark:text-red-200">Lista de Errores</span>
-                                        <span class="text-xs text-red-600 dark:text-red-400">({{ count($importacionErrores) }} encontrados)</span>
+                                        <flux:icon name="information-circle"
+                                            class="w-5 h-5 text-red-600 dark:text-red-400" />
+                                        <span class="text-sm font-semibold text-red-800 dark:text-red-200">Lista de
+                                            Errores</span>
+                                        <span
+                                            class="text-xs text-red-600 dark:text-red-400">({{ count($importacionErrores) }}
+                                            encontrados)</span>
                                     </div>
                                 </div>
                                 <div class="max-h-80 overflow-y-auto">
                                     <div class="divide-y divide-red-100 dark:divide-red-800">
                                         @foreach ($importacionErrores as $index => $error)
-                                            <div class="p-6 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all duration-200">
+                                            <div
+                                                class="p-6 hover:bg-red-50 dark:hover:bg-red-900/10 transition-all duration-200">
                                                 <div class="flex items-start gap-4">
-                                                    <div class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-red-100 to-red-200 dark:from-red-800 dark:to-red-700 rounded-full flex items-center justify-center shadow-sm">
-                                                        <span class="text-sm font-bold text-red-700 dark:text-red-300">{{ $index + 1 }}</span>
+                                                    <div
+                                                        class="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-red-100 to-red-200 dark:from-red-800 dark:to-red-700 rounded-full flex items-center justify-center shadow-sm">
+                                                        <span
+                                                            class="text-sm font-bold text-red-700 dark:text-red-300">{{ $index + 1 }}</span>
                                                     </div>
                                                     <div class="flex-1 min-w-0">
-                                                        <p class="text-sm text-red-800 dark:text-red-200 leading-relaxed font-medium">
+                                                        <p
+                                                            class="text-sm text-red-800 dark:text-red-200 leading-relaxed font-medium">
                                                             {{ $error }}
                                                         </p>
-                                                        @if(str_contains($error, 'Línea Excel'))
-                                                            <div class="mt-3 flex items-center gap-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-700">
-                                                                <flux:icon name="document-text" class="w-4 h-4 text-red-500" />
-                                                                <span class="text-xs text-red-600 dark:text-red-400 font-medium">
+                                                        @if (str_contains($error, 'Línea Excel'))
+                                                            <div
+                                                                class="mt-3 flex items-center gap-3 p-3 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-700">
+                                                                <flux:icon name="document-text"
+                                                                    class="w-4 h-4 text-red-500" />
+                                                                <span
+                                                                    class="text-xs text-red-600 dark:text-red-400 font-medium">
                                                                     📄 Error en archivo Excel
                                                                 </span>
                                                                 <span class="text-xs text-red-500 dark:text-red-400">
@@ -910,10 +967,13 @@
                                                                 </span>
                                                             </div>
                                                         @endif
-                                                        @if(str_contains($error, 'No se encontraron las relaciones'))
-                                                            <div class="mt-3 flex items-center gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-700">
-                                                                <flux:icon name="light-bulb" class="w-4 h-4 text-yellow-500" />
-                                                                <span class="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
+                                                        @if (str_contains($error, 'No se encontraron las relaciones'))
+                                                            <div
+                                                                class="mt-3 flex items-center gap-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-700">
+                                                                <flux:icon name="light-bulb"
+                                                                    class="w-4 h-4 text-yellow-500" />
+                                                                <span
+                                                                    class="text-xs text-yellow-600 dark:text-yellow-400 font-medium">
                                                                     💡 Sugerencia: Use la plantilla como referencia
                                                                 </span>
                                                             </div>
@@ -927,108 +987,141 @@
                             </div>
 
                             <!-- Consejos para resolver errores -->
-                            <div class="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-700">
+                            <div
+                                class="mt-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-700">
                                 <div class="flex items-center gap-3 mb-4">
                                     <flux:icon name="light-bulb" class="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                                    <flux:heading size="md" class="text-blue-900 dark:text-blue-100">💡 Consejos para Resolver Errores</flux:heading>
+                                    <flux:heading size="md" class="text-blue-900 dark:text-blue-100">💡 Consejos
+                                        para Resolver Errores</flux:heading>
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                                     <div class="flex items-start gap-3">
-                                        <div class="w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <div
+                                            class="w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                                             <span class="text-xs font-bold text-blue-600 dark:text-blue-400">1</span>
                                         </div>
                                         <div>
-                                            <div class="font-medium text-blue-800 dark:text-blue-200 mb-1">Verifique los nombres</div>
-                                            <div class="text-blue-600 dark:text-blue-400">Asegúrese de que marca, categoría y línea coincidan exactamente con los valores del sistema</div>
+                                            <div class="font-medium text-blue-800 dark:text-blue-200 mb-1">Verifique
+                                                los nombres</div>
+                                            <div class="text-blue-600 dark:text-blue-400">Asegúrese de que marca,
+                                                categoría y línea coincidan exactamente con los valores del sistema
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="flex items-start gap-3">
-                                        <div class="w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <div
+                                            class="w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                                             <span class="text-xs font-bold text-blue-600 dark:text-blue-400">2</span>
                                         </div>
                                         <div>
-                                            <div class="font-medium text-blue-800 dark:text-blue-200 mb-1">Descargue la plantilla</div>
-                                            <div class="text-blue-600 dark:text-blue-400">Use la plantilla actualizada que incluye los valores válidos del sistema</div>
+                                            <div class="font-medium text-blue-800 dark:text-blue-200 mb-1">Descargue la
+                                                plantilla</div>
+                                            <div class="text-blue-600 dark:text-blue-400">Use la plantilla actualizada
+                                                que incluye los valores válidos del sistema</div>
                                         </div>
                                     </div>
                                     <div class="flex items-start gap-3">
-                                        <div class="w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <div
+                                            class="w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                                             <span class="text-xs font-bold text-blue-600 dark:text-blue-400">3</span>
                                         </div>
                                         <div>
-                                            <div class="font-medium text-blue-800 dark:text-blue-200 mb-1">Revise la línea indicada</div>
-                                            <div class="text-blue-600 dark:text-blue-400">Cada error muestra el número exacto de línea del Excel donde ocurrió</div>
+                                            <div class="font-medium text-blue-800 dark:text-blue-200 mb-1">Revise la
+                                                línea indicada</div>
+                                            <div class="text-blue-600 dark:text-blue-400">Cada error muestra el número
+                                                exacto de línea del Excel donde ocurrió</div>
                                         </div>
                                     </div>
                                     <div class="flex items-start gap-3">
-                                        <div class="w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <div
+                                            class="w-6 h-6 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                                             <span class="text-xs font-bold text-blue-600 dark:text-blue-400">4</span>
                                         </div>
                                         <div>
-                                            <div class="font-medium text-blue-800 dark:text-blue-200 mb-1">Corrija y reintente</div>
-                                            <div class="text-blue-600 dark:text-blue-400">Después de corregir los errores, vuelva a intentar la importación</div>
+                                            <div class="font-medium text-blue-800 dark:text-blue-200 mb-1">Corrija y
+                                                reintente</div>
+                                            <div class="text-blue-600 dark:text-blue-400">Después de corregir los
+                                                errores, vuelva a intentar la importación</div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                            <div class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                                <div class="flex items-start gap-2">
-                                    <flux:icon name="light-bulb" class="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
-                                    <div class="text-sm text-yellow-800 dark:text-yellow-200">
-                                        <strong>💡 Consejo:</strong> Revise los errores y corrija el archivo Excel antes de reintentar la importación.
-                                        Use la plantilla como referencia para el formato correcto.
-                                    </div>
+                        <div
+                            class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                            <div class="flex items-start gap-2">
+                                <flux:icon name="light-bulb"
+                                    class="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+                                <div class="text-sm text-yellow-800 dark:text-yellow-200">
+                                    <strong>💡 Consejo:</strong> Revise los errores y corrija el archivo Excel antes de
+                                    reintentar la importación.
+                                    Use la plantilla como referencia para el formato correcto.
                                 </div>
                             </div>
+                        </div>
 
-                            <!-- Información de Depuración - Solo se muestra si no hay errores -->
-                            @if(isset($importacionStats['debug_info']) && empty($importacionErrores))
-                            <div class="mt-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                        <!-- Información de Depuración - Solo se muestra si no hay errores -->
+                        @if (isset($importacionStats['debug_info']) && empty($importacionErrores))
+                            <div
+                                class="mt-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
                                 <div class="flex items-center gap-2 mb-3">
-                                    <flux:icon name="information-circle" class="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                                    <flux:heading size="sm" class="text-blue-900 dark:text-blue-100">🔍 Información de Depuración</flux:heading>
+                                    <flux:icon name="information-circle"
+                                        class="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                    <flux:heading size="sm" class="text-blue-900 dark:text-blue-100">🔍
+                                        Información de Depuración</flux:heading>
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                                     <div>
-                                        <flux:heading size="xs" class="text-blue-800 dark:text-blue-200 mb-2">🏷️ Marcas Disponibles ({{ count($importacionStats['debug_info']['available_brands'] ?? []) }})</flux:heading>
-                                        <div class="max-h-20 overflow-y-auto bg-white dark:bg-gray-800 rounded p-2 text-xs">
-                                            @foreach($importacionStats['debug_info']['available_brands'] ?? [] as $brand)
+                                        <flux:heading size="xs" class="text-blue-800 dark:text-blue-200 mb-2">🏷️
+                                            Marcas Disponibles
+                                            ({{ count($importacionStats['debug_info']['available_brands'] ?? []) }})
+                                        </flux:heading>
+                                        <div
+                                            class="max-h-20 overflow-y-auto bg-white dark:bg-gray-800 rounded p-2 text-xs">
+                                            @foreach ($importacionStats['debug_info']['available_brands'] ?? [] as $brand)
                                                 <div class="py-1">{{ $brand }}</div>
                                             @endforeach
                                         </div>
                                     </div>
                                     <div>
-                                        <flux:heading size="xs" class="text-blue-800 dark:text-blue-200 mb-2">📂 Categorías Disponibles ({{ count($importacionStats['debug_info']['available_categories'] ?? []) }})</flux:heading>
-                                        <div class="max-h-20 overflow-y-auto bg-white dark:bg-gray-800 rounded p-2 text-xs">
-                                            @foreach($importacionStats['debug_info']['available_categories'] ?? [] as $category)
+                                        <flux:heading size="xs" class="text-blue-800 dark:text-blue-200 mb-2">📂
+                                            Categorías Disponibles
+                                            ({{ count($importacionStats['debug_info']['available_categories'] ?? []) }})
+                                        </flux:heading>
+                                        <div
+                                            class="max-h-20 overflow-y-auto bg-white dark:bg-gray-800 rounded p-2 text-xs">
+                                            @foreach ($importacionStats['debug_info']['available_categories'] ?? [] as $category)
                                                 <div class="py-1">{{ $category }}</div>
                                             @endforeach
                                         </div>
                                     </div>
                                     <div>
-                                        <flux:heading size="xs" class="text-blue-800 dark:text-blue-200 mb-2">📏 Líneas Disponibles ({{ count($importacionStats['debug_info']['available_lines'] ?? []) }})</flux:heading>
-                                        <div class="max-h-20 overflow-y-auto bg-white dark:bg-gray-800 rounded p-2 text-xs">
-                                            @foreach($importacionStats['debug_info']['available_lines'] ?? [] as $line)
+                                        <flux:heading size="xs" class="text-blue-800 dark:text-blue-200 mb-2">📏
+                                            Líneas Disponibles
+                                            ({{ count($importacionStats['debug_info']['available_lines'] ?? []) }})
+                                        </flux:heading>
+                                        <div
+                                            class="max-h-20 overflow-y-auto bg-white dark:bg-gray-800 rounded p-2 text-xs">
+                                            @foreach ($importacionStats['debug_info']['available_lines'] ?? [] as $line)
                                                 <div class="py-1">{{ $line }}</div>
                                             @endforeach
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            @endif
-                        </div>
-                    @endif
-
-                    <!-- Botones de acción -->
-                    <div class="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">
-                        <flux:button wire:click="cerrarModalImportacion" variant="primary" class="px-4 py-2">
-                            Cerrar
-                        </flux:button>
-                    </div>
+                        @endif
                 </div>
             @endif
+
+            <!-- Botones de acción -->
+            <div class="flex justify-end gap-3 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+                <flux:button wire:click="cerrarModalImportacion" variant="primary" class="px-4 py-2">
+                    Cerrar
+                </flux:button>
+            </div>
         </div>
-    </flux:modal>
+        @endif
+</div>
+</flux:modal>
 </div>
