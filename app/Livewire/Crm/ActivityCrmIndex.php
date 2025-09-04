@@ -174,7 +174,7 @@ class ActivityCrmIndex extends Component
             'contacts' => ContactCrm::all(),
             'users' => User::all(),
             'tipos' => ['llamada', 'reunion', 'email', 'tarea'],
-            'estados' => ['pendiente', 'completada', 'cancelada'],
+            'estados' => ['pendiente', 'en_proceso', 'completada', 'cancelada'],
             'prioridades' => ['baja', 'normal', 'alta', 'urgente'],
         ]);
     }
